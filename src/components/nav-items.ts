@@ -1,0 +1,44 @@
+import {
+  LayoutDashboard,
+  Users,
+  CalendarClock,
+  Settings,
+  ShieldCheck,
+  UserCog,
+  Package,
+  BarChart3,
+  FileText,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import { canAccess, type SessionPayload, type PermissionModule } from "@/lib/types";
+
+export type NavItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+} & (
+  | { kind: "fixed"; roles: SessionPayload["role"][] }
+  | { kind: "module"; module: PermissionModule }
+);
+
+export const navItems: NavItem[] = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, kind: "fixed", roles: ["admin", "executive"] },
+  { title: "Admins", href: "/admins", icon: ShieldCheck, kind: "fixed", roles: ["super_admin"] },
+  { title: "Customers", href: "/customers", icon: Users, kind: "module", module: "customers" },
+  { title: "Appointments", href: "/appointments", icon: CalendarClock, kind: "module", module: "appointments" },
+  { title: "Quotations", href: "/quotations", icon: FileText, kind: "module", module: "quotations" },
+  { title: "Products & Stock", href: "/products", icon: Package, kind: "module", module: "products" },
+  { title: "Analytics", href: "/analytics", icon: BarChart3, kind: "module", module: "analytics" },
+  { title: "Balance Sheet", href: "/balance-sheet", icon: Wallet, kind: "fixed", roles: ["admin"] },
+  { title: "Team", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
+  { title: "Settings", href: "/settings", icon: Settings, kind: "fixed", roles: ["super_admin", "admin", "executive"] },
+];
+
+/** Filters the nav for what this session can actually open — module items respect per-executive permission grants. */
+export function navForSession(session: SessionPayload): NavItem[] {
+  return navItems.filter((item) => {
+    if (item.kind === "fixed") return item.roles.includes(session.role);
+    return canAccess(session, item.module);
+  });
+}
