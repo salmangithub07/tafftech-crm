@@ -77,26 +77,36 @@ export default async function DashboardPage() {
           Welcome back, {session.name.split(" ")[0]}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Yeh raha aapke CRM ka aaj ka overview.
+          Here is your CRM overview for today.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {s.title}
-              </CardTitle>
-              <s.icon className="size-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{s.value}</div>
-              <p className="text-xs text-muted-foreground">{s.hint}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  {stats.map((s) => (
+    <Card
+      key={s.title}
+      className="rounded-2xl rounded-xl border shadow-sm"
+    >
+      <CardContent className="flex items-center gap-5 p-6">
+        {/* Icon */}
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
+          <s.icon className="h-7 w-7 text-white" />
+        </div>
+
+        {/* Text */}
+        <div>
+          <h2 className="text-2xl font-bold leading-none">
+            {s.value}
+          </h2>
+
+          <p className="mt-1 text-base text-slate-500">
+            {s.title}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
