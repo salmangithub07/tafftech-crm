@@ -1,4 +1,4 @@
-# Nova CRM — Multi-tenant Admin Dashboard
+# Tafftech CRM — Multi-tenant Admin Dashboard
 
 Next.js (App Router) + TypeScript + Tailwind CSS v4 + shadcn-style UI + MySQL. Built
 so you can sell it as a product: one deployment, one **Super Admin**, and as many
@@ -117,7 +117,7 @@ psql "$DATABASE_URL" -f sql/schema.postgres.sql
 
 (A local Postgres example: `psql postgres://postgres:postgres@localhost:5432/crm_db -f sql/schema.postgres.sql`)
 
-**Migrating from the MySQL version of Nova CRM?** See "Migrating from MySQL"
+**Migrating from the MySQL version of Tafftech CRM?** See "Migrating from MySQL"
 below — the schema is different enough (placeholders, `ENUM` → `CHECK`,
 `AUTO_INCREMENT` → `SERIAL`, etc.) that there's no simple ALTER-table path;
 easiest is to start fresh on Postgres and re-enter/re-import your data.
@@ -175,7 +175,7 @@ Vercel deploys from a Git repository, so the project needs to live on GitHub
    ```bash
    git init
    git add .
-   git commit -m "Nova CRM"
+   git commit -m "Tafftech CRM"
    git branch -M main
    git remote add origin https://github.com/<your-username>/nova-crm.git
    git push -u origin main
@@ -265,7 +265,7 @@ comfortably on the free tier.
 
 ## Migrating from MySQL (if you were running the earlier version)
 
-Nova CRM originally shipped with a MySQL/XAMPP setup (`sql/schema.sql`,
+Tafftech CRM originally shipped with a MySQL/XAMPP setup (`sql/schema.sql`,
 `sql/migration_v2.sql`, `sql/migration_v3.sql` — still included in this
 project for reference). This version runs on Postgres instead, which is a
 better fit for Vercel's serverless hosting. Because so much syntax differs

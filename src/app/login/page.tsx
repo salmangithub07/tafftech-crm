@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <LayoutDashboard className="size-5" />
           </div>
-          <h1 className="text-xl font-semibold">Sign in to Nova CRM</h1>
+          <h1 className="text-xl font-semibold">Sign in to Tafftech CRM</h1>
           <p className="text-sm text-muted-foreground">
             The admin dashboard to manage your customers and appointments.
           </p>
