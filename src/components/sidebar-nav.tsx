@@ -59,7 +59,7 @@ export function SidebarNav({
 
       {!collapsed && (
         <div className="border-t p-3 text-xs text-muted-foreground">
-          Nova CRM &copy; {new Date().getFullYear()}
+          Tafftech CRM &copy; {new Date().getFullYear()}
         </div>
       )}
     </div>

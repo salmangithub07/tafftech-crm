@@ -7,7 +7,7 @@ export type AppSettings = {
 };
 
 const DEFAULTS: AppSettings = {
-  site_name: "Nova CRM",
+  site_name: "Tafftech CRM",
   accent_color: "#2563eb",
   radius: "0.65",
 };

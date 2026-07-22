@@ -8,7 +8,7 @@ import { getSession, tenantOf } from "@/lib/auth";
 import { hexToHslString, readableForeground } from "@/lib/colors";
 
 export const metadata: Metadata = {
-  title: "Nova CRM — Admin Dashboard",
+  title: "Tafftech CRM — Admin Dashboard",
   description: "Manage customers and appointments from one clean dashboard.",
 };
 
