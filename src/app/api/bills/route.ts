@@ -6,9 +6,9 @@ import { z } from "zod";
 const billItemSchema = z.object({
   product_id: z.number().optional().nullable(),
   product_name: z.string().min(1, "Product name required"),
-  quantity: z.number().int().positive(),
-  unit_price: z.number().min(0),
-  total_price: z.number().min(0),
+  quantity: z.coerce.number().int().positive("Quantity must be positive"),
+  unit_price: z.coerce.number().min(0, "Unit price must be >= 0"),
+  total_price: z.coerce.number().optional(),
 });
 
 const createBillSchema = z.object({
@@ -19,9 +19,9 @@ const createBillSchema = z.object({
   customer_address: z.string().optional().or(z.literal("")).default(""),
   bill_date: z.string().min(1, "Bill date required"),
   items: z.array(billItemSchema).min(1, "At least one product item required"),
-  tax_amount: z.number().min(0).default(0),
-  discount_amount: z.number().min(0).default(0),
-  paid_amount: z.number().min(0).default(0),
+  tax_amount: z.coerce.number().min(0).optional().default(0),
+  discount_amount: z.coerce.number().min(0).optional().default(0),
+  paid_amount: z.coerce.number().min(0).optional().default(0),
   payment_status: z.enum(["paid", "unpaid", "partial"]).default("paid"),
   payment_method: z.enum(["cash", "bank", "credit", "other"]).default("cash"),
   notes: z.string().optional().or(z.literal("")).default(""),

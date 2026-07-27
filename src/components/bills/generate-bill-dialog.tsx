@@ -202,10 +202,22 @@ export function GenerateBillDialog({
 
   async function onSubmit(values: FormValues) {
     try {
+      const payload = {
+        ...values,
+        tax_amount: Number(values.tax_amount) || 0,
+        discount_amount: Number(values.discount_amount) || 0,
+        paid_amount: Number(values.paid_amount) || 0,
+        items: values.items.map((item) => ({
+          ...item,
+          quantity: Number(item.quantity) || 1,
+          unit_price: Number(item.unit_price) || 0,
+          total_price: (Number(item.quantity) || 1) * (Number(item.unit_price) || 0),
+        })),
+      };
       const res = await fetch("/api/bills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate bill");
