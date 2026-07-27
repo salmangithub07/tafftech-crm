@@ -47,6 +47,9 @@ export async function GET(req: NextRequest) {
   const fromDate = url.searchParams.get("from") || "";
   const toDate = url.searchParams.get("to") || "";
   const year = url.searchParams.get("year") || "";
+  // DateFilter component sends period + date params
+  const period = url.searchParams.get("period") || "";
+  const date = url.searchParams.get("date") || "";
 
   let whereSql = "WHERE b.tenant_id = ?";
   const params: unknown[] = [tenantId];
@@ -66,19 +69,34 @@ export async function GET(req: NextRequest) {
     params.push(parseInt(customerId, 10));
   }
 
+  // Legacy from/to range params
   if (fromDate) {
     whereSql += " AND b.bill_date >= ?";
     params.push(fromDate);
   }
-
   if (toDate) {
     whereSql += " AND b.bill_date <= ?";
     params.push(toDate);
   }
 
+  // Legacy year param
   if (year && year !== "all") {
     whereSql += " AND EXTRACT(YEAR FROM b.bill_date) = ?";
     params.push(parseInt(year, 10));
+  }
+
+  // DateFilter period+date params (takes precedence over legacy params when present)
+  if (period && period !== "all" && date) {
+    if (period === "day") {
+      whereSql += " AND b.bill_date::date = ?::date";
+      params.push(date);
+    } else if (period === "month") {
+      whereSql += " AND TO_CHAR(b.bill_date, 'YYYY-MM') = ?";
+      params.push(date);
+    } else if (period === "year") {
+      whereSql += " AND TO_CHAR(b.bill_date, 'YYYY') = ?";
+      params.push(date);
+    }
   }
 
   // Count query
