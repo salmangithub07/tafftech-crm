@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const appointmentSchema = z.object({
@@ -134,5 +135,17 @@ export async function POST(req: NextRequest) {
      LEFT JOIN customers c ON c.id = ap.customer_id WHERE ap.id = ?`,
     [result.insertId]
   );
+
+  const apptObj: any = appointment[0];
+  logActivity({
+    tenantId,
+    actorId: session.id,
+    actorName: session.name,
+    action: "Scheduled Appointment",
+    entityType: "appointment",
+    entityId: result.insertId,
+    entityLabel: `${apptObj?.customer_name || "Customer"} (${d.appointment_date})`,
+  });
+
   return NextResponse.json(appointment[0], { status: 201 });
 }

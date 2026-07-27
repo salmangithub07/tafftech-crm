@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const billItemSchema = z.object({
@@ -262,6 +263,16 @@ export async function POST(req: NextRequest) {
       );
     }
   }
+
+  logActivity({
+    tenantId,
+    actorId: session.id,
+    actorName: session.name,
+    action: `Generated Bill ${billNumber}`,
+    entityType: "bill",
+    entityId: billId,
+    entityLabel: `${billNumber} - ${d.customer_name}`,
+  });
 
   return NextResponse.json({ id: billId, bill_number: billNumber }, { status: 201 });
 }

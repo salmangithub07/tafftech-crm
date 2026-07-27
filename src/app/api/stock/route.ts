@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const stockSchema = z.object({
@@ -49,13 +50,24 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
 
-  const product = await query("SELECT id FROM products WHERE id = ? AND tenant_id = ?", [d.product_id, tenantId]);
+  const product = await query("SELECT id, name FROM products WHERE id = ? AND tenant_id = ?", [d.product_id, tenantId]);
   if (!product.length) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  const prodName = (product[0] as any).name || "Product";
 
   await execute(
     "INSERT INTO stock_transactions (tenant_id, product_id, type, quantity, note, created_by) VALUES (?, ?, ?, ?, ?, ?)",
     [tenantId, d.product_id, d.type, d.quantity, d.note, session.id]
   );
+
+  logActivity({
+    tenantId,
+    actorId: session.id,
+    actorName: session.name,
+    action: d.type === "in" ? "Stock Increased (+)" : "Stock Decreased (-)",
+    entityType: "stock",
+    entityId: d.product_id,
+    entityLabel: `${prodName} (${d.type === "in" ? "+" : "-"}${d.quantity})`,
+  });
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const customerSchema = z.object({
@@ -105,5 +106,16 @@ export async function POST(req: NextRequest) {
   );
 
   const customer = await query("SELECT * FROM customers WHERE id = ?", [result.insertId]);
+
+  logActivity({
+    tenantId,
+    actorId: session.id,
+    actorName: session.name,
+    action: "Added new Customer",
+    entityType: "customer",
+    entityId: result.insertId,
+    entityLabel: d.name,
+  });
+
   return NextResponse.json(customer[0], { status: 201 });
 }
