@@ -7,9 +7,17 @@ function formatCurrency(amount: number) {
   return `₹${Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function PrintableInvoice({ bill }: { bill: Bill }) {
+export function PrintableInvoice({
+  bill,
+  siteName,
+}: {
+  bill: Bill;
+  siteName?: string;
+}) {
+  const companyName = siteName || "CRM Enterprise";
+
   return (
-    <div className="printable-invoice w-full max-w-3xl rounded-lg border bg-card p-6 text-card-foreground shadow-sm sm:p-8">
+    <div className="printable-invoice w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6 sm:p-8">
       {/* Header */}
       <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -20,9 +28,7 @@ export function PrintableInvoice({ bill }: { bill: Bill }) {
           </p>
         </div>
         <div className="sm:text-right">
-          <h3 className="text-lg font-semibold text-foreground">Nova CRM Enterprise</h3>
-          <p className="text-xs text-muted-foreground">GST / Tax ID: 27AAAAA0000A1Z5</p>
-          <p className="text-xs text-muted-foreground">Support: contact@novacrm.com</p>
+          <h3 className="text-lg font-semibold text-foreground">{companyName}</h3>
         </div>
       </div>
 
@@ -62,26 +68,26 @@ export function PrintableInvoice({ bill }: { bill: Bill }) {
       </div>
 
       {/* Items Table */}
-      <div className="overflow-x-auto rounded-md border">
+      <div className="rounded-md border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-muted text-xs font-semibold uppercase text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5">#</th>
-              <th className="px-4 py-2.5">Item &amp; Description</th>
-              <th className="px-4 py-2.5 text-right">Qty</th>
-              <th className="px-4 py-2.5 text-right">Rate</th>
-              <th className="px-4 py-2.5 text-right">Amount</th>
+              <th className="px-3 py-2.5 w-8">#</th>
+              <th className="px-3 py-2.5">Item &amp; Description</th>
+              <th className="px-3 py-2.5 text-right w-16">Qty</th>
+              <th className="px-3 py-2.5 text-right w-28">Rate</th>
+              <th className="px-3 py-2.5 text-right w-28">Amount</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {bill.items && bill.items.length > 0 ? (
               bill.items.map((item, idx) => (
                 <tr key={idx} className="hover:bg-muted/10">
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{idx + 1}</td>
-                  <td className="px-4 py-3 font-medium">{item.product_name}</td>
-                  <td className="px-4 py-3 text-right">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right font-mono">{formatCurrency(item.unit_price)}</td>
-                  <td className="px-4 py-3 text-right font-mono font-medium">{formatCurrency(item.total_price)}</td>
+                  <td className="px-3 py-3 text-xs text-muted-foreground">{idx + 1}</td>
+                  <td className="px-3 py-3 font-medium">{item.product_name}</td>
+                  <td className="px-3 py-3 text-right">{item.quantity}</td>
+                  <td className="px-3 py-3 text-right font-mono">{formatCurrency(item.unit_price)}</td>
+                  <td className="px-3 py-3 text-right font-mono font-medium">{formatCurrency(item.total_price)}</td>
                 </tr>
               ))
             ) : (
@@ -94,7 +100,7 @@ export function PrintableInvoice({ bill }: { bill: Bill }) {
       </div>
 
       {/* Summary Totals */}
-      <div className="mt-6 flex flex-col justify-end gap-2 sm:flex-row">
+      <div className="mt-6 flex justify-end">
         <div className="w-full sm:w-72 flex flex-col gap-1.5 rounded-md border p-4 bg-muted/10">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Subtotal:</span>
