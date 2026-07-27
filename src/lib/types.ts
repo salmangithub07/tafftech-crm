@@ -275,3 +275,28 @@ export type BalanceSheetSummary = {
     equity: number;
   };
 };
+
+/* --------------------------- Activity & Notifications --------------------------- */
+
+export type ActivityEntityType =
+  | "customer"
+  | "bill"
+  | "appointment"
+  | "quotation"
+  | "product"
+  | "stock"
+  | "team";
+
+export type ActivityLogItem = {
+  id: number;
+  tenant_id: number;
+  actor_id: number;
+  actor_name: string;
+  action: string; // e.g. "customer_created", "bill_generated", "appointment_scheduled", etc.
+  entity_type: ActivityEntityType;
+  entity_id?: number | null;
+  entity_label?: string | null;
+  created_at: string;
+  is_unread?: boolean;
+};
+

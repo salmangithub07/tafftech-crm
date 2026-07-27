@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const quotationSchema = z.object({
@@ -109,5 +110,17 @@ export async function POST(req: NextRequest) {
      LEFT JOIN customers c ON c.id = q.customer_id WHERE q.id = ?`,
     [result.insertId]
   );
+
+  const qObj: any = quotation[0];
+  logActivity({
+    tenantId,
+    actorId: session.id,
+    actorName: session.name,
+    action: "Created Quotation",
+    entityType: "quotation",
+    entityId: result.insertId,
+    entityLabel: `${qObj?.customer_name || "Customer"} (₹${d.quotation_amount})`,
+  });
+
   return NextResponse.json(quotation[0], { status: 201 });
 }

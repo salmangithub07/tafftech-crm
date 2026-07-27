@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { UserNav } from "@/components/user-nav";
 import { cn } from "@/lib/utils";
 import type { SessionPayload } from "@/lib/types";
@@ -90,6 +91,7 @@ export function DashboardShell({
 
           <div className="flex-1" />
 
+          <NotificationBell />
           <ThemeToggle />
           <UserNav name={session.name} email={session.email} role={session.role} />
         </header>
