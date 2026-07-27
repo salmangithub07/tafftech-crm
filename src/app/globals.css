@@ -154,6 +154,8 @@
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
+.mw-1000 {max-width: 1000px;}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -175,4 +177,12 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* ── Print styles: hide everything except the invoice ── */
+@media print {
+.no-print {
+  display: none !important;
+}
+  
 }

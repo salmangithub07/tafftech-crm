@@ -81,13 +81,13 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-md-4 gap-2 sm:grid-cols-2 lg:grid-cols-4">
   {stats.map((s) => (
     <Card
       key={s.title}
       className="rounded-2xl rounded-xl border shadow-sm"
     >
-      <CardContent className="flex items-center gap-5 p-6">
+      <CardContent className="flex items-center gap-5 p-md-6 p-3">
         {/* Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
           <s.icon className="h-7 w-7 text-white" />
