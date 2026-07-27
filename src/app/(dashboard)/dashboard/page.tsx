@@ -87,7 +87,7 @@ export default async function DashboardPage() {
       key={s.title}
       className="rounded-2xl rounded-xl border shadow-sm"
     >
-      <CardContent className="flex items-center gap-5 p-md-6 p-3">
+      <CardContent className="flex items-center gap-5 p-md-6 p-3 mobileCards">
         {/* Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
           <s.icon className="h-7 w-7 text-white" />
