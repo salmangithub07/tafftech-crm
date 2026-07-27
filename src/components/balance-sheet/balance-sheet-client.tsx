@@ -98,6 +98,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
   const loadTransactions = React.useCallback(async () => {
     setLoadingTx(true);
+    setTxTotal(0);
     try {
       const params = new URLSearchParams({
         page: String(txPage),
@@ -112,7 +113,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
       if (res.ok) {
         const json = await res.json();
         setTransactions(json.data || []);
-        setTxTotal(json.total || 0);
+        setTxTotal(json.total ?? 0);
         setTxStats(json.stats || { totalInflow: 0, totalOutflow: 0, netFlow: 0 });
       }
     } finally {
@@ -419,7 +420,12 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               />
             </div>
 
-            <Select value={txYear} onValueChange={(val) => { setTxYear(val); setTxPage(1); }}>
+            <Select value={txYear} onValueChange={(val) => {
+              // Reset DateFilter when year dropdown is used to avoid conflicting filters
+              if (val !== "all") setTxDateFilter({ period: "all", value: "" });
+              setTxYear(val);
+              setTxPage(1);
+            }}>
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Year Filter" />
               </SelectTrigger>
@@ -456,7 +462,15 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               </SelectContent>
             </Select>
 
-            <DateFilter value={txDateFilter} onChange={(df) => { setTxDateFilter(df); setTxPage(1); }} />
+            <DateFilter
+              value={txDateFilter}
+              onChange={(df) => {
+                // Reset txYear when DateFilter is set to avoid conflicting filters
+                if (df.period !== "all") setTxYear("all");
+                setTxDateFilter(df);
+                setTxPage(1);
+              }}
+            />
           </div>
 
           {/* Table */}

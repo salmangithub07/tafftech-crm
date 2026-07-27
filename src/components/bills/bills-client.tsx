@@ -67,6 +67,7 @@ export function BillsClient() {
 
   const fetchBills = React.useCallback(async () => {
     setLoading(true);
+    setTotal(0);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -79,7 +80,7 @@ export function BillsClient() {
       if (res.ok) {
         const json = await res.json();
         setBills(json.data || []);
-        setTotal(json.total || 0);
+        setTotal(json.total ?? 0);
         setStats(json.stats || { totalInvoiced: 0, totalCollected: 0, totalPending: 0 });
       }
     } finally {
