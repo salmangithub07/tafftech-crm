@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
   const year = url.searchParams.get("year");
   const fromDate = url.searchParams.get("from");
   const toDate = url.searchParams.get("to");
+  // DateFilter component sends period + date params
+  const period = url.searchParams.get("period") || "";
+  const date = url.searchParams.get("date") || "";
   const isPaginated = url.searchParams.has("page") || url.searchParams.has("limit");
 
   let whereSql = `WHERE t.tenant_id = ?`;
@@ -56,6 +59,20 @@ export async function GET(req: NextRequest) {
   if (toDate) {
     whereSql += " AND t.entry_date <= ?";
     params.push(toDate);
+  }
+
+  // DateFilter period+date params
+  if (period && period !== "all" && date) {
+    if (period === "day") {
+      whereSql += " AND t.entry_date::date = ?::date";
+      params.push(date);
+    } else if (period === "month") {
+      whereSql += " AND TO_CHAR(t.entry_date, 'YYYY-MM') = ?";
+      params.push(date);
+    } else if (period === "year") {
+      whereSql += " AND TO_CHAR(t.entry_date, 'YYYY') = ?";
+      params.push(date);
+    }
   }
 
   if (search) {
