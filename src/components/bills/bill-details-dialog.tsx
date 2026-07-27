@@ -42,20 +42,20 @@ export function BillDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* max-w-5xl gives enough room; overflow-x-hidden prevents horizontal scroll */}
-      <DialogContent className="max-w-5xl w-full max-h-[92vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-3 space-y-0">
+      {/* Wide enough to show invoice without horizontal scroll; no overflow-x */}
+      <DialogContent className="max-w-full w-full p-0 gap-0 overflow-visible">
+        {/* Header — hidden on print via .no-print */}
+        <DialogHeader className="flex flex-row items-center justify-between border-b px-6 py-4 space-y-0">
           <DialogTitle className="text-lg font-semibold">
             Bill Details - {bill.bill_number}
           </DialogTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
-              <Printer className="size-4" /> Print / Save PDF
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
+            <Printer className="size-4 no-print" /> Print / Save PDF
+          </Button>
         </DialogHeader>
 
-        <div className="py-4">
+        {/* Invoice content — no hidden overflow */}
+        <div className="p-6">
           <PrintableInvoice bill={bill} siteName={siteName} />
         </div>
       </DialogContent>
