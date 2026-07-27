@@ -235,6 +235,55 @@ CREATE TABLE `fixed_assets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------
+-- bills
+-- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS `bill_items`;
+DROP TABLE IF EXISTS `bills`;
+CREATE TABLE `bills` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `tenant_id` INT NOT NULL,
+  `bill_number` VARCHAR(50) NOT NULL,
+  `customer_id` INT DEFAULT NULL,
+  `customer_name` VARCHAR(100) NOT NULL,
+  `customer_phone` VARCHAR(20) DEFAULT NULL,
+  `customer_email` VARCHAR(100) DEFAULT NULL,
+  `customer_address` TEXT DEFAULT NULL,
+  `bill_date` DATE NOT NULL DEFAULT (CURRENT_DATE),
+  `subtotal` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `tax_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `discount_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `total_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `payment_status` ENUM('paid','unpaid','partial') NOT NULL DEFAULT 'paid',
+  `payment_method` ENUM('cash','bank','credit','other') NOT NULL DEFAULT 'cash',
+  `notes` TEXT DEFAULT NULL,
+  `created_by` INT DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY `bills_tenant_idx` (`tenant_id`),
+  KEY `bills_customer_idx` (`customer_id`),
+  CONSTRAINT `bills_tenant_fk` FOREIGN KEY (`tenant_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `bills_customer_fk` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `bills_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- bill_items
+-- ---------------------------------------------------------------------
+CREATE TABLE `bill_items` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `bill_id` INT NOT NULL,
+  `product_id` INT DEFAULT NULL,
+  `product_name` VARCHAR(150) NOT NULL,
+  `quantity` INT NOT NULL DEFAULT 1,
+  `unit_price` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `total_price` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  KEY `bill_items_bill_idx` (`bill_id`),
+  CONSTRAINT `bill_items_bill_fk` FOREIGN KEY (`bill_id`) REFERENCES `bills` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `bill_items_product_fk` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ---------------------------------------------------------------------
 -- settings  (global, product-level branding — Super Admin controlled)
 -- ---------------------------------------------------------------------
 DROP TABLE IF EXISTS `settings`;

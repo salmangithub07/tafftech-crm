@@ -10,6 +10,7 @@ const MODULE_LABELS: Record<PermissionModule, string> = {
   appointments: "Appointments",
   quotations: "Quotations",
   products: "Products & Stock",
+  bills: "Bills & Invoices",
   analytics: "Analytics",
 };
 
@@ -18,6 +19,7 @@ const MODULE_DESCRIPTIONS: Record<PermissionModule, string> = {
   appointments: "Schedule and manage appointments",
   quotations: "Send and update quotations",
   products: "Manage the product catalog and stock",
+  bills: "Generate, manage, and print bills and invoices",
   analytics: "Log and view social media performance",
 };
 

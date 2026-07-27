@@ -28,6 +28,7 @@ import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { StockDialog } from "@/components/products/stock-dialog";
+import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import type { Product, StockTransaction } from "@/lib/types";
 
@@ -54,7 +55,9 @@ export function ProductsClient({
   const [editing, setEditing] = React.useState<Product | null>(null);
   const [deleting, setDeleting] = React.useState<Product | null>(null);
   const [stockDialog, setStockDialog] = React.useState<{ product: Product; type: "in" | "out" } | null>(null);
+  const [generateBillPrompt, setGenerateBillPrompt] = React.useState<{ product: Product; quantity: number } | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
+
 
   React.useEffect(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem(PAGE_SIZE_KEY) : null;
@@ -330,6 +333,17 @@ export function ProductsClient({
           product={stockDialog.product}
           type={stockDialog.type}
           onSaved={refresh}
+          onGenerateBill={(product, quantity) => setGenerateBillPrompt({ product, quantity })}
+        />
+      )}
+
+      {generateBillPrompt && (
+        <GenerateBillDialog
+          open={!!generateBillPrompt}
+          onOpenChange={(open) => !open && setGenerateBillPrompt(null)}
+          initialProduct={generateBillPrompt.product}
+          initialQuantity={generateBillPrompt.quantity}
+          onSaved={refresh}
         />
       )}
 
@@ -345,3 +359,4 @@ export function ProductsClient({
     </div>
   );
 }
+

@@ -114,8 +114,49 @@ export const PERMISSION_MODULES = [
   "quotations",
   "products",
   "analytics",
+  "bills",
 ] as const;
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
+
+/* --------------------------- Bills & Invoices --------------------------- */
+
+export type BillPaymentStatus = "paid" | "unpaid" | "partial";
+export type BillPaymentMethod = "cash" | "bank" | "credit" | "other";
+
+export type BillItem = {
+  id?: number;
+  bill_id?: number;
+  product_id?: number | null;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+};
+
+export type Bill = {
+  id: number;
+  tenant_id: number;
+  bill_number: string;
+  customer_id?: number | null;
+  customer_name: string;
+  customer_phone?: string | null;
+  customer_email?: string | null;
+  customer_address?: string | null;
+  bill_date: string;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  paid_amount: number;
+  payment_status: BillPaymentStatus;
+  payment_method: BillPaymentMethod;
+  notes?: string | null;
+  created_by?: number | null;
+  created_by_name?: string | null;
+  created_at: string;
+  items?: BillItem[];
+};
+
 
 export type SessionPayload = {
   id: number;

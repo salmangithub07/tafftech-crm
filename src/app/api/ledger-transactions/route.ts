@@ -17,21 +17,102 @@ export async function GET(req: NextRequest) {
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tenantId = tenantOf(session)!;
 
-  const accountId = req.nextUrl.searchParams.get("account_id");
-  let sql = `
-    SELECT t.*, a.name AS account_name, ad.name AS created_by_name
+  const url = req.nextUrl;
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const limit = Math.max(1, parseInt(url.searchParams.get("limit") || "10", 10));
+  const offset = (page - 1) * limit;
+
+  const accountId = url.searchParams.get("account_id");
+  const direction = url.searchParams.get("direction");
+  const search = url.searchParams.get("search") || "";
+  const year = url.searchParams.get("year");
+  const fromDate = url.searchParams.get("from");
+  const toDate = url.searchParams.get("to");
+  const isPaginated = url.searchParams.has("page") || url.searchParams.has("limit");
+
+  let whereSql = `WHERE t.tenant_id = ?`;
+  const params: unknown[] = [tenantId];
+
+  if (accountId && accountId !== "all") {
+    whereSql += " AND t.account_id = ?";
+    params.push(parseInt(accountId, 10));
+  }
+
+  if (direction && direction !== "all") {
+    whereSql += " AND t.direction = ?";
+    params.push(direction);
+  }
+
+  if (year && year !== "all") {
+    whereSql += " AND EXTRACT(YEAR FROM t.entry_date) = ?";
+    params.push(parseInt(year, 10));
+  }
+
+  if (fromDate) {
+    whereSql += " AND t.entry_date >= ?";
+    params.push(fromDate);
+  }
+
+  if (toDate) {
+    whereSql += " AND t.entry_date <= ?";
+    params.push(toDate);
+  }
+
+  if (search) {
+    whereSql += " AND (t.description ILIKE ? OR a.name ILIKE ? OR ad.name ILIKE ?)";
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  // Calculate totals for filtered dataset
+  const statsRes = await query<{ total_inflow: number; total_outflow: number }>(
+    `SELECT 
+       COALESCE(SUM(CASE WHEN t.direction = 'increase' THEN t.amount ELSE 0 END), 0) AS total_inflow,
+       COALESCE(SUM(CASE WHEN t.direction = 'decrease' THEN t.amount ELSE 0 END), 0) AS total_outflow
+     FROM ledger_transactions t
+     LEFT JOIN ledger_accounts a ON a.id = t.account_id
+     LEFT JOIN admins ad ON ad.id = t.created_by
+     ${whereSql}`,
+    params
+  );
+  const totalInflow = Number(statsRes[0]?.total_inflow || 0);
+  const totalOutflow = Number(statsRes[0]?.total_outflow || 0);
+  const netFlow = totalInflow - totalOutflow;
+
+  const countRes = await query<{ count: string }>(
+    `SELECT COUNT(*) AS count 
+     FROM ledger_transactions t
+     LEFT JOIN ledger_accounts a ON a.id = t.account_id
+     LEFT JOIN admins ad ON ad.id = t.created_by
+     ${whereSql}`,
+    params
+  );
+  const total = parseInt(countRes[0]?.count || "0", 10);
+
+  let dataSql = `
+    SELECT t.*, a.name AS account_name, a.type AS account_type, ad.name AS created_by_name
     FROM ledger_transactions t
     LEFT JOIN ledger_accounts a ON a.id = t.account_id
     LEFT JOIN admins ad ON ad.id = t.created_by
-    WHERE t.tenant_id = ?`;
-  const params: unknown[] = [tenantId];
-  if (accountId) {
-    sql += " AND t.account_id = ?";
-    params.push(accountId);
-  }
-  sql += " ORDER BY t.entry_date DESC, t.id DESC LIMIT 200";
+    ${whereSql}
+    ORDER BY t.entry_date DESC, t.id DESC
+  `;
 
-  const transactions = await query(sql, params);
+  if (isPaginated) {
+    dataSql += ` LIMIT ? OFFSET ?`;
+    const dataParams = [...params, limit, offset];
+    const transactions = await query(dataSql, dataParams);
+    return NextResponse.json({
+      data: transactions,
+      total,
+      page,
+      limit,
+      stats: { totalInflow, totalOutflow, netFlow },
+    });
+  }
+
+  // Backwards compatibility if no page parameter passed
+  dataSql += ` LIMIT 200`;
+  const transactions = await query(dataSql, params);
   return NextResponse.json(transactions);
 }
 

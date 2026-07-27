@@ -19,12 +19,22 @@ import {
   Factory,
   ExternalLink,
   MoreHorizontal,
+  Download,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,6 +49,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { LedgerAccountDialog } from "@/components/balance-sheet/ledger-account-dialog";
 import { LedgerTransactionDialog } from "@/components/balance-sheet/ledger-transaction-dialog";
 import { FixedAssetDialog } from "@/components/balance-sheet/fixed-asset-dialog";
@@ -53,7 +65,18 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
   const router = useRouter();
   const [summary, setSummary] = React.useState(initialSummary);
   const [transactions, setTransactions] = React.useState<LedgerTransaction[]>([]);
+  const [txTotal, setTxTotal] = React.useState(0);
+  const [txStats, setTxStats] = React.useState({ totalInflow: 0, totalOutflow: 0, netFlow: 0 });
   const [loadingTx, setLoadingTx] = React.useState(false);
+
+  // Filter & Pagination state for All Transactions
+  const [txPage, setTxPage] = React.useState(1);
+  const [txPageSize, setTxPageSize] = React.useState(10);
+  const [txSearch, setTxSearch] = React.useState("");
+  const [txAccountId, setTxAccountId] = React.useState("all");
+  const [txDirection, setTxDirection] = React.useState("all");
+  const [txYear, setTxYear] = React.useState("all");
+  const [txDateFilter, setTxDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
 
   const [accountDialog, setAccountDialog] = React.useState<{
     type: LedgerAccountType;
@@ -73,20 +96,33 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
     router.refresh();
   }
 
-  async function loadTransactions() {
+  const loadTransactions = React.useCallback(async () => {
     setLoadingTx(true);
     try {
-      const res = await fetch("/api/ledger-transactions");
-      if (res.ok) setTransactions(await res.json());
+      const params = new URLSearchParams({
+        page: String(txPage),
+        limit: String(txPageSize),
+        ...(txSearch ? { search: txSearch } : {}),
+        ...(txAccountId !== "all" ? { account_id: txAccountId } : {}),
+        ...(txDirection !== "all" ? { direction: txDirection } : {}),
+        ...(txYear !== "all" ? { year: txYear } : {}),
+        ...dateFilterParams(txDateFilter),
+      });
+      const res = await fetch(`/api/ledger-transactions?${params}`);
+      if (res.ok) {
+        const json = await res.json();
+        setTransactions(json.data || []);
+        setTxTotal(json.total || 0);
+        setTxStats(json.stats || { totalInflow: 0, totalOutflow: 0, netFlow: 0 });
+      }
     } finally {
       setLoadingTx(false);
     }
-  }
+  }, [txPage, txPageSize, txSearch, txAccountId, txDirection, txYear, txDateFilter]);
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the recent transaction log once on mount
     loadTransactions();
-  }, []);
+  }, [loadTransactions]);
 
   async function handleDeleteAccount(account: LedgerAccount) {
     const res = await fetch(`/api/ledger-accounts/${account.id}`, { method: "DELETE" });
@@ -120,6 +156,20 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
   }
 
   const balanced = Math.abs(summary.totals.totalAssets - summary.totals.totalLiabilities) < 0.5;
+
+  const exportTxUrl = React.useMemo(() => {
+    const params = new URLSearchParams({
+      ...(txSearch ? { search: txSearch } : {}),
+      ...(txAccountId !== "all" ? { account_id: txAccountId } : {}),
+      ...(txDirection !== "all" ? { direction: txDirection } : {}),
+      ...(txYear !== "all" ? { year: txYear } : {}),
+      ...dateFilterParams(txDateFilter),
+    });
+    return `/api/ledger-transactions/export?${params}`;
+  }, [txSearch, txAccountId, txDirection, txYear, txDateFilter]);
+
+  const currentYear = new Date().getFullYear();
+  const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
 
   return (
     <div className="flex flex-col gap-6">
@@ -316,64 +366,161 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         </Card>
       </div>
 
-      {/* --------------------------- Recent transactions --------------------------- */}
+      {/* --------------------------- All Transactions Ledger --------------------------- */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recent Transactions</CardTitle>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
+          <div>
+            <CardTitle className="text-lg">All Transactions Ledger</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Complete historical record of all account increases &amp; decreases with year &amp; date filters.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={exportTxUrl}>
+                <Download className="size-4" /> Export CSV
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="px-0 sm:px-6">
+
+        <CardContent className="flex flex-col gap-4">
+          {/* Summary stats bar for filtered view */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-lg border p-3 bg-muted/20 text-xs">
+            <div className="flex justify-between items-center sm:flex-col sm:items-start">
+              <span className="text-muted-foreground uppercase font-semibold">Total Inflow (+):</span>
+              <span className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {money(txStats.totalInflow)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center sm:flex-col sm:items-start">
+              <span className="text-muted-foreground uppercase font-semibold">Total Outflow (-):</span>
+              <span className="font-mono text-sm font-bold text-red-600 dark:text-red-400">
+                {money(txStats.totalOutflow)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center sm:flex-col sm:items-start">
+              <span className="text-muted-foreground uppercase font-semibold">Net Flow:</span>
+              <span className={`font-mono text-sm font-bold ${txStats.netFlow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                {txStats.netFlow >= 0 ? "+" : ""}{money(txStats.netFlow)}
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Toolbar */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search description..."
+                className="pl-9 h-9 text-xs"
+                value={txSearch}
+                onChange={(e) => { setTxSearch(e.target.value); setTxPage(1); }}
+              />
+            </div>
+
+            <Select value={txYear} onValueChange={(val) => { setTxYear(val); setTxPage(1); }}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue placeholder="Year Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {availableYears.map((yr) => (
+                  <SelectItem key={yr} value={String(yr)}>Year {yr}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={txAccountId} onValueChange={(val) => { setTxAccountId(val); setTxPage(1); }}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue placeholder="Account Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Accounts</SelectItem>
+                {allAccounts.map((acc) => (
+                  <SelectItem key={acc.id} value={String(acc.id)}>
+                    {acc.name} ({acc.type.toUpperCase()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={txDirection} onValueChange={(val) => { setTxDirection(val); setTxPage(1); }}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue placeholder="Direction" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Directions</SelectItem>
+                <SelectItem value="increase">Increase (+)</SelectItem>
+                <SelectItem value="decrease">Decrease (-)</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <DateFilter value={txDateFilter} onChange={(df) => { setTxDateFilter(df); setTxPage(1); }} />
+          </div>
+
+          {/* Table */}
           {!loadingTx && transactions.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-0">
-              No transactions recorded yet — balances shown are the opening balances.
+              No transactions match the selected filters.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead>Direction</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>By</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="text-muted-foreground">{t.entry_date}</TableCell>
-                    <TableCell className="font-medium">{t.account_name}</TableCell>
-                    <TableCell>
-                      {t.direction === "increase" ? (
-                        <Badge variant="success" className="gap-1">
-                          <ArrowUpCircle className="size-3" /> Increase
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="gap-1">
-                          <ArrowDownCircle className="size-3" /> Decrease
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono">{money(t.amount)}</TableCell>
-                    <TableCell className="max-w-[220px] truncate text-muted-foreground">
-                      {t.description || "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        onClick={() => handleDeleteTransaction(t.id)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Account</TableHead>
+                    <TableHead>Direction</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>By</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell className="text-muted-foreground">{t.entry_date}</TableCell>
+                      <TableCell className="font-medium">{t.account_name}</TableCell>
+                      <TableCell>
+                        {t.direction === "increase" ? (
+                          <Badge variant="success" className="gap-1">
+                            <ArrowUpCircle className="size-3" /> Increase
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="gap-1">
+                            <ArrowDownCircle className="size-3" /> Decrease
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono font-semibold">{money(t.amount)}</TableCell>
+                      <TableCell className="max-w-[240px] truncate text-muted-foreground">
+                        {t.description || "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => handleDeleteTransaction(t.id)}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <PaginationBar
+                page={txPage}
+                pageSize={txPageSize}
+                total={txTotal}
+                onPageChange={setTxPage}
+                onPageSizeChange={(sz) => { setTxPageSize(sz); setTxPage(1); }}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
