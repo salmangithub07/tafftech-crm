@@ -9,6 +9,7 @@ import {
   BarChart3,
   FileText,
   Wallet,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 import { canAccess, type SessionPayload, type PermissionModule } from "@/lib/types";
@@ -29,11 +30,13 @@ export const navItems: NavItem[] = [
   { title: "Appointments", href: "/appointments", icon: CalendarClock, kind: "module", module: "appointments" },
   { title: "Quotations", href: "/quotations", icon: FileText, kind: "module", module: "quotations" },
   { title: "Products & Stock", href: "/products", icon: Package, kind: "module", module: "products" },
+  { title: "Bills & Invoices", href: "/bills", icon: Receipt, kind: "module", module: "bills" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, kind: "module", module: "analytics" },
   { title: "Balance Sheet", href: "/balance-sheet", icon: Wallet, kind: "fixed", roles: ["admin"] },
   { title: "Team", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
   { title: "Settings", href: "/settings", icon: Settings, kind: "fixed", roles: ["super_admin", "admin", "executive"] },
 ];
+
 
 /** Filters the nav for what this session can actually open — module items respect per-executive permission grants. */
 export function navForSession(session: SessionPayload): NavItem[] {
