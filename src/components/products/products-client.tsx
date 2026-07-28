@@ -343,6 +343,7 @@ export function ProductsClient({
           onOpenChange={(open) => !open && setGenerateBillPrompt(null)}
           initialProduct={generateBillPrompt.product}
           initialQuantity={generateBillPrompt.quantity}
+          skipStockDeduction={true}
           onSaved={refresh}
         />
       )}
