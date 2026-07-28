@@ -172,65 +172,131 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
           </CardContent>
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Added by</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quotations.map((q) => (
-                <TableRow key={q.id}>
-                  <TableCell className="font-medium">{q.customer_name ?? "—"}</TableCell>
-                  <TableCell>₹{Number(q.quotation_amount).toLocaleString("en-IN")}</TableCell>
-                  <TableCell className="text-muted-foreground">{q.quotation_date}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[q.quotation_status]} className="capitalize">
-                      {q.quotation_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{q.created_by_name || "—"}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => updateStatus(q, "accepted")}>
-                          <CheckCircle2 className="size-4" /> Mark accepted
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(q, "rejected")}>
-                          <XCircle className="size-4" /> Mark rejected
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(q, "pending")}>
-                          <Clock className="size-4" /> Mark pending
-                        </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onClick={() => setDeleting(q)}>
-                          <Trash2 className="size-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          {/* Desktop Table View */}
+          <Card className="hidden overflow-hidden py-0 md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Added by</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <PaginationBar
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onPageSizeChange={changePageSize}
-          />
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {quotations.map((q) => (
+                  <TableRow key={q.id}>
+                    <TableCell className="font-medium">{q.customer_name ?? "—"}</TableCell>
+                    <TableCell>₹{Number(q.quotation_amount).toLocaleString("en-IN")}</TableCell>
+                    <TableCell className="text-muted-foreground">{q.quotation_date}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[q.quotation_status]} className="capitalize">
+                        {q.quotation_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{q.created_by_name || "—"}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => updateStatus(q, "accepted")}>
+                            <CheckCircle2 className="size-4" /> Mark accepted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(q, "rejected")}>
+                            <XCircle className="size-4" /> Mark rejected
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(q, "pending")}>
+                            <Clock className="size-4" /> Mark pending
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => setDeleting(q)}>
+                            <Trash2 className="size-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={changePageSize}
+            />
+          </Card>
+
+          {/* Mobile Card View */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {quotations.map((q) => (
+              <Card key={q.id}>
+                <CardContent className="flex flex-col gap-3 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{q.customer_name ?? "—"}</p>
+                      <p className="font-mono font-bold text-base text-primary mt-0.5">
+                        ₹{Number(q.quotation_amount).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant={statusVariant[q.quotation_status]} className="capitalize text-[10px]">
+                        {q.quotation_status}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8 -mr-2">
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => updateStatus(q, "accepted")}>
+                            <CheckCircle2 className="size-4" /> Mark accepted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(q, "rejected")}>
+                            <XCircle className="size-4" /> Mark rejected
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(q, "pending")}>
+                            <Clock className="size-4" /> Mark pending
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => setDeleting(q)}>
+                            <Trash2 className="size-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  {q.notes && (
+                    <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40">
+                      {q.notes}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                    <span>Date: {q.quotation_date}</span>
+                    <span>By: {q.created_by_name || "—"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={changePageSize}
+            />
+          </div>
+        </>
       )}
 
       {deleting && (

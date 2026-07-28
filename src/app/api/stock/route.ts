@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
-import { logActivity } from "@/lib/activity";
+import { logActivity, checkAndLogLowStock } from "@/lib/activity";
 import { z } from "zod";
 
 const stockSchema = z.object({
@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
     entityId: d.product_id,
     entityLabel: `${prodName} (${d.type === "in" ? "+" : "-"}${d.quantity})`,
   });
+
+  if (d.type === "out") {
+    await checkAndLogLowStock(tenantId, d.product_id, session.id, session.name);
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

@@ -211,83 +211,160 @@ export function BillsClient() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Bill No</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Paid</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bills.map((b) => (
-                <TableRow key={b.id}>
-                  <TableCell className="font-mono font-medium text-primary">
-                    <button
-                      className="hover:underline focus:outline-none text-left"
-                      onClick={() => setViewingBill(b)}
-                    >
-                      {b.bill_number}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{b.bill_date}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{b.customer_name}</span>
-                      {b.customer_phone && <span className="text-xs text-muted-foreground">{b.customer_phone}</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {b.items?.length ?? 1} item{(b.items?.length ?? 1) > 1 ? "s" : ""}
-                  </TableCell>
-                  <TableCell className="font-mono font-semibold">{money(b.total_amount)}</TableCell>
-                  <TableCell className="font-mono text-muted-foreground">{money(b.paid_amount)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        b.payment_status === "paid" ? "success" :
-                        b.payment_status === "unpaid" ? "destructive" : "warning"
-                      }
-                      className="uppercase"
-                    >
-                      {b.payment_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setViewingBill(b)}>
-                          <Eye className="size-4" /> View / Print
-                        </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onClick={() => setDeletingBill(b)}>
-                          <Trash2 className="size-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          {/* Desktop Table View */}
+          <Card className="hidden overflow-hidden py-0 md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill No</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Paid</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <PaginationBar
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onPageSizeChange={(sz) => { setPageSize(sz); setPage(1); }}
-          />
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {bills.map((b) => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-mono font-medium text-primary">
+                      <button
+                        className="hover:underline focus:outline-none text-left"
+                        onClick={() => setViewingBill(b)}
+                      >
+                        {b.bill_number}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{b.bill_date}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{b.customer_name}</span>
+                        {b.customer_phone && <span className="text-xs text-muted-foreground">{b.customer_phone}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {b.items?.length ?? 1} item{(b.items?.length ?? 1) > 1 ? "s" : ""}
+                    </TableCell>
+                    <TableCell className="font-mono font-semibold">{money(b.total_amount)}</TableCell>
+                    <TableCell className="font-mono text-muted-foreground">{money(b.paid_amount)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          b.payment_status === "paid" ? "success" :
+                          b.payment_status === "unpaid" ? "destructive" : "warning"
+                        }
+                        className="uppercase"
+                      >
+                        {b.payment_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setViewingBill(b)}>
+                            <Eye className="size-4" /> View / Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => setDeletingBill(b)}>
+                            <Trash2 className="size-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={(sz) => { setPageSize(sz); setPage(1); }}
+            />
+          </Card>
+
+          {/* Mobile Card View */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {bills.map((b) => (
+              <Card key={b.id}>
+                <CardContent className="flex flex-col gap-3 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <button
+                        className="font-mono text-sm font-bold text-primary hover:underline"
+                        onClick={() => setViewingBill(b)}
+                      >
+                        {b.bill_number}
+                      </button>
+                      <p className="font-medium text-sm text-foreground mt-0.5">{b.customer_name}</p>
+                      {b.customer_phone && (
+                        <p className="text-xs text-muted-foreground">{b.customer_phone}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge
+                        variant={
+                          b.payment_status === "paid" ? "success" :
+                          b.payment_status === "unpaid" ? "destructive" : "warning"
+                        }
+                        className="uppercase text-[10px]"
+                      >
+                        {b.payment_status}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8 -mr-2">
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setViewingBill(b)}>
+                            <Eye className="size-4" /> View / Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => setDeletingBill(b)}>
+                            <Trash2 className="size-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-[10px]">Total Amount</span>
+                      <span className="font-mono font-bold text-foreground text-sm">{money(b.total_amount)}</span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-muted-foreground text-[10px]">Paid Amount</span>
+                      <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{money(b.paid_amount)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                    <span>Date: {b.bill_date}</span>
+                    <span>{b.items?.length ?? 1} item{(b.items?.length ?? 1) > 1 ? "s" : ""}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={(sz) => { setPageSize(sz); setPage(1); }}
+            />
+          </div>
+        </>
       )}
 
       {/* Dialogs */}

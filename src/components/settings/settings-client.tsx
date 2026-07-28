@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Check, Palette, Lock } from "lucide-react";
+import { Loader2, Check, Palette, Lock, FileText, Building, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAccentColor } from "@/components/accent-color-provider";
 import { ACCENT_PRESETS } from "@/lib/colors";
 import type { SessionPayload } from "@/lib/types";
-import type { AppSettings } from "@/lib/settings";
+import type { AppSettings, InvoiceTemplateType } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 function initials(name: string) {
@@ -49,6 +50,7 @@ export function SettingsClient({
       <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         {canEditAppearance && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
+        {canEditAppearance && <TabsTrigger value="invoice">Invoice &amp; T&amp;C</TabsTrigger>}
       </TabsList>
 
       <TabsContent value="profile" className="mt-6">
@@ -57,6 +59,11 @@ export function SettingsClient({
       {canEditAppearance && (
         <TabsContent value="appearance" className="mt-6">
           <AppearanceTab initialSiteName={initialSettings.site_name} />
+        </TabsContent>
+      )}
+      {canEditAppearance && (
+        <TabsContent value="invoice" className="mt-6">
+          <InvoiceTab initialSettings={initialSettings} />
         </TabsContent>
       )}
     </Tabs>
@@ -99,53 +106,51 @@ function ProfileTab({ session }: { session: SessionPayload }) {
   }
 
   return (
-    <Card>
+    <Card className="max-w-2xl">
       <CardHeader>
         <div className="flex items-center gap-4">
-          <Avatar className="size-14">
-            <AvatarFallback className="text-lg">{initials(session.name)}</AvatarFallback>
+          <Avatar className="size-16">
+            <AvatarFallback className="text-xl">{initials(session.name)}</AvatarFallback>
           </Avatar>
           <div>
             <CardTitle>{session.name}</CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              {session.email}
-              <Badge variant="secondary">{roleLabel[session.role] ?? session.role}</Badge>
-            </CardDescription>
+            <CardDescription>{session.email}</CardDescription>
+            <Badge variant="outline" className="mt-1 capitalize">
+              {roleLabel[session.role] || session.role}
+            </Badge>
           </div>
         </div>
       </CardHeader>
       <form onSubmit={handleSave}>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={session.email} disabled />
-            </div>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="name">Full name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-
-          <div className="mt-2 border-t pt-4">
-            <p className="mb-3 flex items-center gap-1.5 text-sm font-medium">
-              <Lock className="size-3.5" /> Change password
+          <div className="space-y-1">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" value={session.email} disabled className="bg-muted" />
+            <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
+          </div>
+          <div className="border-t pt-4 space-y-3">
+            <p className="text-sm font-medium flex items-center gap-1.5">
+              <Lock className="size-4 text-muted-foreground" /> Change password
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">New password</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="pass">New password</Label>
                 <Input
-                  id="password"
+                  id="pass"
                   type="password"
-                  placeholder="Leave blank to keep unchanged"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Leave blank to keep current"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+              <div className="space-y-1">
+                <Label htmlFor="conf">Confirm password</Label>
                 <Input
-                  id="confirmPassword"
+                  id="conf"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -177,7 +182,6 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
   const [savingSite, setSavingSite] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration flag to avoid SSR/CSR theme mismatch
   React.useEffect(() => setMounted(true), []);
 
   async function applyAndSave(hex: string) {
@@ -215,7 +219,7 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle>Theme</CardTitle>
@@ -256,7 +260,7 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
             <Palette className="size-4" /> Accent color
           </CardTitle>
           <CardDescription>
-            This changes the primary color across your entire tenant — applies to you and everyone on your team. Other Admins are not affected.
+            This changes the primary color across your entire tenant — applies to you and everyone on your team.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -336,5 +340,172 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
         </form>
       </Card>
     </div>
+  );
+}
+
+/* --------------------------- Invoice & T&C tab --------------------------- */
+
+function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
+  const router = useRouter();
+  const [template, setTemplate] = React.useState<InvoiceTemplateType>(initialSettings.invoice_template || "modern");
+  const [terms, setTerms] = React.useState(initialSettings.invoice_terms || "");
+  const [bankDetails, setBankDetails] = React.useState(initialSettings.bank_details || "");
+  const [saving, setSaving] = React.useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoice_template: template,
+          invoice_terms: terms,
+          bank_details: bankDetails,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Invoice settings & T&C saved successfully!");
+      router.refresh();
+    } catch {
+      toast.error("Could not save invoice settings.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const templatesList = [
+    {
+      id: "modern",
+      name: "Modern Template",
+      desc: "Clean layout with accent color title, rounded cards & right-aligned totals box.",
+      badge: "Popular",
+    },
+    {
+      id: "classic",
+      name: "Classic Corporate",
+      desc: "Formal navy/black top banner, crisp double borders & traditional serif fonts.",
+      badge: "Formal",
+    },
+    {
+      id: "minimal",
+      name: "Minimalist Elegant",
+      desc: "Monochrome elegance, thin dividers & generous clean whitespace.",
+      badge: "Clean",
+    },
+    {
+      id: "compact",
+      name: "Compact / Receipt",
+      desc: "Space-saving single-page layout optimized for thermal / small print jobs.",
+      badge: "POS / Print",
+    },
+  ] as const;
+
+  return (
+    <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+      {/* Template Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="size-4 text-primary" /> Invoice Template Layout
+          </CardTitle>
+          <CardDescription>
+            Select your preferred default printable invoice design template.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {templatesList.map((tpl) => (
+              <div
+                key={tpl.id}
+                onClick={() => setTemplate(tpl.id as InvoiceTemplateType)}
+                className={cn(
+                  "cursor-pointer rounded-lg border p-4 transition-all hover:border-primary/50 relative flex flex-col justify-between gap-3",
+                  template === tpl.id
+                    ? "border-2 border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
+                    : "bg-card hover:bg-accent/40"
+                )}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-sm text-foreground">{tpl.name}</p>
+                    <Badge variant="outline" className="text-[10px]">
+                      {tpl.badge}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{tpl.desc}</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                  {template === tpl.id ? (
+                    <>
+                      <Check className="size-4" /> Selected Default
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground hover:text-foreground">Click to select</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bank & Payment Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="size-4" /> Bank Account &amp; Payment Details
+          </CardTitle>
+          <CardDescription>
+            These payment details (Bank Name, Account Number, IFSC, UPI ID) will be printed at the bottom of every invoice.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1.5">
+            <Label htmlFor="bankDetails">Bank &amp; Payment Details</Label>
+            <Textarea
+              id="bankDetails"
+              rows={4}
+              value={bankDetails}
+              onChange={(e) => setBankDetails(e.target.value)}
+              placeholder="Bank: HDFC Bank&#10;A/C No: 50200012345678&#10;IFSC Code: HDFC0001234&#10;UPI ID: merchant@upi"
+              className="font-mono text-xs"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Terms & Conditions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="size-4" /> Terms &amp; Conditions (T&amp;C)
+          </CardTitle>
+          <CardDescription>
+            Specify your standard business terms, return policies, and legal jurisdiction printed on invoices.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1.5">
+            <Label htmlFor="terms">Standard Terms &amp; Conditions</Label>
+            <Textarea
+              id="terms"
+              rows={4}
+              value={terms}
+              onChange={(e) => setTerms(e.target.value)}
+              placeholder="1. Goods once sold will not be taken back.&#10;2. Interest @18% p.a. will be charged if payment is delayed.&#10;3. Subject to local jurisdiction."
+              className="text-xs"
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="border-t">
+          <Button type="submit" disabled={saving} className="ml-auto gap-1.5">
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            Save Invoice Settings
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
   );
 }

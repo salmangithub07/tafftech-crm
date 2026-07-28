@@ -199,42 +199,98 @@ export function AnalyticsClient({
               </CardContent>
             </Card>
           ) : (
-            <Card className="overflow-hidden py-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Executive</TableHead>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>Post reference</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Enquiries</TableHead>
-                    <TableHead>Posts</TableHead>
-                    <TableHead>Views</TableHead>
-                    <TableHead>Likes</TableHead>
-                    <TableHead>Subs</TableHead>
-                    <TableHead className="w-20" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="font-medium">{e.executive_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{e.platform_name}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                        {e.post_reference || "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{e.analytics_date}</TableCell>
-                      <TableCell>
-                        <Badge variant={e.enquiries > 0 ? "success" : "secondary"}>{e.enquiries}</Badge>
-                      </TableCell>
-                      <TableCell>{e.total_posts}</TableCell>
-                      <TableCell>{e.total_views}</TableCell>
-                      <TableCell>{e.total_likes}</TableCell>
-                      <TableCell>{e.subscribers_gained}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
+            <>
+              {/* Desktop Table View */}
+              <Card className="hidden overflow-hidden py-0 md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Executive</TableHead>
+                      <TableHead>Platform</TableHead>
+                      <TableHead>Post reference</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Enquiries</TableHead>
+                      <TableHead>Posts</TableHead>
+                      <TableHead>Views</TableHead>
+                      <TableHead>Likes</TableHead>
+                      <TableHead>Subs</TableHead>
+                      <TableHead className="w-20" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell className="font-medium">{e.executive_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{e.platform_name}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                          {e.post_reference || "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{e.analytics_date}</TableCell>
+                        <TableCell>
+                          <Badge variant={e.enquiries > 0 ? "success" : "secondary"}>{e.enquiries}</Badge>
+                        </TableCell>
+                        <TableCell>{e.total_posts}</TableCell>
+                        <TableCell>{e.total_views}</TableCell>
+                        <TableCell>{e.total_likes}</TableCell>
+                        <TableCell>{e.subscribers_gained}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => {
+                                setEditing(e);
+                                setFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => handleDeleteEntry(e.id)}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={changePageSize}
+                />
+              </Card>
+
+              {/* Mobile Card View */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {entries.map((e) => (
+                  <Card key={e.id}>
+                    <CardContent className="flex flex-col gap-3 py-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-sm text-foreground">{e.executive_name}</p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px] py-0 px-2">
+                              {e.platform_name}
+                            </Badge>
+                            {e.enquiries > 0 && (
+                              <Badge variant="success" className="text-[10px] py-0 px-2">
+                                {e.enquiries} Enquiries
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 -mr-2">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -255,19 +311,50 @@ export function AnalyticsClient({
                             <Trash2 className="size-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <PaginationBar
-                page={page}
-                pageSize={pageSize}
-                total={total}
-                onPageChange={setPage}
-                onPageSizeChange={changePageSize}
-              />
-            </Card>
+                      </div>
+
+                      {e.post_reference && (
+                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40 truncate">
+                          Ref: {e.post_reference}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-border/50">
+                        <div className="flex flex-col rounded bg-muted/20 p-1.5">
+                          <span className="text-[10px] text-muted-foreground">Posts</span>
+                          <span className="font-bold text-xs">{e.total_posts}</span>
+                        </div>
+                        <div className="flex flex-col rounded bg-muted/20 p-1.5">
+                          <span className="text-[10px] text-muted-foreground">Views</span>
+                          <span className="font-bold text-xs">{e.total_views}</span>
+                        </div>
+                        <div className="flex flex-col rounded bg-muted/20 p-1.5">
+                          <span className="text-[10px] text-muted-foreground">Likes</span>
+                          <span className="font-bold text-xs">{e.total_likes}</span>
+                        </div>
+                        <div className="flex flex-col rounded bg-muted/20 p-1.5">
+                          <span className="text-[10px] text-muted-foreground">Subs</span>
+                          <span className="font-bold text-xs">{e.subscribers_gained}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                        <span>Date: {e.analytics_date}</span>
+                        <span>Enquiries: {e.enquiries}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={changePageSize}
+                />
+              </div>
+            </>
           )}
         </TabsContent>
 

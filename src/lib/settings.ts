@@ -1,15 +1,23 @@
 import { query, execute } from "@/lib/db";
 
+export type InvoiceTemplateType = "modern" | "classic" | "minimal" | "compact";
+
 export type AppSettings = {
   site_name: string;
   accent_color: string;
   radius: string;
+  invoice_template: InvoiceTemplateType;
+  invoice_terms: string;
+  bank_details: string;
 };
 
 const DEFAULTS: AppSettings = {
   site_name: "Tafftech CRM",
   accent_color: "#2563eb",
   radius: "0.65",
+  invoice_template: "modern",
+  invoice_terms: "1. Goods once sold will not be taken back.\n2. Payment due within 15 days of invoice date.\n3. Subject to local jurisdiction.",
+  bank_details: "Bank: HDFC Bank\nA/C No: 50200012345678\nIFSC Code: HDFC0001234\nUPI ID: merchant@upi",
 };
 
 /**
@@ -31,10 +39,18 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       else tenantMap[r.key] = r.value;
     }
 
+    const templateRaw = tenantMap.invoice_template ?? globalMap.invoice_template ?? DEFAULTS.invoice_template;
+    const invoice_template: InvoiceTemplateType = ["modern", "classic", "minimal", "compact"].includes(templateRaw)
+      ? (templateRaw as InvoiceTemplateType)
+      : "modern";
+
     return {
       site_name: tenantMap.site_name ?? globalMap.site_name ?? DEFAULTS.site_name,
       accent_color: tenantMap.accent_color ?? globalMap.accent_color ?? DEFAULTS.accent_color,
       radius: tenantMap.radius ?? globalMap.radius ?? DEFAULTS.radius,
+      invoice_template,
+      invoice_terms: tenantMap.invoice_terms ?? globalMap.invoice_terms ?? DEFAULTS.invoice_terms,
+      bank_details: tenantMap.bank_details ?? globalMap.bank_details ?? DEFAULTS.bank_details,
     };
   } catch {
     // DB unreachable (e.g. mid-deploy) — fall back to defaults instead of

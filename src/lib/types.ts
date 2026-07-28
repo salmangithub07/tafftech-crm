@@ -61,6 +61,7 @@ export type Product = {
   name: string;
   sku: string | null;
   price: number;
+  min_stock_level?: number;
   stock?: number;
   created_at: string;
 };

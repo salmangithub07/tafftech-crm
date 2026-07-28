@@ -181,10 +181,36 @@
 
 /* ── Print styles: hide everything except the invoice ── */
 @media print {
-.no-print {
-  display: none !important;
-}
-  
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  #bill-print-root {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #bill-print-root * {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    background-color: transparent !important;
+  }
+
+  #bill-print-root .bg-slate-900 {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+  }
+
+  #bill-print-root .bg-slate-900 * {
+    color: #ffffff !important;
+  }
 }
 
 @media (max-width:575px) {
