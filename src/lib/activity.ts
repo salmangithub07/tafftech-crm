@@ -34,6 +34,10 @@ export async function ensureActivityTables() {
       );
     `);
 
+    await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS min_stock_level INTEGER DEFAULT 5;
+    `);
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);
@@ -68,3 +72,43 @@ export async function logActivity({
     console.error("Failed to record activity log:", err);
   }
 }
+
+export async function checkAndLogLowStock(
+  tenantId: number,
+  productId: number,
+  actorId: number,
+  actorName: string
+) {
+  try {
+    await ensureActivityTables();
+    const prodRes = await query<{ name: string; min_stock_level: number }>(
+      `SELECT name, COALESCE(min_stock_level, 5) as min_stock_level FROM products WHERE id = ? AND tenant_id = ?`,
+      [productId, tenantId]
+    );
+    if (!prodRes.length) return;
+    const prod = prodRes[0];
+
+    const stockRes = await query<{ stock: number }>(
+      `SELECT COALESCE(SUM(CASE WHEN type='in' THEN quantity WHEN type='out' THEN -quantity ELSE 0 END), 0) AS stock
+       FROM stock_transactions WHERE product_id = ? AND tenant_id = ?`,
+      [productId, tenantId]
+    );
+    const currentStock = Number(stockRes[0]?.stock || 0);
+
+    if (currentStock <= prod.min_stock_level) {
+      const isOutOfStock = currentStock <= 0;
+      await logActivity({
+        tenantId,
+        actorId,
+        actorName,
+        action: isOutOfStock ? "❌ Out of Stock Alert" : "⚠️ Low Stock Warning",
+        entityType: "product",
+        entityId: productId,
+        entityLabel: `${prod.name} (${currentStock} left, min threshold: ${prod.min_stock_level})`,
+      });
+    }
+  } catch (err) {
+    console.error("Failed to check low stock alert:", err);
+  }
+}
+

@@ -9,6 +9,9 @@ const settingsSchema = z.object({
     .string()
     .regex(/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/, "Invalid hex color")
     .optional(),
+  invoice_template: z.enum(["modern", "classic", "minimal", "compact"]).optional(),
+  invoice_terms: z.string().optional(),
+  bank_details: z.string().optional(),
 });
 
 export async function GET() {
@@ -18,12 +21,6 @@ export async function GET() {
   return NextResponse.json(await getSettings(tenantId));
 }
 
-/**
- * Super Admin edits the global/default branding (tenant_id = 0).
- * Admin edits only their own tenant's override — completely isolated from
- * every other Admin, and from the global default.
- * Executives cannot change appearance.
- */
 export async function PUT(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

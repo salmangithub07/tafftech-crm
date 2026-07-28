@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
-import { logActivity } from "@/lib/activity";
+import { logActivity, checkAndLogLowStock } from "@/lib/activity";
 import { z } from "zod";
 
 const billItemSchema = z.object({
@@ -238,6 +238,7 @@ export async function POST(req: NextRequest) {
          VALUES (?, ?, 'out', ?, ?, ?)`,
         [tenantId, item.product_id, item.quantity, `Sold via Bill ${billNumber}`, session.id]
       );
+      await checkAndLogLowStock(tenantId, item.product_id, session.id, session.name);
     }
   }
 
