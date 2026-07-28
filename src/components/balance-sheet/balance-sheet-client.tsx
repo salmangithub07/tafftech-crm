@@ -23,6 +23,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -173,16 +174,16 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
   const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Balance Sheet</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Assets and liabilities, always tallied — visible to Admin only.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={balanced ? "success" : "destructive"} className="gap-1 py-1.5">
+          <Badge variant={balanced ? "success" : "destructive"} className="gap-1 py-1.5 text-xs">
             {balanced ? <CheckCircle2 className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
             {balanced ? "Balanced" : "Out of balance"}
           </Badge>
@@ -199,60 +200,26 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* ---------------------------- Liabilities ---------------------------- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Landmark className="size-4" /> Liabilities
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-6">
-            <AccountSection
-              icon={<Users className="size-3.5" />}
-              title="Creditors"
-              subtitle="Parties you owe money to"
-              accounts={summary.creditors}
-              onAdd={() => setAccountDialog({ type: "creditor" })}
-              onEdit={(a) => setAccountDialog({ type: "creditor", account: a })}
-              onTransact={(a) => {
-                setTxDefaultAccount(a.id);
-                setTxDialogOpen(true);
-              }}
-              onDelete={setDeleteAccount}
-            />
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Capital &amp; Reserves</p>
-                <p className="text-xs text-muted-foreground">
-                  Computed automatically — Total Assets minus Creditors, so both sides always match.
-                </p>
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-6">
+        {/* ------------------------------- Assets (First on Mobile, Second on Desktop) ------------------------------- */}
+        <Card className="order-1 md:order-2 border-emerald-500/20 dark:border-emerald-500/30 overflow-hidden shadow-xs">
+          <CardHeader className="bg-emerald-500/5 dark:bg-emerald-500/10 border-b border-emerald-500/15 py-3 px-3.5 sm:py-4 sm:px-6">
+            <CardTitle className="flex items-center justify-between text-emerald-700 dark:text-emerald-300">
+              <div className="flex items-center gap-2 text-base font-bold">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  <Wallet className="size-4" />
+                </span>
+                Assets
               </div>
-              <p className="font-mono text-sm font-semibold">{money(summary.totals.equity)}</p>
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between text-base font-semibold">
-              <span>Total Liabilities</span>
-              <span className="font-mono">{money(summary.totals.totalLiabilities)}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ------------------------------- Assets ------------------------------- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="size-4" /> Assets
+              <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 font-mono text-xs">
+                {money(summary.totals.totalAssets)}
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-6">
+          <CardContent className="flex flex-col gap-3.5 sm:gap-6 pt-3.5 sm:pt-6 px-3.5 sm:px-6 pb-4 sm:pb-6">
             <AccountSection
               icon={<Wallet className="size-3.5" />}
+              iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
               title="Cash"
               accounts={summary.cash}
               onAdd={() => setAccountDialog({ type: "cash" })}
@@ -266,6 +233,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
             <AccountSection
               icon={<Landmark className="size-3.5" />}
+              iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400"
               title="Bank"
               accounts={summary.bank}
               onAdd={() => setAccountDialog({ type: "bank" })}
@@ -279,6 +247,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
             <AccountSection
               icon={<HandCoins className="size-3.5" />}
+              iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400"
               title="Debtors / Outstanding"
               subtitle="Money owed to you"
               accounts={summary.debtors}
@@ -291,20 +260,22 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               onDelete={setDeleteAccount}
             />
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
+            {/* Raw Material Card */}
+            <div className="flex items-center justify-between rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-2.5 sm:p-3.5">
               <div>
-                <p className="flex items-center gap-1.5 text-sm font-medium">
-                  <Boxes className="size-3.5" /> Raw Material
+                <p className="flex items-center gap-2 text-sm font-semibold text-indigo-900 dark:text-indigo-200">
+                  <span className="flex size-6 items-center justify-center rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                    <Boxes className="size-3.5" />
+                  </span>
+                  Raw Material
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Live from Products &amp; Stock — quantity × price, updates automatically.
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                  Live from Products &amp; Stock — quantity × price
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="font-mono text-sm font-semibold">{money(summary.rawMaterialValue)}</p>
-                <Button variant="ghost" size="icon" className="size-7" asChild>
+                <p className="font-mono text-sm font-bold text-indigo-900 dark:text-indigo-200">{money(summary.rawMaterialValue)}</p>
+                <Button variant="ghost" size="icon" className="size-7 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10" asChild>
                   <Link href="/products" title="View Products">
                     <ExternalLink className="size-3.5" />
                   </Link>
@@ -312,14 +283,16 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               </div>
             </div>
 
-            <Separator />
-
-            <div className="flex flex-col gap-2">
+            {/* Fixed Assets Card */}
+            <div className="flex flex-col gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 p-2.5 sm:p-3.5">
               <div className="flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-sm font-medium">
-                  <Factory className="size-3.5" /> Fixed Assets
+                <p className="flex items-center gap-2 text-sm font-semibold text-teal-900 dark:text-teal-200">
+                  <span className="flex size-6 items-center justify-center rounded bg-teal-500/15 text-teal-600 dark:text-teal-400">
+                    <Factory className="size-3.5" />
+                  </span>
+                  Fixed Assets
                 </p>
-                <Button variant="ghost" size="sm" onClick={() => setAssetDialog({})}>
+                <Button variant="outline" size="sm" className="h-7 text-xs border-teal-500/30 text-teal-700 dark:text-teal-300 hover:bg-teal-500/10" onClick={() => setAssetDialog({})}>
                   <Plus className="size-3.5" /> Add
                 </Button>
               </div>
@@ -327,15 +300,17 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
                 <p className="text-xs text-muted-foreground">No fixed assets recorded yet.</p>
               ) : (
                 summary.fixedAssets.map((asset) => (
-                  <div key={asset.id} className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent">
+                  <div key={asset.id} className="flex items-center justify-between rounded-md px-2.5 py-1.5 hover:bg-teal-500/10 transition-colors">
                     <div>
-                      <p className="text-sm">{asset.name}</p>
+                      <p className="text-sm font-medium text-teal-950 dark:text-teal-100">{asset.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {asset.quantity} × {money(asset.unit_value)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm">{money(asset.quantity * Number(asset.unit_value))}</p>
+                      <p className="font-mono text-sm font-semibold text-teal-900 dark:text-teal-200">
+                        {money(asset.quantity * Number(asset.unit_value))}
+                      </p>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="size-7">
@@ -357,11 +332,62 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               )}
             </div>
 
+            <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 sm:p-4 text-emerald-900 dark:text-emerald-200">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Total Assets</span>
+              <span className="font-mono text-base sm:text-lg font-extrabold">{money(summary.totals.totalAssets)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ---------------------------- Liabilities (Second on Mobile, First on Desktop) ---------------------------- */}
+        <Card className="order-2 md:order-1 border-rose-500/20 dark:border-rose-500/30 overflow-hidden shadow-xs">
+          <CardHeader className="bg-rose-500/5 dark:bg-rose-500/10 border-b border-rose-500/15 py-3 px-3.5 sm:py-4 sm:px-6">
+            <CardTitle className="flex items-center justify-between text-rose-700 dark:text-rose-300">
+              <div className="flex items-center gap-2 text-base font-bold">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                  <Landmark className="size-4" />
+                </span>
+                Liabilities
+              </div>
+              <Badge variant="outline" className="border-rose-500/30 text-rose-700 dark:text-rose-300 bg-rose-500/10 font-mono text-xs">
+                {money(summary.totals.totalLiabilities)}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3.5 sm:gap-6 pt-3.5 sm:pt-6 px-3.5 sm:px-6 pb-4 sm:pb-6">
+            <AccountSection
+              icon={<Users className="size-3.5" />}
+              iconBg="bg-rose-500/15 text-rose-600 dark:text-rose-400"
+              title="Creditors"
+              subtitle="Parties you owe money to"
+              accounts={summary.creditors}
+              onAdd={() => setAccountDialog({ type: "creditor" })}
+              onEdit={(a) => setAccountDialog({ type: "creditor", account: a })}
+              onTransact={(a) => {
+                setTxDefaultAccount(a.id);
+                setTxDialogOpen(true);
+              }}
+              onDelete={setDeleteAccount}
+            />
+
             <Separator />
 
-            <div className="flex items-center justify-between text-base font-semibold">
-              <span>Total Assets</span>
-              <span className="font-mono">{money(summary.totals.totalAssets)}</span>
+            {/* Capital & Reserves Box */}
+            <div className="rounded-xl border border-purple-500/20 bg-linear-to-r from-purple-500/10 via-indigo-500/5 to-purple-500/10 p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-purple-900 dark:text-purple-200">Capital &amp; Reserves</p>
+                  <p className="text-[11px] sm:text-xs text-purple-700/80 dark:text-purple-300/80 mt-0.5">
+                    Total Assets minus Creditors — auto tallies both sides
+                  </p>
+                </div>
+                <p className="font-mono text-sm sm:text-base font-bold text-purple-900 dark:text-purple-200">{money(summary.totals.equity)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 sm:p-4 text-rose-900 dark:text-rose-200">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Total Liabilities</span>
+              <span className="font-mono text-base sm:text-lg font-extrabold">{money(summary.totals.totalLiabilities)}</span>
             </div>
           </CardContent>
         </Card>
@@ -369,25 +395,25 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
       {/* --------------------------- All Transactions Ledger --------------------------- */}
       <Card>
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 px-3.5 sm:py-4 sm:px-6">
           <div>
-            <CardTitle className="text-lg">All Transactions Ledger</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Complete historical record of all account increases &amp; decreases with year &amp; date filters.
+            <CardTitle className="text-base sm:text-lg">All Transactions Ledger</CardTitle>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+              Complete historical record of all account increases &amp; decreases.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
               <Link href={exportTxUrl}>
-                <Download className="size-4" /> Export CSV
+                <Download className="size-3.5" /> Export CSV
               </Link>
             </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-3 sm:gap-4 px-3.5 sm:px-6 pb-4 sm:pb-6">
           {/* Summary stats bar for filtered view */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-lg border p-3 bg-muted/20 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 rounded-lg border p-2.5 sm:p-3 bg-muted/20 text-xs">
             <div className="flex justify-between items-center sm:flex-col sm:items-start">
               <span className="text-muted-foreground uppercase font-semibold">Total Inflow (+):</span>
               <span className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
@@ -408,133 +434,194 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
             </div>
           </div>
 
-          {/* Filter Toolbar */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="relative">
+          {/* Filter Toolbar: Search full width + 2x2 grid on mobile (2 lines of 2 dropdowns) */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative w-full lg:w-64 shrink-0">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Search description..."
-                className="pl-9 h-9 text-xs"
+                className="pl-9 h-9 text-xs w-full"
                 value={txSearch}
                 onChange={(e) => { setTxSearch(e.target.value); setTxPage(1); }}
               />
             </div>
 
-            <Select value={txYear} onValueChange={(val) => {
-              // Reset DateFilter when year dropdown is used to avoid conflicting filters
-              if (val !== "all") setTxDateFilter({ period: "all", value: "" });
-              setTxYear(val);
-              setTxPage(1);
-            }}>
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Year Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map((yr) => (
-                  <SelectItem key={yr} value={String(yr)}>Year {yr}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={txAccountId} onValueChange={(val) => { setTxAccountId(val); setTxPage(1); }}>
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Account Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Accounts</SelectItem>
-                {allAccounts.map((acc) => (
-                  <SelectItem key={acc.id} value={String(acc.id)}>
-                    {acc.name} ({acc.type.toUpperCase()})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={txDirection} onValueChange={(val) => { setTxDirection(val); setTxPage(1); }}>
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Direction" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Directions</SelectItem>
-                <SelectItem value="increase">Increase (+)</SelectItem>
-                <SelectItem value="decrease">Decrease (-)</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <DateFilter
-              value={txDateFilter}
-              onChange={(df) => {
-                // Reset txYear when DateFilter is set to avoid conflicting filters
-                if (df.period !== "all") setTxYear("all");
-                setTxDateFilter(df);
+            <div className="grid grid-cols-2 gap-2.5 w-full sm:flex sm:flex-wrap sm:items-center">
+              <Select value={txYear} onValueChange={(val) => {
+                if (val !== "all") setTxDateFilter({ period: "all", value: "" });
+                setTxYear(val);
                 setTxPage(1);
-              }}
-            />
+              }}>
+                <SelectTrigger className="h-9 text-xs w-full sm:w-[130px]">
+                  <SelectValue placeholder="Year Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {availableYears.map((yr) => (
+                    <SelectItem key={yr} value={String(yr)}>Year {yr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={txAccountId} onValueChange={(val) => { setTxAccountId(val); setTxPage(1); }}>
+                <SelectTrigger className="h-9 text-xs w-full sm:w-[150px]">
+                  <SelectValue placeholder="Account Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Accounts</SelectItem>
+                  {allAccounts.map((acc) => (
+                    <SelectItem key={acc.id} value={String(acc.id)}>
+                      {acc.name} ({acc.type.toUpperCase()})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={txDirection} onValueChange={(val) => { setTxDirection(val); setTxPage(1); }}>
+                <SelectTrigger className="h-9 text-xs w-full sm:w-[130px]">
+                  <SelectValue placeholder="Direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Directions</SelectItem>
+                  <SelectItem value="increase">Increase (+)</SelectItem>
+                  <SelectItem value="decrease">Decrease (-)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="w-full sm:w-auto">
+                <DateFilter
+                  value={txDateFilter}
+                  onChange={(df) => {
+                    if (df.period !== "all") setTxYear("all");
+                    setTxDateFilter(df);
+                    setTxPage(1);
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Table */}
+          {/* Table / Cards */}
           {!loadingTx && transactions.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-0">
               No transactions match the selected filters.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Direction</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>By</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-muted-foreground">{t.entry_date}</TableCell>
-                      <TableCell className="font-medium">{t.account_name}</TableCell>
-                      <TableCell>
-                        {t.direction === "increase" ? (
-                          <Badge variant="success" className="gap-1">
-                            <ArrowUpCircle className="size-3" /> Increase
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive" className="gap-1">
-                            <ArrowDownCircle className="size-3" /> Decrease
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono font-semibold">{money(t.amount)}</TableCell>
-                      <TableCell className="max-w-[240px] truncate text-muted-foreground">
-                        {t.description || "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          onClick={() => handleDeleteTransaction(t.id)}
-                        >
-                          <Trash2 className="size-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden overflow-hidden rounded-md border md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Account</TableHead>
+                      <TableHead>Direction</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>By</TableHead>
+                      <TableHead className="w-10" />
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <PaginationBar
-                page={txPage}
-                pageSize={txPageSize}
-                total={txTotal}
-                onPageChange={setTxPage}
-                onPageSizeChange={(sz) => { setTxPageSize(sz); setTxPage(1); }}
-              />
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="text-muted-foreground">{t.entry_date}</TableCell>
+                        <TableCell className="font-medium">{t.account_name}</TableCell>
+                        <TableCell>
+                          {t.direction === "increase" ? (
+                            <Badge variant="success" className="gap-1">
+                              <ArrowUpCircle className="size-3" /> Increase
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="gap-1">
+                              <ArrowDownCircle className="size-3" /> Decrease
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono font-semibold">{money(t.amount)}</TableCell>
+                        <TableCell className="max-w-[240px] truncate text-muted-foreground">
+                          {t.description || "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => handleDeleteTransaction(t.id)}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <PaginationBar
+                  page={txPage}
+                  pageSize={txPageSize}
+                  total={txTotal}
+                  onPageChange={setTxPage}
+                  onPageSizeChange={(sz) => { setTxPageSize(sz); setTxPage(1); }}
+                />
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {transactions.map((t) => (
+                  <Card key={t.id}>
+                    <CardContent className="flex flex-col gap-3 py-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-sm text-foreground">{t.account_name}</p>
+                          <p className="font-mono font-bold text-base text-foreground mt-0.5">
+                            {money(t.amount)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {t.direction === "increase" ? (
+                            <Badge variant="success" className="gap-1 text-[10px]">
+                              <ArrowUpCircle className="size-3" /> Increase
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="gap-1 text-[10px]">
+                              <ArrowDownCircle className="size-3" /> Decrease
+                            </Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 -mr-2"
+                            onClick={() => handleDeleteTransaction(t.id)}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {t.description && (
+                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40">
+                          {t.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                        <span>Date: {t.entry_date}</span>
+                        <span>By: {t.created_by_name || "—"}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <PaginationBar
+                  page={txPage}
+                  pageSize={txPageSize}
+                  total={txTotal}
+                  onPageChange={setTxPage}
+                  onPageSizeChange={(sz) => { setTxPageSize(sz); setTxPage(1); }}
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -594,6 +681,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
 function AccountSection({
   icon,
+  iconBg = "bg-muted text-muted-foreground",
   title,
   subtitle,
   accounts,
@@ -603,6 +691,7 @@ function AccountSection({
   onDelete,
 }: {
   icon: React.ReactNode;
+  iconBg?: string;
   title: string;
   subtitle?: string;
   accounts: LedgerAccount[];
@@ -616,50 +705,62 @@ function AccountSection({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
-          <p className="flex items-center gap-1.5 text-sm font-medium">
-            {icon} {title}
+          <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <span className={cn("flex size-6 items-center justify-center rounded", iconBg)}>
+              {icon}
+            </span>
+            {title}
           </p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground ml-8">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2">
-          {accounts.length > 0 && <span className="font-mono text-sm">{money(total)}</span>}
-          <Button variant="ghost" size="sm" onClick={onAdd}>
+          {accounts.length > 0 && (
+            <span className="font-mono text-sm font-bold text-foreground">{money(total)}</span>
+          )}
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onAdd}>
             <Plus className="size-3.5" /> Add
           </Button>
         </div>
       </div>
       {accounts.length === 0 ? (
-        <p className="text-xs text-muted-foreground">None added yet.</p>
+        <p className="text-xs text-muted-foreground ml-8">None added yet.</p>
       ) : (
-        accounts.map((a) => (
-          <div key={a.id} className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent">
-            <div className="min-w-0">
-              <p className="truncate text-sm">{a.name}</p>
-              {a.notes && <p className="truncate text-xs text-muted-foreground">{a.notes}</p>}
+        <div className="flex flex-col gap-1 mt-1">
+          {accounts.map((a) => (
+            <div
+              key={a.id}
+              className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2 hover:bg-muted/50 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
+                {a.notes && <p className="truncate text-xs text-muted-foreground">{a.notes}</p>}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-semibold text-foreground">
+                  {money(a.balance ?? a.opening_balance)}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-7">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onTransact(a)}>
+                      <Plus className="size-4" /> Record transaction
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(a)}>
+                      <Pencil className="size-4" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(a)}>
+                      <Trash2 className="size-4" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-sm">{money(a.balance ?? a.opening_balance)}</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onTransact(a)}>
-                    <Plus className="size-4" /> Record transaction
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit(a)}>
-                    <Pencil className="size-4" /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(a)}>
-                    <Trash2 className="size-4" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );
