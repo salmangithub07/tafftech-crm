@@ -28,7 +28,7 @@ const createBillSchema = z.object({
   notes: z.string().optional().or(z.literal("")).default(""),
   // Optional integration flags
   account_id: z.number().optional().nullable(), // Balance Sheet ledger account to record payment
-  record_stock_out: z.boolean().optional().default(false), // Auto reduce stock for items
+  record_stock_out: z.boolean().optional().default(true), // Auto reduce stock for items (defaults to true)
 });
 
 export async function GET(req: NextRequest) {

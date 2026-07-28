@@ -59,12 +59,14 @@ export function GenerateBillDialog({
   onOpenChange,
   initialProduct,
   initialQuantity = 1,
+  skipStockDeduction = false,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialProduct?: Product | null;
   initialQuantity?: number;
+  skipStockDeduction?: boolean;
   onSaved?: () => void;
 }) {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
@@ -104,7 +106,7 @@ export function GenerateBillDialog({
       payment_method: "cash",
       notes: "",
       account_id: null,
-      record_stock_out: false,
+      record_stock_out: !skipStockDeduction,
     },
   });
 
@@ -159,10 +161,10 @@ export function GenerateBillDialog({
         payment_method: "cash",
         notes: initialProduct ? `Generated on stock removal for ${initialProduct.name}` : "",
         account_id: null,
-        record_stock_out: false,
+        record_stock_out: !skipStockDeduction,
       });
     }
-  }, [open, reset, initialProduct, initialQuantity]);
+  }, [open, reset, initialProduct, initialQuantity, skipStockDeduction]);
 
   // Keep paid amount synced when grandTotal changes if status is "paid"
   React.useEffect(() => {
