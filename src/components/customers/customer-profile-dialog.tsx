@@ -125,7 +125,7 @@ export function CustomerProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-3 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <User className="size-5 text-primary" />
@@ -280,21 +280,23 @@ export function CustomerProfileDialog({
 
             {/* Tabs for Timeline, Appointments, Bills, Quotations, Notes */}
             <Tabs defaultValue="timeline" className="w-full">
-              <TabsList className="w-full grid grid-cols-5 h-9">
-                <TabsTrigger value="timeline" className="text-xs gap-1">
-                  <Clock className="size-3.5 hidden sm:inline" /> Timeline
+              <TabsList className="w-full grid grid-cols-5 h-9 p-1">
+                <TabsTrigger value="timeline" className="text-[11px] sm:text-xs px-1 py-1 gap-1">
+                  Timeline
                 </TabsTrigger>
-                <TabsTrigger value="appointments" className="text-xs gap-1">
-                  <Calendar className="size-3.5 hidden sm:inline" /> Appointments
+                <TabsTrigger value="appointments" className="text-[11px] sm:text-xs px-1 py-1 gap-1">
+                  <span className="sm:hidden">Appts</span>
+                  <span className="hidden sm:inline">Appointments</span>
                 </TabsTrigger>
-                <TabsTrigger value="bills" className="text-xs gap-1">
-                  <Receipt className="size-3.5 hidden sm:inline" /> Bills
+                <TabsTrigger value="bills" className="text-[11px] sm:text-xs px-1 py-1 gap-1">
+                  Bills
                 </TabsTrigger>
-                <TabsTrigger value="quotations" className="text-xs gap-1">
-                  <FileText className="size-3.5 hidden sm:inline" /> Quotations
+                <TabsTrigger value="quotations" className="text-[11px] sm:text-xs px-1 py-1 gap-1">
+                  <span className="sm:hidden">Quotes</span>
+                  <span className="hidden sm:inline">Quotations</span>
                 </TabsTrigger>
-                <TabsTrigger value="notes" className="text-xs gap-1">
-                  <Pencil className="size-3.5 hidden sm:inline" /> Details
+                <TabsTrigger value="notes" className="text-[11px] sm:text-xs px-1 py-1 gap-1">
+                  Details
                 </TabsTrigger>
               </TabsList>
 

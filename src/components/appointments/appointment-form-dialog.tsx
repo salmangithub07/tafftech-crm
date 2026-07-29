@@ -134,7 +134,13 @@ export function AppointmentFormDialog({
                 <Label>Customer *</Label>
                 <Select
                   value={watch("customer_id")}
-                  onValueChange={(v) => setValue("customer_id", v)}
+                  onValueChange={(v) => {
+                    setValue("customer_id", v);
+                    const selectedCust = customers.find((c) => String(c.id) === v);
+                    if (selectedCust?.product && (!watch("title") || !isEdit)) {
+                      setValue("title", selectedCust.product);
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a customer" />
@@ -142,7 +148,7 @@ export function AppointmentFormDialog({
                   <SelectContent>
                     {customers.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} {c.phone ? `· ${c.phone}` : ""}
+                        {c.name} {c.product ? `(${c.product})` : ""} {c.phone ? `· ${c.phone}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -153,8 +159,12 @@ export function AppointmentFormDialog({
               </div>
 
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" {...register("title")} placeholder="e.g. Site visit follow-up" />
+                <Label htmlFor="title">Title / Product</Label>
+                <Input
+                  id="title"
+                  {...register("title")}
+                  placeholder="Auto-fetched from Customer Product (or enter custom title)"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">

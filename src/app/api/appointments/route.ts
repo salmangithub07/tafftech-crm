@@ -110,10 +110,15 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
 
-  const customer = await query("SELECT id FROM customers WHERE id = ? AND tenant_id = ?", [d.customer_id, tenantId]);
-  if (!customer.length) {
+  const customerRow = await query<{ id: number; product: string | null }>(
+    "SELECT id, product FROM customers WHERE id = ? AND tenant_id = ?",
+    [d.customer_id, tenantId]
+  );
+  if (!customerRow.length) {
     return NextResponse.json({ error: "Customer not found." }, { status: 404 });
   }
+
+  const apptTitle = d.title && d.title.trim().length > 0 ? d.title.trim() : (customerRow[0].product || null);
 
   const result = await execute(
     `INSERT INTO appointments (tenant_id, customer_id, title, appointment_date, appointment_time, status, remarks, created_by)
@@ -121,7 +126,7 @@ export async function POST(req: NextRequest) {
     [
       tenantId,
       d.customer_id,
-      d.title || null,
+      apptTitle,
       d.appointment_date,
       d.appointment_time || null,
       d.status,
