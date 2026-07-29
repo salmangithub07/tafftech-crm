@@ -34,9 +34,16 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!existing.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const d = parsed.data;
+
+  const customerRow = await query<{ id: number; product: string | null }>(
+    "SELECT id, product FROM customers WHERE id = ? AND tenant_id = ?",
+    [d.customer_id, tenantId]
+  );
+  const apptTitle = d.title && d.title.trim().length > 0 ? d.title.trim() : (customerRow[0]?.product || null);
+
   await execute(
     `UPDATE appointments SET title=?, customer_id=?, appointment_date=?, appointment_time=?, status=?, remarks=? WHERE id=? AND tenant_id=?`,
-    [d.title || null, d.customer_id, d.appointment_date, d.appointment_time || null, d.status, d.remarks, id, tenantId]
+    [apptTitle, d.customer_id, d.appointment_date, d.appointment_time || null, d.status, d.remarks, id, tenantId]
   );
 
   const appointment = await query(
