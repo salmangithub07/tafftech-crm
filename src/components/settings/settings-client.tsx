@@ -664,9 +664,9 @@ function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None (WhatsApp Web 1-Click Link)</SelectItem>
-                  <SelectItem value="ultramsg">UltraMsg (Recommended)</SelectItem>
-                  <SelectItem value="greenapi">Green-API</SelectItem>
+                  <SelectItem value="none">None (100% Free - WhatsApp Web 1-Click Link)</SelectItem>
+                  <SelectItem value="greenapi">Green-API (Free Tier Available)</SelectItem>
+                  <SelectItem value="ultramsg">UltraMsg Gateway</SelectItem>
                   <SelectItem value="wati">WATI WhatsApp API</SelectItem>
                   <SelectItem value="twilio">Twilio WhatsApp API</SelectItem>
                 </SelectContent>

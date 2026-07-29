@@ -1,10 +1,11 @@
-import { getSession } from "@/lib/auth";
+import { getSession, tenantOf } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { SettingsClient } from "@/components/settings/settings-client";
 
 export default async function SettingsPage() {
   const session = await getSession();
-  const settings = await getSettings();
+  const tenantId = session?.role === "super_admin" ? 0 : (session ? tenantOf(session) ?? 0 : 0);
+  const settings = await getSettings(tenantId);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
