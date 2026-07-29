@@ -42,6 +42,7 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { BillDetailsDialog } from "@/components/bills/bill-details-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import type { Bill } from "@/lib/types";
 
 function money(n: number) {
@@ -64,6 +65,7 @@ export function BillsClient() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [viewingBill, setViewingBill] = React.useState<Bill | null>(null);
   const [deletingBill, setDeletingBill] = React.useState<Bill | null>(null);
+  const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
 
   const fetchBills = React.useCallback(async () => {
     setLoading(true);
@@ -241,7 +243,12 @@ export function BillsClient() {
                     <TableCell className="text-muted-foreground">{b.bill_date}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">{b.customer_name}</span>
+                        <button
+                          onClick={() => setProfileCustomerId(b.customer_id ?? null)}
+                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                        >
+                          {b.customer_name}
+                        </button>
                         {b.customer_phone && <span className="text-xs text-muted-foreground">{b.customer_phone}</span>}
                       </div>
                     </TableCell>
@@ -391,6 +398,13 @@ export function BillsClient() {
           onConfirm={() => handleDelete(deletingBill)}
         />
       )}
+
+      <CustomerProfileDialog
+        customerId={profileCustomerId}
+        open={!!profileCustomerId}
+        onOpenChange={(open) => !open && setProfileCustomerId(null)}
+        onCustomerUpdated={fetchBills}
+      />
     </div>
   );
 }

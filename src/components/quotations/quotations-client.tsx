@@ -25,6 +25,7 @@ import {
 import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import type { Quotation, QuotationStatus } from "@/lib/types";
 
 const statusVariant: Record<QuotationStatus, "warning" | "success" | "destructive"> = {
@@ -46,6 +47,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [deleting, setDeleting] = React.useState<Quotation | null>(null);
+  const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem(PAGE_SIZE_KEY) : null;
@@ -189,7 +191,14 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
               <TableBody>
                 {quotations.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell className="font-medium">{q.customer_name ?? "—"}</TableCell>
+                    <TableCell className="font-medium">
+                      <button
+                        onClick={() => setProfileCustomerId(q.customer_id)}
+                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                      >
+                        {q.customer_name ?? "—"}
+                      </button>
+                    </TableCell>
                     <TableCell>₹{Number(q.quotation_amount).toLocaleString("en-IN")}</TableCell>
                     <TableCell className="text-muted-foreground">{q.quotation_date}</TableCell>
                     <TableCell>
@@ -241,7 +250,12 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                 <CardContent className="flex flex-col gap-3 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium text-sm text-foreground">{q.customer_name ?? "—"}</p>
+                      <button
+                        onClick={() => setProfileCustomerId(q.customer_id)}
+                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                      >
+                        {q.customer_name ?? "—"}
+                      </button>
                       <p className="font-mono font-bold text-base text-primary mt-0.5">
                         ₹{Number(q.quotation_amount).toLocaleString("en-IN")}
                       </p>
@@ -308,6 +322,13 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
           onConfirm={() => handleDelete(deleting)}
         />
       )}
+
+      <CustomerProfileDialog
+        customerId={profileCustomerId}
+        open={!!profileCustomerId}
+        onOpenChange={(open) => !open && setProfileCustomerId(null)}
+        onCustomerUpdated={fetchQuotations}
+      />
     </div>
   );
 }

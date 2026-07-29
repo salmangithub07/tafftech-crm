@@ -1,23 +1,46 @@
 import { query, execute } from "@/lib/db";
 
 export type InvoiceTemplateType = "modern" | "classic" | "minimal" | "compact";
+export type WhatsAppProviderType = "none" | "ultramsg" | "greenapi" | "wati" | "twilio";
 
 export type AppSettings = {
   site_name: string;
+  company_phone: string;
+  privacy_policy: string;
   accent_color: string;
   radius: string;
   invoice_template: InvoiceTemplateType;
   invoice_terms: string;
+  bank_name: string;
+  bank_account_no: string;
+  bank_ifsc: string;
+  bank_upi_id: string;
   bank_details: string;
+  whatsapp_api_provider: WhatsAppProviderType;
+  whatsapp_phone: string;
+  whatsapp_api_key: string;
+  whatsapp_instance_id: string;
+  whatsapp_reminder_template: string;
 };
 
 const DEFAULTS: AppSettings = {
   site_name: "Tafftech CRM",
+  company_phone: "+91 9876543210",
+  privacy_policy: "We value your privacy. All customer data and transaction history are protected under our privacy guidelines.",
   accent_color: "#2563eb",
   radius: "0.65",
   invoice_template: "modern",
   invoice_terms: "1. Goods once sold will not be taken back.\n2. Payment due within 15 days of invoice date.\n3. Subject to local jurisdiction.",
+  bank_name: "HDFC Bank",
+  bank_account_no: "50200012345678",
+  bank_ifsc: "HDFC0001234",
+  bank_upi_id: "merchant@upi",
   bank_details: "Bank: HDFC Bank\nA/C No: 50200012345678\nIFSC Code: HDFC0001234\nUPI ID: merchant@upi",
+  whatsapp_api_provider: "none",
+  whatsapp_phone: "",
+  whatsapp_api_key: "",
+  whatsapp_instance_id: "",
+  whatsapp_reminder_template: "Namaste {customer_name}! 🔔\nRemind karne ke liye text hai ki aapka appointment aaj {appointment_date} ko {appointment_time} baje scheduled hai for {product_name}.\nThank you! — {company_name}",
 };
 
 /**
@@ -44,17 +67,38 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       ? (templateRaw as InvoiceTemplateType)
       : "modern";
 
+    const providerRaw = tenantMap.whatsapp_api_provider ?? globalMap.whatsapp_api_provider ?? DEFAULTS.whatsapp_api_provider;
+    const whatsapp_api_provider: WhatsAppProviderType = ["none", "ultramsg", "greenapi", "wati", "twilio"].includes(providerRaw)
+      ? (providerRaw as WhatsAppProviderType)
+      : "none";
+
+    const bName = tenantMap.bank_name ?? globalMap.bank_name ?? DEFAULTS.bank_name;
+    const bAcc = tenantMap.bank_account_no ?? globalMap.bank_account_no ?? DEFAULTS.bank_account_no;
+    const bIfsc = tenantMap.bank_ifsc ?? globalMap.bank_ifsc ?? DEFAULTS.bank_ifsc;
+    const bUpi = tenantMap.bank_upi_id ?? globalMap.bank_upi_id ?? DEFAULTS.bank_upi_id;
+
+    const formattedBankDetails = `Bank: ${bName}\nA/C No: ${bAcc}\nIFSC Code: ${bIfsc}\nUPI ID: ${bUpi}`;
+
     return {
       site_name: tenantMap.site_name ?? globalMap.site_name ?? DEFAULTS.site_name,
+      company_phone: tenantMap.company_phone ?? globalMap.company_phone ?? DEFAULTS.company_phone,
+      privacy_policy: tenantMap.privacy_policy ?? globalMap.privacy_policy ?? DEFAULTS.privacy_policy,
       accent_color: tenantMap.accent_color ?? globalMap.accent_color ?? DEFAULTS.accent_color,
       radius: tenantMap.radius ?? globalMap.radius ?? DEFAULTS.radius,
       invoice_template,
       invoice_terms: tenantMap.invoice_terms ?? globalMap.invoice_terms ?? DEFAULTS.invoice_terms,
-      bank_details: tenantMap.bank_details ?? globalMap.bank_details ?? DEFAULTS.bank_details,
+      bank_name: bName,
+      bank_account_no: bAcc,
+      bank_ifsc: bIfsc,
+      bank_upi_id: bUpi,
+      bank_details: tenantMap.bank_details ?? globalMap.bank_details ?? formattedBankDetails,
+      whatsapp_api_provider,
+      whatsapp_phone: tenantMap.whatsapp_phone ?? globalMap.whatsapp_phone ?? DEFAULTS.whatsapp_phone,
+      whatsapp_api_key: tenantMap.whatsapp_api_key ?? globalMap.whatsapp_api_key ?? DEFAULTS.whatsapp_api_key,
+      whatsapp_instance_id: tenantMap.whatsapp_instance_id ?? globalMap.whatsapp_instance_id ?? DEFAULTS.whatsapp_instance_id,
+      whatsapp_reminder_template: tenantMap.whatsapp_reminder_template ?? globalMap.whatsapp_reminder_template ?? DEFAULTS.whatsapp_reminder_template,
     };
   } catch {
-    // DB unreachable (e.g. mid-deploy) — fall back to defaults instead of
-    // crashing every page, since the root layout reads this on every request.
     return DEFAULTS;
   }
 }

@@ -18,6 +18,7 @@ import {
   Upload,
   CheckCircle2,
   Circle,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { CustomerFormDialog } from "@/components/customers/customer-form-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import type { Customer, CustomerStatus } from "@/lib/types";
 
 const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary"> = {
@@ -71,6 +73,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Customer | null>(null);
   const [deleting, setDeleting] = React.useState<Customer | null>(null);
+  const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -281,7 +284,14 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
               <TableBody>
                 {customers.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <button
+                        onClick={() => setProfileCustomerId(c.id)}
+                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                      >
+                        {c.name}
+                      </button>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div className="flex flex-col gap-0.5 text-xs">
                         {c.email && <span>{c.email}</span>}
@@ -312,6 +322,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                     <TableCell>
                       <RowActions
                         customerId={c.id}
+                        onViewProfile={() => setProfileCustomerId(c.id)}
                         onEdit={() => {
                           setEditing(c);
                           setFormOpen(true);
@@ -339,7 +350,12 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                 <CardContent className="flex flex-col gap-2 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium">{c.name}</p>
+                      <button
+                        onClick={() => setProfileCustomerId(c.id)}
+                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                      >
+                        {c.name}
+                      </button>
                       {c.product && (
                         <p className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Package className="size-3" /> {c.product}
@@ -348,6 +364,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                     </div>
                     <RowActions
                       customerId={c.id}
+                      onViewProfile={() => setProfileCustomerId(c.id)}
                       onEdit={() => {
                         setEditing(c);
                         setFormOpen(true);
@@ -415,16 +432,25 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
           onConfirm={() => handleDelete(deleting)}
         />
       )}
+
+      <CustomerProfileDialog
+        customerId={profileCustomerId}
+        open={!!profileCustomerId}
+        onOpenChange={(open) => !open && setProfileCustomerId(null)}
+        onCustomerUpdated={refresh}
+      />
     </div>
   );
 }
 
 function RowActions({
   customerId,
+  onViewProfile,
   onEdit,
   onDelete,
 }: {
   customerId: number;
+  onViewProfile: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -436,6 +462,9 @@ function RowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onViewProfile}>
+          <User className="size-4 text-primary" /> View 360° Profile
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={`/appointments?cid=${customerId}`}>
             <CalendarPlus className="size-4" /> Add appointment
