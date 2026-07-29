@@ -16,6 +16,7 @@ import {
   Download,
   Upload,
   Phone,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,8 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { AppointmentFormDialog } from "@/components/appointments/appointment-form-dialog";
 import { QuotationDialog } from "@/components/quotations/quotation-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
+import { TodayRemindersDialog } from "@/components/appointments/today-reminders-dialog";
 import type { Appointment, AppointmentStatus, Customer } from "@/lib/types";
 
 const statusVariant: Record<AppointmentStatus, "warning" | "success" | "secondary"> = {
@@ -80,6 +83,8 @@ export function AppointmentsClient({
   const [editing, setEditing] = React.useState<Appointment | null>(null);
   const [deleting, setDeleting] = React.useState<Appointment | null>(null);
   const [quoting, setQuoting] = React.useState<Appointment | null>(null);
+  const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
+  const [remindersOpen, setRemindersOpen] = React.useState(false);
   const importInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -221,6 +226,15 @@ export function AppointmentsClient({
             </Link>
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRemindersOpen(true)}
+            className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 gap-1.5"
+          >
+            <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" />
+            Today&apos;s Reminders {counts.today > 0 && `(${counts.today})`}
+          </Button>
+          <Button
             size="sm"
             onClick={() => {
               setEditing(null);
@@ -283,7 +297,12 @@ export function AppointmentsClient({
                   <TableRow key={a.id}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col">
-                        <span>{a.customer_name ?? "—"}</span>
+                        <button
+                          onClick={() => setProfileCustomerId(a.customer_id)}
+                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                        >
+                          {a.customer_name ?? "—"}
+                        </button>
                         {a.customer_phone && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="size-3" /> {a.customer_phone}
@@ -332,17 +351,20 @@ export function AppointmentsClient({
             />
           </Card>
 
+          {/* Mobile cards */}
           <div className="flex flex-col gap-3 md:hidden">
             {appointments.map((a) => (
               <Card key={a.id}>
                 <CardContent className="flex flex-col gap-2 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium">{a.customer_name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {a.appointment_date}
-                        {a.appointment_time ? ` · ${a.appointment_time.slice(0, 5)}` : ""}
-                      </p>
+                      <button
+                        onClick={() => setProfileCustomerId(a.customer_id)}
+                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                      >
+                        {a.customer_name ?? "—"}
+                      </button>
+                      <p className="text-xs text-muted-foreground">{a.title || a.customer_product || "—"}</p>
                     </div>
                     <RowActions
                       appointment={a}
@@ -356,10 +378,16 @@ export function AppointmentsClient({
                       onQuote={() => setQuoting(a)}
                     />
                   </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      {a.appointment_date}
+                      {a.appointment_time ? ` · ${a.appointment_time.slice(0, 5)}` : ""}
+                    </span>
+                    <Badge variant={statusVariant[a.status]} className="capitalize">
+                      {a.status}
+                    </Badge>
+                  </div>
                   {a.remarks && <p className="text-xs text-muted-foreground">{a.remarks}</p>}
-                  <Badge variant={statusVariant[a.status]} className="w-fit capitalize">
-                    {a.status}
-                  </Badge>
                 </CardContent>
               </Card>
             ))}
@@ -401,6 +429,18 @@ export function AppointmentsClient({
           onConfirm={() => handleDelete(deleting)}
         />
       )}
+
+      <CustomerProfileDialog
+        customerId={profileCustomerId}
+        open={!!profileCustomerId}
+        onOpenChange={(open) => !open && setProfileCustomerId(null)}
+        onCustomerUpdated={() => refresh()}
+      />
+
+      <TodayRemindersDialog
+        open={remindersOpen}
+        onOpenChange={setRemindersOpen}
+      />
     </div>
   );
 }

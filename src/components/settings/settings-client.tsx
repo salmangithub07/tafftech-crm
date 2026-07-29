@@ -2,7 +2,20 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Check, Palette, Lock, FileText, Building, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Check,
+  Palette,
+  Lock,
+  FileText,
+  Building,
+  Sparkles,
+  Phone,
+  Shield,
+  MessageSquare,
+  Send,
+  HelpCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 
@@ -14,11 +27,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useAccentColor } from "@/components/accent-color-provider";
 import { ACCENT_PRESETS } from "@/lib/colors";
 import type { SessionPayload } from "@/lib/types";
-import type { AppSettings, InvoiceTemplateType } from "@/lib/settings";
+import type { AppSettings, InvoiceTemplateType, WhatsAppProviderType } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 function initials(name: string) {
@@ -50,7 +70,8 @@ export function SettingsClient({
       <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         {canEditAppearance && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
-        {canEditAppearance && <TabsTrigger value="invoice">Invoice &amp; T&amp;C</TabsTrigger>}
+        {canEditAppearance && <TabsTrigger value="invoice">Invoice &amp; Bank</TabsTrigger>}
+        {canEditAppearance && <TabsTrigger value="whatsapp">WhatsApp Gateway</TabsTrigger>}
       </TabsList>
 
       <TabsContent value="profile" className="mt-6">
@@ -64,6 +85,11 @@ export function SettingsClient({
       {canEditAppearance && (
         <TabsContent value="invoice" className="mt-6">
           <InvoiceTab initialSettings={initialSettings} />
+        </TabsContent>
+      )}
+      {canEditAppearance && (
+        <TabsContent value="whatsapp" className="mt-6">
+          <WhatsAppTab initialSettings={initialSettings} />
         </TabsContent>
       )}
     </Tabs>
@@ -98,106 +124,101 @@ function ProfileTab({ session }: { session: SessionPayload }) {
       setPassword("");
       setConfirmPassword("");
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } catch (err: any) {
+      toast.error(err.message || "Could not update profile.");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Card className="max-w-2xl">
-      <CardHeader>
-        <div className="flex items-center gap-4">
-          <Avatar className="size-16">
-            <AvatarFallback className="text-xl">{initials(session.name)}</AvatarFallback>
+    <div className="flex flex-col gap-6 max-w-2xl">
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4 py-4">
+          <Avatar className="size-14">
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">
+              {initials(session.name)}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <CardTitle>{session.name}</CardTitle>
-            <CardDescription>{session.email}</CardDescription>
-            <Badge variant="outline" className="mt-1 capitalize">
-              {roleLabel[session.role] || session.role}
-            </Badge>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-lg">{session.name}</p>
+              <Badge variant="secondary" className="capitalize text-xs">
+                {roleLabel[session.role] ?? session.role}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">{session.email}</p>
           </div>
-        </div>
-      </CardHeader>
-      <form onSubmit={handleSave}>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="name">Full name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" value={session.email} disabled className="bg-muted" />
-            <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
-          </div>
-          <div className="border-t pt-4 space-y-3">
-            <p className="text-sm font-medium flex items-center gap-1.5">
-              <Lock className="size-4 text-muted-foreground" /> Change password
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="pass">New password</Label>
-                <Input
-                  id="pass"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Leave blank to keep current"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="conf">Confirm password</Label>
+        </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Details</CardTitle>
+          <CardDescription>Update your display name and login password.</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSave}>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" value={session.email} disabled className="bg-muted" />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="name">Display Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+
+            <div className="flex flex-col gap-1.5 pt-2 border-t">
+              <Label htmlFor="pass">New Password (leave blank to keep current)</Label>
+              <Input
+                id="pass"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+
+            {password && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="conf">Confirm New Password</Label>
                 <Input
                   id="conf"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
                 />
               </div>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="border-t">
-          <Button type="submit" disabled={saving} className="ml-auto">
-            {saving && <Loader2 className="size-4 animate-spin" />}
-            Save changes
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+            )}
+          </CardContent>
+          <CardFooter className="border-t">
+            <Button type="submit" disabled={saving} className="ml-auto">
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              Save Profile
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+    </div>
   );
 }
 
-/* --------------------------- Appearance tab --------------------------- */
+/* ---------------------------- Appearance tab ---------------------------- */
 
 function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
   const { accentColor, setAccentColor, persistAccentColor } = useAccentColor();
   const [siteName, setSiteName] = React.useState(initialSiteName);
   const [customHex, setCustomHex] = React.useState(accentColor);
-  const [savingColor, setSavingColor] = React.useState(false);
   const [savingSite, setSavingSite] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
+  const [savingColor, setSavingColor] = React.useState(false);
 
-  React.useEffect(() => setMounted(true), []);
-
-  async function applyAndSave(hex: string) {
-    setAccentColor(hex);
-    setCustomHex(hex);
-    setSavingColor(true);
-    try {
-      await persistAccentColor(hex);
-      toast.success("Accent color updated.");
-      router.refresh();
-    } catch {
-      toast.error("Could not save color.");
-    } finally {
-      setSavingColor(false);
-    }
-  }
+  React.useEffect(() => {
+    setCustomHex(accentColor);
+  }, [accentColor]);
 
   async function handleSiteNameSave(e: React.FormEvent) {
     e.preventDefault();
@@ -209,12 +230,25 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
         body: JSON.stringify({ site_name: siteName }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Dashboard name updated.");
+      toast.success("Site name updated.");
       router.refresh();
     } catch {
-      toast.error("Could not save.");
+      toast.error("Could not update site name.");
     } finally {
       setSavingSite(false);
+    }
+  }
+
+  async function applyAndSave(hex: string) {
+    setAccentColor(hex);
+    setSavingColor(true);
+    try {
+      await persistAccentColor(hex);
+      toast.success("Accent color updated for your tenant.");
+    } catch {
+      toast.error("Could not save accent color.");
+    } finally {
+      setSavingColor(false);
     }
   }
 
@@ -222,31 +256,21 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
     <div className="flex flex-col gap-6 max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Theme</CardTitle>
-          <CardDescription>Choose light or dark mode, or let it follow your system setting.</CardDescription>
+          <CardTitle>Theme mode</CardTitle>
+          <CardDescription>Choose how Nova CRM looks to you on this device.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid max-w-md grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 max-w-sm">
             {(["light", "dark", "system"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTheme(t)}
                 className={cn(
-                  "flex flex-col items-center gap-2 rounded-lg border p-3 text-sm capitalize transition-colors hover:bg-accent",
-                  mounted && theme === t && "border-primary bg-accent"
+                  "flex flex-col items-center justify-center rounded-lg border-2 p-3 text-xs capitalize transition-all hover:bg-accent",
+                  theme === t ? "border-primary bg-primary/5 font-semibold text-primary" : "border-transparent"
                 )}
               >
-                <span
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-full border",
-                    t === "light" && "bg-white",
-                    t === "dark" && "bg-neutral-900",
-                    t === "system" && "bg-linear-to-br from-white to-neutral-900"
-                  )}
-                >
-                  {mounted && theme === t && <Check className="size-4 text-primary" />}
-                </span>
                 {t}
               </button>
             ))}
@@ -260,7 +284,7 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
             <Palette className="size-4" /> Accent color
           </CardTitle>
           <CardDescription>
-            This changes the primary color across your entire tenant — applies to you and everyone on your team.
+            This changes the primary color across your entire tenant.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -322,7 +346,7 @@ function AppearanceTab({ initialSiteName }: { initialSiteName: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Dashboard name</CardTitle>
-          <CardDescription>The name shown in your sidebar — only visible to you and your team.</CardDescription>
+          <CardDescription>The name shown in your sidebar.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSiteNameSave}>
           <CardContent>
@@ -349,7 +373,11 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
   const router = useRouter();
   const [template, setTemplate] = React.useState<InvoiceTemplateType>(initialSettings.invoice_template || "modern");
   const [terms, setTerms] = React.useState(initialSettings.invoice_terms || "");
-  const [bankDetails, setBankDetails] = React.useState(initialSettings.bank_details || "");
+  const [bankName, setBankName] = React.useState(initialSettings.bank_name || "");
+  const [bankAcc, setBankAcc] = React.useState(initialSettings.bank_account_no || "");
+  const [bankIfsc, setBankIfsc] = React.useState(initialSettings.bank_ifsc || "");
+  const [bankUpi, setBankUpi] = React.useState(initialSettings.bank_upi_id || "");
+  const [privacyPolicy, setPrivacyPolicy] = React.useState(initialSettings.privacy_policy || "");
   const [saving, setSaving] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
@@ -362,11 +390,15 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
         body: JSON.stringify({
           invoice_template: template,
           invoice_terms: terms,
-          bank_details: bankDetails,
+          bank_name: bankName,
+          bank_account_no: bankAcc,
+          bank_ifsc: bankIfsc,
+          bank_upi_id: bankUpi,
+          privacy_policy: privacyPolicy,
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Invoice settings & T&C saved successfully!");
+      toast.success("Tenant Bank Details, T&C & Privacy Policy saved successfully!");
       router.refresh();
     } catch {
       toast.error("Could not save invoice settings.");
@@ -404,7 +436,6 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
-      {/* Template Selection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -451,36 +482,69 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
         </CardContent>
       </Card>
 
-      {/* Bank & Payment Info */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building className="size-4" /> Bank Account &amp; Payment Details
+            <Building className="size-4 text-primary" /> Bank Account &amp; Payment Details (Tenant-Wise)
           </CardTitle>
           <CardDescription>
-            These payment details (Bank Name, Account Number, IFSC, UPI ID) will be printed at the bottom of every invoice.
+            Individual structured fields for your tenant bank account, IFSC code, and UPI ID printed on every invoice.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-1.5">
-            <Label htmlFor="bankDetails">Bank &amp; Payment Details</Label>
-            <Textarea
-              id="bankDetails"
-              rows={4}
-              value={bankDetails}
-              onChange={(e) => setBankDetails(e.target.value)}
-              placeholder="Bank: HDFC Bank&#10;A/C No: 50200012345678&#10;IFSC Code: HDFC0001234&#10;UPI ID: merchant@upi"
-              className="font-mono text-xs"
-            />
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Axis Bank / HDFC Bank"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="bankAcc">Account Number (A/C No)</Label>
+              <Input
+                id="bankAcc"
+                value={bankAcc}
+                onChange={(e) => setBankAcc(e.target.value)}
+                placeholder="50200000000000"
+                className="font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="bankIfsc">IFSC Code</Label>
+              <Input
+                id="bankIfsc"
+                value={bankIfsc}
+                onChange={(e) => setBankIfsc(e.target.value)}
+                placeholder="ICIC0001234"
+                className="font-mono uppercase"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="bankUpi">UPI ID / VPA</Label>
+              <Input
+                id="bankUpi"
+                value={bankUpi}
+                onChange={(e) => setBankUpi(e.target.value)}
+                placeholder="merchant@upi"
+                className="font-mono"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Terms & Conditions */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="size-4" /> Terms &amp; Conditions (T&amp;C)
+            <FileText className="size-4 text-primary" /> Terms &amp; Conditions (T&amp;C)
           </CardTitle>
           <CardDescription>
             Specify your standard business terms, return policies, and legal jurisdiction printed on invoices.
@@ -491,7 +555,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
             <Label htmlFor="terms">Standard Terms &amp; Conditions</Label>
             <Textarea
               id="terms"
-              rows={4}
+              rows={3}
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
               placeholder="1. Goods once sold will not be taken back.&#10;2. Interest @18% p.a. will be charged if payment is delayed.&#10;3. Subject to local jurisdiction."
@@ -499,10 +563,185 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
             />
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="size-4 text-primary" /> Privacy Policy &amp; Invoice Policy Note
+          </CardTitle>
+          <CardDescription>
+            Separate dynamic policy statement printed on your tenant invoices and customer billing portals.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1.5">
+            <Label htmlFor="privacyPolicy">Tenant Privacy &amp; Invoice Policy</Label>
+            <Textarea
+              id="privacyPolicy"
+              rows={3}
+              value={privacyPolicy}
+              onChange={(e) => setPrivacyPolicy(e.target.value)}
+              placeholder="We value your privacy. All customer data and transaction history are protected under our privacy guidelines."
+              className="text-xs"
+            />
+          </div>
+        </CardContent>
         <CardFooter className="border-t">
           <Button type="submit" disabled={saving} className="ml-auto gap-1.5">
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Save Invoice Settings
+            Save Tenant Invoice Settings
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
+  );
+}
+
+/* --------------------------- WhatsApp Gateway & Reminders Tab --------------------------- */
+
+function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
+  const router = useRouter();
+  const [provider, setProvider] = React.useState<WhatsAppProviderType>(initialSettings.whatsapp_api_provider || "none");
+  const [waPhone, setWaPhone] = React.useState(initialSettings.whatsapp_phone || "");
+  const [instanceId, setInstanceId] = React.useState(initialSettings.whatsapp_instance_id || "");
+  const [apiKey, setApiKey] = React.useState(initialSettings.whatsapp_api_key || "");
+  const [template, setTemplate] = React.useState(initialSettings.whatsapp_reminder_template || "");
+  const [saving, setSaving] = React.useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsapp_api_provider: provider,
+          whatsapp_phone: waPhone,
+          whatsapp_instance_id: instanceId,
+          whatsapp_api_key: apiKey,
+          whatsapp_reminder_template: template,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("WhatsApp Gateway & Reminder settings saved!");
+      router.refresh();
+    } catch {
+      toast.error("Could not save WhatsApp settings.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+            <MessageSquare className="size-5" /> WhatsApp Sender &amp; Background Gateway
+          </CardTitle>
+          <CardDescription>
+            Configure your WhatsApp Sender number and Background Gateway API (UltraMsg, Green-API, Wati, Twilio) for 1-Click Automated Batch Reminders.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="waPhone">WhatsApp Sender Phone Number</Label>
+              <Input
+                id="waPhone"
+                value={waPhone}
+                onChange={(e) => setWaPhone(e.target.value)}
+                placeholder="+91 9876543210"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="provider">Background Gateway Provider</Label>
+              <Select value={provider} onValueChange={(val) => setProvider(val as WhatsAppProviderType)}>
+                <SelectTrigger id="provider">
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None (WhatsApp Web 1-Click Link)</SelectItem>
+                  <SelectItem value="ultramsg">UltraMsg (Recommended)</SelectItem>
+                  <SelectItem value="greenapi">Green-API</SelectItem>
+                  <SelectItem value="wati">WATI WhatsApp API</SelectItem>
+                  <SelectItem value="twilio">Twilio WhatsApp API</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {provider !== "none" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+              <div className="space-y-1.5">
+                <Label htmlFor="instanceId">Instance ID / Channel ID</Label>
+                <Input
+                  id="instanceId"
+                  value={instanceId}
+                  onChange={(e) => setInstanceId(e.target.value)}
+                  placeholder="instance12345"
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="apiKey">API Secret Key / Token</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="••••••••••••••••"
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="size-4 text-emerald-600 dark:text-emerald-400" /> Appointment Reminder Message Template
+          </CardTitle>
+          <CardDescription>
+            Personalize the WhatsApp message sent to customers on the day of their scheduled appointment.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="waTemplate">Message Template</Label>
+            <Textarea
+              id="waTemplate"
+              rows={4}
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              placeholder="Namaste {customer_name}! 🔔\nRemind karne ke liye text hai ki aapka appointment aaj {appointment_date} ko {appointment_time} baje scheduled hai for {product_name}.\nThank you! — {company_name}"
+              className="text-xs leading-relaxed"
+            />
+          </div>
+
+          <div className="rounded-lg border bg-muted/20 p-3 text-xs space-y-1.5">
+            <p className="font-semibold flex items-center gap-1 text-foreground">
+              <HelpCircle className="size-3.5 text-primary" /> Available Dynamic Placeholders:
+            </p>
+            <div className="flex flex-wrap gap-2 text-muted-foreground font-mono text-[11px]">
+              <span className="bg-background px-1.5 py-0.5 rounded border">{`{customer_name}`}</span>
+              <span className="bg-background px-1.5 py-0.5 rounded border">{`{appointment_date}`}</span>
+              <span className="bg-background px-1.5 py-0.5 rounded border">{`{appointment_time}`}</span>
+              <span className="bg-background px-1.5 py-0.5 rounded border">{`{product_name}`}</span>
+              <span className="bg-background px-1.5 py-0.5 rounded border">{`{company_name}`}</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="border-t">
+          <Button type="submit" disabled={saving} className="ml-auto gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            Save WhatsApp Gateway Settings
           </Button>
         </CardFooter>
       </Card>
