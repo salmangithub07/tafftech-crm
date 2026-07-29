@@ -84,6 +84,27 @@ export async function POST(req: NextRequest) {
         console.error("UltraMsg WhatsApp dispatch error:", e);
       }
     }
+  } else if (settings.whatsapp_api_provider === "greenapi" && settings.whatsapp_instance_id && settings.whatsapp_api_key) {
+    for (const item of reminders) {
+      if (!item.customer_phone) continue;
+      try {
+        const cleanP = item.customer_phone.replace(/[^0-9]/g, "");
+        const toPhone = cleanP.startsWith("91") ? cleanP : `91${cleanP}`;
+        const chatId = `${toPhone}@c.us`;
+
+        await fetch(`https://api.green-api.com/waInstance${settings.whatsapp_instance_id}/sendMessage/${settings.whatsapp_api_key}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chatId,
+            message: item.message,
+          }),
+        });
+        apiSuccessCount++;
+      } catch (e) {
+        console.error("Green-API WhatsApp dispatch error:", e);
+      }
+    }
   }
 
   if (reminders.length > 0) {
