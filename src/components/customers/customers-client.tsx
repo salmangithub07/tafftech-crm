@@ -293,20 +293,42 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
 
   const isTrashTab = tab === "trash";
 
+  // Build filter-aware export URL from current UI state
+  const exportUrl = React.useMemo(() => {
+    const p = new URLSearchParams();
+    if (tab !== "all") p.set("status", tab);
+    if (search) p.set("search", search);
+    if (dateFilter.period && dateFilter.period !== "all") {
+      p.set("period", dateFilter.period);
+      if (dateFilter.value) p.set("date", dateFilter.value);
+    }
+    const qs = p.toString();
+    return `/api/customers/export${qs ? `?${qs}` : ""}`;
+  }, [tab, search, dateFilter]);
+
+  // Human-readable label for export tooltip
+  const exportLabel = React.useMemo(() => {
+    const parts: string[] = [];
+    if (tab !== "all") parts.push(tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (dateFilter.period && dateFilter.period !== "all") parts.push(dateFilter.period);
+    if (search) parts.push(`"${search}"`);
+    return parts.length ? parts.join(" · ") : "All";
+  }, [tab, search, dateFilter]);
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+    <div className="flex flex-col gap-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2 sm:text-2xl">
             Customers {isTrashTab && <Badge variant="destructive" className="text-xs font-normal">Trash Bin</Badge>}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground sm:text-sm">
             {isTrashTab
-              ? "Manage trashed customers, restore records, or purge permanently."
+              ? "Manage trashed customers, restore or purge."
               : "Manage all your customers in one place."}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <input
             ref={importInputRef}
             type="file"
@@ -314,39 +336,49 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
             className="hidden"
             onChange={handleImportFile}
           />
-          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-            <Upload className="size-4" /> Import
+          {/* Mobile: icon-only buttons */}
+          <Button variant="outline" size="icon" className="size-8 sm:hidden" onClick={() => importInputRef.current?.click()} title="Import">
+            <Upload className="size-4" />
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/api/customers/export">
-              <Download className="size-4" /> Export
+          <Button variant="outline" size="icon" className="size-8 sm:hidden" asChild title={`Export: ${exportLabel}`}>
+            <Link href={exportUrl}>
+              <Download className="size-4" />
             </Link>
           </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
+          <Button size="icon" className="size-8 sm:hidden" onClick={() => { setEditing(null); setFormOpen(true); }} title="Add Customer">
+            <Plus className="size-4" />
+          </Button>
+          {/* Desktop: full buttons */}
+          <Button variant="outline" size="sm" className="hidden sm:flex" onClick={() => importInputRef.current?.click()}>
+            <Upload className="size-4" /> Import
+          </Button>
+          <Button variant="outline" size="sm" className="hidden sm:flex" asChild title={`Export: ${exportLabel}`}>
+            <Link href={exportUrl}>
+              <Download className="size-4" /> Export
+              {exportLabel !== "All" && (
+                <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary leading-none">{exportLabel}</span>
+              )}
+            </Link>
+          </Button>
+          <Button size="sm" className="hidden sm:flex" onClick={() => { setEditing(null); setFormOpen(true); }}>
             <Plus className="size-4" /> Add Customer
           </Button>
         </div>
       </div>
 
       <Tabs value={tab} onValueChange={changeTab}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
-            <TabsTrigger value="lead">Lead ({counts.lead})</TabsTrigger>
-            <TabsTrigger value="progress">Progress ({counts.progress})</TabsTrigger>
-            <TabsTrigger value="active">Active ({counts.active})</TabsTrigger>
-            <TabsTrigger value="inactive">Inactive ({counts.inactive})</TabsTrigger>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <TabsList className="flex-wrap h-auto gap-1">
+            <TabsTrigger value="all" className="text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
+            <TabsTrigger value="lead" className="text-xs sm:text-sm">Lead ({counts.lead})</TabsTrigger>
+            <TabsTrigger value="progress" className="text-xs sm:text-sm">Progress ({counts.progress})</TabsTrigger>
+            <TabsTrigger value="active" className="text-xs sm:text-sm">Active ({counts.active})</TabsTrigger>
+            <TabsTrigger value="inactive" className="text-xs sm:text-sm">Inactive ({counts.inactive})</TabsTrigger>
             <TabsTrigger
               value="trash"
-              className="gap-1.5 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+              className="gap-1 text-xs sm:text-sm data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
             >
-              <Trash2 className="size-3.5" /> Trash ({counts.trash})
+              <Trash2 className="size-3" /> Trash ({counts.trash})
             </TabsTrigger>
           </TabsList>
           <DateFilter value={dateFilter} onChange={changeDateFilter} />
@@ -563,31 +595,35 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
           </Card>
 
           {/* Mobile cards */}
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex flex-col gap-2.5 md:hidden">
             {customers.map((c) => {
               const isSelected = selectedIds.includes(c.id);
               return (
-                <Card key={c.id} className={isSelected ? "border-primary bg-primary/5" : ""}>
-                  <CardContent className="flex flex-col gap-2 py-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelectOne(c.id)}
-                        />
-                        <div>
-                          <button
-                            onClick={() => setProfileCustomerId(c.id)}
-                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
-                          >
-                            {c.name}
-                          </button>
-                          {c.product && (
-                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Package className="size-3" /> {c.product}
-                            </p>
-                          )}
-                        </div>
+                <Card
+                  key={c.id}
+                  className={`transition-colors ${isSelected ? "border-primary bg-primary/5" : ""}`}
+                >
+                  <CardContent className="px-4 py-3">
+                    {/* Row 1: checkbox + name/product + menu */}
+                    <div className="flex items-center gap-2.5">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelectOne(c.id)}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <button
+                          onClick={() => setProfileCustomerId(c.id)}
+                          className="block w-full text-left text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors leading-snug"
+                        >
+                          {c.name}
+                        </button>
+                        {c.product && (
+                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                            <Package className="size-3 shrink-0" />
+                            <span className="truncate">{c.product}</span>
+                          </span>
+                        )}
                       </div>
                       <RowActions
                         customer={c}
@@ -622,30 +658,38 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                         onDelete={() => setDeleting(c)}
                       />
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      {c.email && (
-                        <span className="flex items-center gap-1.5">
-                          <Mail className="size-3" /> {c.email}
-                        </span>
-                      )}
-                      {c.phone && (
-                        <span className="flex items-center gap-1.5">
-                          <Phone className="size-3" /> {c.phone}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant={statusVariant[c.status]} className="w-fit capitalize">
+
+                    {/* Row 2: contact info (only if present) — indented to align with name */}
+                    {(c.email || c.phone) && (
+                      <div className="ml-[26px] mt-2 flex flex-col gap-0.5 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
+                        {c.email && (
+                          <span className="flex items-center gap-1.5">
+                            <Mail className="size-3 shrink-0" />
+                            <span className="truncate">{c.email}</span>
+                          </span>
+                        )}
+                        {c.phone && (
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="size-3 shrink-0" />
+                            <span>{c.phone}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Row 3: status badge + visited toggle */}
+                    <div className="ml-[26px] mt-2 flex items-center justify-between">
+                      <Badge variant={statusVariant[c.status]} className="capitalize text-[11px] h-5 px-2">
                         {c.status}
                       </Badge>
                       <button
                         onClick={() => toggleVisited(c)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {c.visited ? (
-                          <CheckCircle2 className="size-4 text-success" />
+                          <CheckCircle2 className="size-3.5 text-success" />
                         ) : (
-                          <Circle className="size-4" />
+                          <Circle className="size-3.5" />
                         )}
                         {c.visited ? "Visited" : "Mark visited"}
                       </button>

@@ -116,6 +116,14 @@ export function BillsClient() {
     return `/api/bills/export?${params}`;
   }, [search, status, dateFilter]);
 
+  const exportLabel = React.useMemo(() => {
+    const parts: string[] = [];
+    if (status !== "all") parts.push(status.charAt(0).toUpperCase() + status.slice(1));
+    if (dateFilter.period && dateFilter.period !== "all") parts.push(dateFilter.period);
+    if (search) parts.push(`"${search}"`);
+    return parts.length ? parts.join(" · ") : "All";
+  }, [search, status, dateFilter]);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -127,9 +135,12 @@ export function BillsClient() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild title={`Export: ${exportLabel}`}>
             <Link href={exportUrl}>
               <Download className="size-4" /> Export CSV
+              {exportLabel !== "All" && (
+                <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary leading-none">{exportLabel}</span>
+              )}
             </Link>
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>

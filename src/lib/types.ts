@@ -33,6 +33,7 @@ export type Appointment = {
   appointment_time: string | null;
   remarks: string | null;
   status: AppointmentStatus;
+  is_trashed?: number; // 0 | 1
   created_by: number | null;
   created_by_name?: string | null;
   created_at: string;

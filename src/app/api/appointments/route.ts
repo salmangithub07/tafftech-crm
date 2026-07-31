@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
-import { logActivity } from "@/lib/activity";
+import { ensureActivityTables, logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const appointmentSchema = z.object({
@@ -15,13 +15,14 @@ const appointmentSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  await ensureActivityTables();
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!canAccess(session, "appointments"))
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tenantId = tenantOf(session)!;
 
-  const filter = req.nextUrl.searchParams.get("filter") || "all"; // all | today | tomorrow | past
+  const filter = req.nextUrl.searchParams.get("filter") || "all"; // all | today | tomorrow | past | trash
   const search = req.nextUrl.searchParams.get("search")?.trim();
   const period = req.nextUrl.searchParams.get("period");
   const date = req.nextUrl.searchParams.get("date");
@@ -32,14 +33,19 @@ export async function GET(req: NextRequest) {
   let where = " WHERE ap.tenant_id = ?";
   const params: unknown[] = [tenantId];
 
-  if (filter === "past") {
-    where += " AND ap.status IN ('completed','cancelled')";
+  if (filter === "trash") {
+    where += " AND COALESCE(ap.is_trashed, 0) = 1";
   } else {
-    where += " AND ap.status = 'pending'";
-    if (filter === "today") {
-      where += " AND ap.appointment_date = CURRENT_DATE";
-    } else if (filter === "tomorrow") {
-      where += " AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date";
+    where += " AND COALESCE(ap.is_trashed, 0) = 0";
+    if (filter === "past") {
+      where += " AND ap.status IN ('completed','cancelled')";
+    } else {
+      where += " AND ap.status = 'pending'";
+      if (filter === "today") {
+        where += " AND ap.appointment_date = CURRENT_DATE";
+      } else if (filter === "tomorrow") {
+        where += " AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date";
+      }
     }
   }
 
@@ -70,10 +76,11 @@ export async function GET(req: NextRequest) {
     ),
     queryOne<Record<string, number>>(
       `SELECT
-         SUM(CASE WHEN ap.status = 'pending' THEN 1 ELSE 0 END) AS all_count,
-         SUM(CASE WHEN ap.status = 'pending' AND ap.appointment_date = CURRENT_DATE THEN 1 ELSE 0 END) AS today_count,
-         SUM(CASE WHEN ap.status = 'pending' AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date THEN 1 ELSE 0 END) AS tomorrow_count,
-         SUM(CASE WHEN ap.status IN ('completed','cancelled') THEN 1 ELSE 0 END) AS past_count
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' THEN 1 ELSE 0 END) AS all_count,
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' AND ap.appointment_date = CURRENT_DATE THEN 1 ELSE 0 END) AS today_count,
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date THEN 1 ELSE 0 END) AS tomorrow_count,
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status IN ('completed','cancelled') THEN 1 ELSE 0 END) AS past_count,
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=1 THEN 1 ELSE 0 END) AS trash_count
        FROM appointments ap ${baseWhere}`,
       baseParams
     ),
@@ -89,6 +96,7 @@ export async function GET(req: NextRequest) {
       today: counts?.today_count ?? 0,
       tomorrow: counts?.tomorrow_count ?? 0,
       past: counts?.past_count ?? 0,
+      trash: counts?.trash_count ?? 0,
     },
   });
 }

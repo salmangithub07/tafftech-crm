@@ -54,6 +54,10 @@ export async function ensureActivityTables() {
       ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_trashed SMALLINT DEFAULT 0;
     `).catch(() => {});
 
+    await execute(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_trashed SMALLINT DEFAULT 0;
+    `).catch(() => {});
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);
