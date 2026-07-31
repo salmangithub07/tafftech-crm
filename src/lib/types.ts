@@ -1,4 +1,4 @@
-export type CustomerStatus = "lead" | "active" | "inactive";
+export type CustomerStatus = "lead" | "progress" | "active" | "inactive";
 
 export type Customer = {
   id: number;
@@ -11,6 +11,7 @@ export type Customer = {
   notes: string | null;
   status: CustomerStatus;
   visited: number; // 0 | 1
+  is_trashed?: number; // 0 | 1
   created_by: number | null;
   created_by_name?: string | null;
   appointment_count?: number;
@@ -59,7 +60,8 @@ export type Product = {
   id: number;
   tenant_id: number;
   name: string;
-  sku: string | null;
+  sku?: string | null;
+  unit?: string | null;
   price: number;
   min_stock_level?: number;
   stock?: number;
@@ -264,6 +266,7 @@ export type BalanceSheetSummary = {
   debtors: LedgerAccount[];
   fixedAssets: FixedAsset[];
   rawMaterialValue: number;
+  billsOutstandingValue: number;
   totals: {
     cash: number;
     bank: number;
@@ -271,6 +274,7 @@ export type BalanceSheetSummary = {
     debtors: number;
     fixedAssets: number;
     rawMaterial: number;
+    billsOutstanding: number;
     totalAssets: number;
     totalLiabilities: number;
     equity: number;

@@ -7,7 +7,7 @@ import { z } from "zod";
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  sku: z.string().optional().or(z.literal("")).default(""),
+  unit: z.string().optional().or(z.literal("")).default("Pcs"),
   price: z.coerce.number().min(0).default(0),
   min_stock_level: z.coerce.number().int().min(0).default(5),
   quantity: z.coerce.number().int().min(0).default(0),
@@ -109,8 +109,8 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
   const result = await execute(
-    "INSERT INTO products (tenant_id, name, sku, price, min_stock_level) VALUES (?, ?, ?, ?, ?)",
-    [tenantId, d.name, d.sku, d.price, d.min_stock_level]
+    "INSERT INTO products (tenant_id, name, unit, price, min_stock_level) VALUES (?, ?, ?, ?, ?)",
+    [tenantId, d.name, d.unit || "Pcs", d.price, d.min_stock_level]
   );
   if (d.quantity > 0) {
     await execute(

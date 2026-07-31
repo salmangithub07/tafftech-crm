@@ -13,9 +13,10 @@ function initials(name: string) {
   return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "success" | "warning" | "outline"> = {
+const statusVariant: Record<string, "default" | "secondary" | "success" | "warning" | "info" | "outline"> = {
   active: "success",
   lead: "warning",
+  progress: "info",
   inactive: "secondary",
   pending: "default",
   completed: "success",
@@ -81,61 +82,65 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-md-4 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-  {stats.map((s) => (
-    <Card
-      key={s.title}
-      className="rounded-2xl rounded-xl border shadow-sm"
-    >
-      <CardContent className="flex items-center gap-5 p-md-6 p-3 mobileCards">
-        {/* Icon */}
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-          <s.icon className="h-7 w-7 text-white" />
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {stats.map((s) => (
+          <Card
+            key={s.title}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-2xs hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1 min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                  {s.title}
+                </p>
+                <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                  {s.value}
+                </p>
+                <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                  {s.hint}
+                </p>
+              </div>
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
+                <s.icon className="size-5" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-        {/* Text */}
-        <div>
-          <h2 className="text-2xl font-bold leading-none">
-            {s.value}
-          </h2>
-
-          <p className="mt-1 text-base text-slate-500">
-            {s.title}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  ))}
-</div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Customers</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Card className="border-border/60">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base font-bold">Recent Customers</CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary hover:text-primary" asChild>
               <Link href="/customers">
                 View all <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           </CardHeader>
-          <CardContent className="flex flex-col gap-1">
+          <CardContent className="flex flex-col gap-2">
             {recentCustomers.length === 0 && (
               <p className="py-6 text-center text-sm text-muted-foreground">
                 No customers yet. Add one from the &quot;Customers&quot; page.
               </p>
             )}
             {recentCustomers.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent">
-                <Avatar>
-                  <AvatarFallback>{initials(c.name)}</AvatarFallback>
+              <div
+                key={c.id}
+                className="flex items-center gap-3 rounded-xl border border-border/40 bg-muted/20 px-3 py-2.5 hover:bg-muted/60 hover:border-border/80 transition-all duration-200 shadow-2xs"
+              >
+                <Avatar className="size-9 border border-primary/20">
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                    {initials(c.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{c.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-sm font-semibold text-foreground">{c.name}</p>
+                  <p className="truncate text-xs text-muted-foreground mt-0.5">
                     {c.product || c.email || "—"}
                   </p>
                 </div>
-                <Badge variant={statusVariant[c.status] ?? "outline"} className="capitalize">
+                <Badge variant={statusVariant[c.status] ?? "outline"} className="capitalize text-xs font-semibold">
                   {c.status}
                 </Badge>
               </div>
@@ -143,38 +148,41 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Upcoming Appointments</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
+        <Card className="border-border/60">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base font-bold">Upcoming Appointments</CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary hover:text-primary" asChild>
               <Link href="/appointments">
                 View all <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           </CardHeader>
-          <CardContent className="flex flex-col gap-1">
+          <CardContent className="flex flex-col gap-2">
             {upcoming.length === 0 && (
               <p className="py-6 text-center text-sm text-muted-foreground">
                 No upcoming appointments.
               </p>
             )}
             {upcoming.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent">
-                <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <span className="text-[10px] font-medium uppercase leading-none">
+              <div
+                key={a.id}
+                className="flex items-center gap-3 rounded-xl border border-border/40 bg-muted/20 px-3 py-2.5 hover:bg-muted/60 hover:border-border/80 transition-all duration-200 shadow-2xs"
+              >
+                <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/20 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase leading-none">
                     {format(new Date(a.appointment_date), "MMM")}
                   </span>
-                  <span className="text-sm font-bold leading-none">
+                  <span className="text-sm font-extrabold leading-none mt-0.5">
                     {format(new Date(a.appointment_date), "d")}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.title || a.customer_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-sm font-semibold text-foreground">{a.title || a.customer_name}</p>
+                  <p className="truncate text-xs text-muted-foreground mt-0.5">
                     {a.customer_name ?? "No customer"} {a.appointment_time ? `· ${a.appointment_time}` : ""}
                   </p>
                 </div>
-                <Badge variant={statusVariant[a.status] ?? "outline"} className="capitalize">
+                <Badge variant={statusVariant[a.status] ?? "outline"} className="capitalize text-xs font-semibold">
                   {a.status}
                 </Badge>
               </div>

@@ -38,6 +38,22 @@ export async function ensureActivityTables() {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS min_stock_level INTEGER DEFAULT 5;
     `);
 
+    await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'Pcs';
+    `);
+
+    await execute(`
+      ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_status_check;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE customers ALTER COLUMN status TYPE VARCHAR(50);
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_trashed SMALLINT DEFAULT 0;
+    `).catch(() => {});
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);

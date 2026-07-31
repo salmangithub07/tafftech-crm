@@ -251,6 +251,10 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               title="Debtors / Outstanding"
               subtitle="Money owed to you"
               accounts={summary.debtors}
+              extraValue={summary.billsOutstandingValue}
+              extraLabel="Bills & Invoices Outstanding"
+              extraSubtitle="Live from Bills — uncollected pending balance"
+              extraLink="/bills"
               onAdd={() => setAccountDialog({ type: "debtor" })}
               onEdit={(a) => setAccountDialog({ type: "debtor", account: a })}
               onTransact={(a) => {
@@ -685,6 +689,10 @@ function AccountSection({
   title,
   subtitle,
   accounts,
+  extraValue = 0,
+  extraLabel,
+  extraSubtitle,
+  extraLink,
   onAdd,
   onEdit,
   onTransact,
@@ -695,12 +703,19 @@ function AccountSection({
   title: string;
   subtitle?: string;
   accounts: LedgerAccount[];
+  extraValue?: number;
+  extraLabel?: string;
+  extraSubtitle?: string;
+  extraLink?: string;
   onAdd: () => void;
   onEdit: (account: LedgerAccount) => void;
   onTransact: (account: LedgerAccount) => void;
   onDelete: (account: LedgerAccount) => void;
 }) {
-  const total = accounts.reduce((s, a) => s + Number(a.balance ?? a.opening_balance), 0);
+  const manualTotal = accounts.reduce((s, a) => s + Number(a.balance ?? a.opening_balance), 0);
+  const grandTotal = manualTotal + extraValue;
+  const hasItems = accounts.length > 0 || extraValue > 0;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -714,18 +729,39 @@ function AccountSection({
           {subtitle && <p className="text-xs text-muted-foreground ml-8">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2">
-          {accounts.length > 0 && (
-            <span className="font-mono text-sm font-bold text-foreground">{money(total)}</span>
+          {hasItems && (
+            <span className="font-mono text-sm font-bold text-foreground">{money(grandTotal)}</span>
           )}
           <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onAdd}>
             <Plus className="size-3.5" /> Add
           </Button>
         </div>
       </div>
-      {accounts.length === 0 ? (
+      {!hasItems ? (
         <p className="text-xs text-muted-foreground ml-8">None added yet.</p>
       ) : (
-        <div className="flex flex-col gap-1 mt-1">
+        <div className="flex flex-col gap-1.5 mt-1">
+          {extraValue > 0 && extraLabel && (
+            <div className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-amber-900 dark:text-amber-200">{extraLabel}</p>
+                {extraSubtitle && <p className="truncate text-[11px] text-muted-foreground">{extraSubtitle}</p>}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  {money(extraValue)}
+                </span>
+                {extraLink && (
+                  <Button variant="ghost" size="icon" className="size-7 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15" asChild>
+                    <Link href={extraLink} title="View Bills">
+                      <ExternalLink className="size-3.5" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           {accounts.map((a) => (
             <div
               key={a.id}

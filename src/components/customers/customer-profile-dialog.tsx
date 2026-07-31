@@ -154,9 +154,11 @@ export function CustomerProfileDialog({
                         variant={
                           c.status === "active"
                             ? "success"
+                            : c.status === "progress"
+                            ? "info"
                             : c.status === "lead"
                             ? "warning"
-                            : "outline"
+                            : "secondary"
                         }
                         className="capitalize text-xs"
                       >

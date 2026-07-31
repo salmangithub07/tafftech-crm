@@ -19,6 +19,9 @@ import {
   CheckCircle2,
   Circle,
   User,
+  RotateCcw,
+  ShieldAlert,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -47,38 +51,42 @@ import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import type { Customer, CustomerStatus } from "@/lib/types";
 
-const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary"> = {
+const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary" | "info" | "outline"> = {
   active: "success",
   lead: "warning",
+  progress: "info",
   inactive: "secondary",
 };
 
 const PAGE_SIZE_KEY = "nova-crm:pageSize:customers";
 
-type Counts = { all: number; lead: number; active: number; inactive: number };
+type Counts = { all: number; lead: number; progress: number; active: number; inactive: number; trash: number };
 
 export function CustomersClient({ initialCustomers }: { initialCustomers: Customer[] }) {
   const router = useRouter();
   const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
-  const [total, setTotal] = React.useState(initialCustomers.length);
-  const [counts, setCounts] = React.useState<Counts>({ all: 0, lead: 0, active: 0, inactive: 0 });
+  const [total, setTotal] = React.useState(0);
+  const [counts, setCounts] = React.useState<Counts>({ all: 0, lead: 0, progress: 0, active: 0, inactive: 0, trash: 0 });
   const [loading, setLoading] = React.useState(false);
 
   const [search, setSearch] = React.useState("");
-  const [tab, setTab] = React.useState<"all" | CustomerStatus>("all");
+  const [tab, setTab] = React.useState<"all" | "lead" | "progress" | "active" | "inactive" | "trash">("all");
   const [dateFilter, setDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
 
+  const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = React.useState(false);
+
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Customer | null>(null);
   const [deleting, setDeleting] = React.useState<Customer | null>(null);
+  const [emptyTrashConfirm, setEmptyTrashConfirm] = React.useState(false);
   const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem(PAGE_SIZE_KEY) : null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of the saved page-size preference
     if (saved) setPageSize(Number(saved));
   }, []);
 
@@ -105,7 +113,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   }, [page, pageSize, search, tab, dateFilter]);
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- refetches whenever any filter/pagination input changes
+    setSelectedIds([]);
     fetchCustomers();
   }, [fetchCustomers]);
 
@@ -120,12 +128,14 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   }, [searchInput]);
 
   function changeTab(next: string) {
-    setTab(next as "all" | CustomerStatus);
+    setTab(next as any);
+    setSelectedIds([]);
     setPage(1);
   }
 
   function changeDateFilter(next: DateFilterValue) {
     setDateFilter(next);
+    setSelectedIds([]);
     setPage(1);
   }
 
@@ -136,78 +146,165 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   }
 
   async function refresh() {
+    setSelectedIds([]);
     await fetchCustomers();
     router.refresh();
   }
 
-  async function handleDelete(customer: Customer) {
-    const res = await fetch(`/api/customers/${customer.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.error(data.error || "Could not delete customer.");
-      return;
+  // Selection handlers
+  const allVisibleIds = customers.map((c) => c.id);
+  const isAllSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.includes(id));
+
+  function toggleSelectAll() {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allVisibleIds);
     }
-    toast.success("Customer deleted.");
-    refresh();
+  }
+
+  function toggleSelectOne(id: number) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  }
+
+  // Bulk Actions
+  async function handleBulkTrash() {
+    if (selectedIds.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch("/api/customers/bulk-trash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_ids: selectedIds }),
+      });
+      if (!res.ok) throw new Error("Could not move customers to trash");
+      toast.success(`${selectedIds.length} customer(s) moved to Trash.`);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to trash customers.");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }
+
+  async function handleBulkRestore() {
+    if (selectedIds.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch("/api/customers/bulk-restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_ids: selectedIds }),
+      });
+      if (!res.ok) throw new Error("Could not restore customers");
+      toast.success(`${selectedIds.length} customer(s) restored from Trash.`);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to restore customers.");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }
+
+  async function handleBulkPermanentDelete(emptyAll = false) {
+    if (!emptyAll && selectedIds.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch("/api/customers/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emptyAll ? { empty_all: true } : { customer_ids: selectedIds }),
+      });
+      if (!res.ok) throw new Error("Could not delete customers");
+      const json = await res.json();
+      toast.success(emptyAll ? `Trash emptied (${json.count} deleted).` : `${selectedIds.length} customer(s) deleted permanently.`);
+      setEmptyTrashConfirm(false);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete customers.");
+    } finally {
+      setBulkActionLoading(false);
+    }
   }
 
   async function toggleVisited(customer: Customer) {
+    const next = customer.visited ? 0 : 1;
     const res = await fetch(`/api/customers/${customer.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: customer.name,
-        product: customer.product ?? "",
-        email: customer.email ?? "",
-        phone: customer.phone ?? "",
-        status: customer.status,
-        visited: !customer.visited,
-        address: customer.address ?? "",
-        notes: customer.notes ?? "",
-      }),
+      body: JSON.stringify({ ...customer, visited: !!next }),
     });
     if (!res.ok) {
-      toast.error("Could not update customer.");
+      toast.error("Could not update visited status.");
       return;
     }
-    toast.success(customer.visited ? "Marked as not visited." : "Marked as visited.");
-    refresh();
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customer.id ? { ...c, visited: next } : c))
+    );
   }
 
   function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    Papa.parse(file, {
+
+    Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
-        const rows = results.data as Record<string, string>[];
-        const res = await fetch("/api/customers/import", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rows }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || "Import failed.");
+        const rows = results.data.map((r) => ({
+          name: r.name || r.Name || "",
+          product: r.product || r.Product || r.product_interest || "",
+          email: r.email || r.Email || "",
+          phone: r.phone || r.Phone || "",
+          address: r.address || r.Address || "",
+          notes: r.notes || r.Notes || "",
+          status: (r.status || r.Status || "lead").toLowerCase(),
+          visited: (r.visited || r.Visited || "").toString().toLowerCase() === "true",
+        }));
+
+        const valid = rows.filter((r) => r.name);
+        if (valid.length === 0) {
+          toast.error("No valid customer rows found in CSV. 'name' is required.");
           return;
         }
-        toast.success(
-          `${data.inserted} customers imported${data.skipped ? `, ${data.skipped} rows skipped` : ""}.`
-        );
-        refresh();
+
+        try {
+          const res = await fetch("/api/customers/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ customers: valid }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Import failed");
+
+          toast.success(
+            `Imported ${data.importedCount} customers.${data.skippedCount ? ` Skipped ${data.skippedCount}.` : ""}`
+          );
+          refresh();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Import failed");
+        }
       },
-      error: () => toast.error("Could not read the file."),
     });
     e.target.value = "";
   }
+
+  const isTrashTab = tab === "trash";
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Customers</h1>
-          <p className="text-sm text-muted-foreground">Manage all your customers in one place.</p>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            Customers {isTrashTab && <Badge variant="destructive" className="text-xs font-normal">Trash Bin</Badge>}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isTrashTab
+              ? "Manage trashed customers, restore records, or purge permanently."
+              : "Manage all your customers in one place."}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <input
@@ -239,30 +336,111 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
 
       <Tabs value={tab} onValueChange={changeTab}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
             <TabsTrigger value="lead">Lead ({counts.lead})</TabsTrigger>
+            <TabsTrigger value="progress">Progress ({counts.progress})</TabsTrigger>
             <TabsTrigger value="active">Active ({counts.active})</TabsTrigger>
             <TabsTrigger value="inactive">Inactive ({counts.inactive})</TabsTrigger>
+            <TabsTrigger
+              value="trash"
+              className="gap-1.5 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+            >
+              <Trash2 className="size-3.5" /> Trash ({counts.trash})
+            </TabsTrigger>
           </TabsList>
           <DateFilter value={dateFilter} onChange={changeDateFilter} />
         </div>
       </Tabs>
 
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by name, phone, or product..."
-          className="pl-9"
-        />
+      <div className="flex flex-col gap-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name, phone, or product..."
+            className="pl-9"
+          />
+        </div>
+
+        {/* Floating / Sticky Bulk Action Bar */}
+        {(selectedIds.length > 0 || (isTrashTab && counts.trash > 0)) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 dark:bg-primary/10 shadow-xs animate-in fade-in-50 duration-200">
+            <div className="flex items-center gap-2">
+              {selectedIds.length > 0 ? (
+                <Badge variant="default" className="font-mono text-xs">
+                  {selectedIds.length} Selected
+                </Badge>
+              ) : (
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Trash Management ({counts.trash} items)
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {!isTrashTab && selectedIds.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkActionLoading}
+                  onClick={handleBulkTrash}
+                  className="h-8 text-xs gap-1.5"
+                >
+                  {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                  Move to Trash ({selectedIds.length})
+                </Button>
+              )}
+
+              {isTrashTab && selectedIds.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={bulkActionLoading}
+                    onClick={handleBulkRestore}
+                    className="h-8 text-xs gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                  >
+                    {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+                    Restore Selected ({selectedIds.length})
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={bulkActionLoading}
+                    onClick={() => handleBulkPermanentDelete(false)}
+                    className="h-8 text-xs gap-1.5"
+                  >
+                    {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                    Delete Permanently ({selectedIds.length})
+                  </Button>
+                </>
+              )}
+
+              {isTrashTab && counts.trash > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkActionLoading}
+                  onClick={() => setEmptyTrashConfirm(true)}
+                  className="h-8 text-xs gap-1.5 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                >
+                  <Trash2 className="size-3.5" /> Empty Trash
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {!loading && customers.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No customers found. Add a new customer to get started.
+            {isTrashTab
+              ? "Trash is empty."
+              : "No customers found. Add a new customer to get started."}
           </CardContent>
         </Card>
       ) : (
@@ -272,6 +450,13 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10 text-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Product</TableHead>
@@ -282,56 +467,90 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customers.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">
-                      <button
-                        onClick={() => setProfileCustomerId(c.id)}
-                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
-                      >
-                        {c.name}
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div className="flex flex-col gap-0.5 text-xs">
-                        {c.email && <span>{c.email}</span>}
-                        {c.phone && <span>{c.phone}</span>}
-                        {!c.email && !c.phone && <span>—</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{c.product || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[c.status]} className="capitalize">
-                        {c.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => toggleVisited(c)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        {c.visited ? (
-                          <CheckCircle2 className="size-4 text-success" />
-                        ) : (
-                          <Circle className="size-4" />
-                        )}
-                        {c.visited ? "Visited" : "Mark visited"}
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
-                    <TableCell>
-                      <RowActions
-                        customerId={c.id}
-                        onViewProfile={() => setProfileCustomerId(c.id)}
-                        onEdit={() => {
-                          setEditing(c);
-                          setFormOpen(true);
-                        }}
-                        onDelete={() => setDeleting(c)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {customers.map((c) => {
+                  const isSelected = selectedIds.includes(c.id);
+                  return (
+                    <TableRow key={c.id} data-state={isSelected ? "selected" : undefined}>
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectOne(c.id)}
+                          aria-label={`Select ${c.name}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <button
+                          onClick={() => setProfileCustomerId(c.id)}
+                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                        >
+                          {c.name}
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <div className="flex flex-col gap-0.5 text-xs">
+                          {c.email && <span>{c.email}</span>}
+                          {c.phone && <span>{c.phone}</span>}
+                          {!c.email && !c.phone && <span>—</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{c.product || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant[c.status]} className="capitalize">
+                          {c.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => toggleVisited(c)}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          {c.visited ? (
+                            <CheckCircle2 className="size-4 text-success" />
+                          ) : (
+                            <Circle className="size-4" />
+                          )}
+                          {c.visited ? "Visited" : "Mark visited"}
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
+                      <TableCell>
+                        <RowActions
+                          customer={c}
+                          isTrashTab={isTrashTab}
+                          onViewProfile={() => setProfileCustomerId(c.id)}
+                          onEdit={() => {
+                            setEditing(c);
+                            setFormOpen(true);
+                          }}
+                          onMoveToTrash={async () => {
+                            setSelectedIds([c.id]);
+                            const res = await fetch("/api/customers/bulk-trash", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ customer_ids: [c.id] }),
+                            });
+                            if (res.ok) {
+                              toast.success(`${c.name} moved to Trash.`);
+                              refresh();
+                            }
+                          }}
+                          onRestore={async () => {
+                            const res = await fetch("/api/customers/bulk-restore", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ customer_ids: [c.id] }),
+                            });
+                            if (res.ok) {
+                              toast.success(`${c.name} restored.`);
+                              refresh();
+                            }
+                          }}
+                          onDelete={() => setDeleting(c)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
             <PaginationBar
@@ -345,64 +564,96 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
 
           {/* Mobile cards */}
           <div className="flex flex-col gap-3 md:hidden">
-            {customers.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="flex flex-col gap-2 py-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <button
-                        onClick={() => setProfileCustomerId(c.id)}
-                        className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
-                      >
-                        {c.name}
-                      </button>
-                      {c.product && (
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Package className="size-3" /> {c.product}
-                        </p>
+            {customers.map((c) => {
+              const isSelected = selectedIds.includes(c.id);
+              return (
+                <Card key={c.id} className={isSelected ? "border-primary bg-primary/5" : ""}>
+                  <CardContent className="flex flex-col gap-2 py-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectOne(c.id)}
+                        />
+                        <div>
+                          <button
+                            onClick={() => setProfileCustomerId(c.id)}
+                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                          >
+                            {c.name}
+                          </button>
+                          {c.product && (
+                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Package className="size-3" /> {c.product}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <RowActions
+                        customer={c}
+                        isTrashTab={isTrashTab}
+                        onViewProfile={() => setProfileCustomerId(c.id)}
+                        onEdit={() => {
+                          setEditing(c);
+                          setFormOpen(true);
+                        }}
+                        onMoveToTrash={async () => {
+                          const res = await fetch("/api/customers/bulk-trash", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ customer_ids: [c.id] }),
+                          });
+                          if (res.ok) {
+                            toast.success(`${c.name} moved to Trash.`);
+                            refresh();
+                          }
+                        }}
+                        onRestore={async () => {
+                          const res = await fetch("/api/customers/bulk-restore", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ customer_ids: [c.id] }),
+                          });
+                          if (res.ok) {
+                            toast.success(`${c.name} restored.`);
+                            refresh();
+                          }
+                        }}
+                        onDelete={() => setDeleting(c)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      {c.email && (
+                        <span className="flex items-center gap-1.5">
+                          <Mail className="size-3" /> {c.email}
+                        </span>
+                      )}
+                      {c.phone && (
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="size-3" /> {c.phone}
+                        </span>
                       )}
                     </div>
-                    <RowActions
-                      customerId={c.id}
-                      onViewProfile={() => setProfileCustomerId(c.id)}
-                      onEdit={() => {
-                        setEditing(c);
-                        setFormOpen(true);
-                      }}
-                      onDelete={() => setDeleting(c)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    {c.email && (
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="size-3" /> {c.email}
-                      </span>
-                    )}
-                    {c.phone && (
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="size-3" /> {c.phone}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Badge variant={statusVariant[c.status]} className="w-fit capitalize">
-                      {c.status}
-                    </Badge>
-                    <button
-                      onClick={() => toggleVisited(c)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      {c.visited ? (
-                        <CheckCircle2 className="size-4 text-success" />
-                      ) : (
-                        <Circle className="size-4" />
-                      )}
-                      {c.visited ? "Visited" : "Mark visited"}
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center justify-between">
+                      <Badge variant={statusVariant[c.status]} className="w-fit capitalize">
+                        {c.status}
+                      </Badge>
+                      <button
+                        onClick={() => toggleVisited(c)}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                      >
+                        {c.visited ? (
+                          <CheckCircle2 className="size-4 text-success" />
+                        ) : (
+                          <Circle className="size-4" />
+                        )}
+                        {c.visited ? "Visited" : "Mark visited"}
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
             <Card className="py-0">
               <PaginationBar
                 page={page}
@@ -427,9 +678,19 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
         <ConfirmDeleteDialog
           open={!!deleting}
           onOpenChange={(open) => !open && setDeleting(null)}
-          title={`Delete ${deleting.name}?`}
-          description="This customer and all their related appointments/quotations will be permanently deleted. This action cannot be undone."
-          onConfirm={() => handleDelete(deleting)}
+          title={`Delete ${deleting.name} permanently?`}
+          description="This customer and all their related appointments/quotations will be permanently deleted from the database. This action cannot be undone."
+          onConfirm={() => handleBulkPermanentDelete(false)}
+        />
+      )}
+
+      {emptyTrashConfirm && (
+        <ConfirmDeleteDialog
+          open={emptyTrashConfirm}
+          onOpenChange={setEmptyTrashConfirm}
+          title="Empty Customer Trash?"
+          description={`Are you sure you want to permanently purge all ${counts.trash} trashed customer(s)? This action cannot be undone.`}
+          onConfirm={() => handleBulkPermanentDelete(true)}
         />
       )}
 
@@ -444,14 +705,20 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
 }
 
 function RowActions({
-  customerId,
+  customer,
+  isTrashTab,
   onViewProfile,
   onEdit,
+  onMoveToTrash,
+  onRestore,
   onDelete,
 }: {
-  customerId: number;
+  customer: Customer;
+  isTrashTab?: boolean;
   onViewProfile: () => void;
   onEdit: () => void;
+  onMoveToTrash: () => void;
+  onRestore: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -465,17 +732,31 @@ function RowActions({
         <DropdownMenuItem onClick={onViewProfile}>
           <User className="size-4 text-primary" /> View 360° Profile
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={`/appointments?cid=${customerId}`}>
-            <CalendarPlus className="size-4" /> Add appointment
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onEdit}>
-          <Pencil className="size-4" /> Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2 className="size-4" /> Delete
-        </DropdownMenuItem>
+
+        {!isTrashTab ? (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href={`/appointments?cid=${customer.id}`}>
+                <CalendarPlus className="size-4" /> Add appointment
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="size-4" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={onMoveToTrash}>
+              <Trash2 className="size-4" /> Move to Trash
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuItem onClick={onRestore} className="text-emerald-600 dark:text-emerald-400">
+              <RotateCcw className="size-4 text-emerald-600" /> Restore Customer
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={onDelete}>
+              <Trash2 className="size-4" /> Delete Permanently
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

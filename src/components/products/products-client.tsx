@@ -30,6 +30,7 @@ import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { StockDialog } from "@/components/products/stock-dialog";
 import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { StockOutReasonDialog } from "@/components/products/stock-out-reason-dialog";
 import type { Product, StockTransaction } from "@/lib/types";
 
 type Counts = { all: number; in: number; low: number; out: number };
@@ -56,6 +57,7 @@ export function ProductsClient({
   const [deleting, setDeleting] = React.useState<Product | null>(null);
   const [stockDialog, setStockDialog] = React.useState<{ product: Product; type: "in" | "out" } | null>(null);
   const [generateBillPrompt, setGenerateBillPrompt] = React.useState<{ product: Product; quantity: number } | null>(null);
+  const [auditReasonProduct, setAuditReasonProduct] = React.useState<{ product: Product; quantity: number } | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
 
 
@@ -209,9 +211,7 @@ export function ProductsClient({
               <TabsList>
                 <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
                 <TabsTrigger value="in">In Stock ({counts.in})</TabsTrigger>
-                <TabsTrigger value="low" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-700 dark:data-[state=active]:text-amber-400">
-                  Low Stock ({counts.low})
-                </TabsTrigger>
+                <TabsTrigger value="low">Low Stock ({counts.low})</TabsTrigger>
                 <TabsTrigger value="out">Out of Stock ({counts.out})</TabsTrigger>
               </TabsList>
               <DateFilter value={dateFilter} onChange={changeDateFilter} />
@@ -232,10 +232,10 @@ export function ProductsClient({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Min. Alert Level</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Unit Price</TableHead>
                       <TableHead>Current Stock</TableHead>
+                      <TableHead>Total Stock Value</TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
                   </TableHeader>
@@ -243,26 +243,32 @@ export function ProductsClient({
                     {products.map((p) => {
                       const currentStock = p.stock ?? 0;
                       const minLevel = p.min_stock_level ?? 5;
+                      const unitStr = p.unit || "Pcs";
+                      const totalValue = currentStock * Number(p.price || 0);
                       const isOut = currentStock <= 0;
                       const isLow = !isOut && currentStock <= minLevel;
 
                       return (
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.sku || "—"}</TableCell>
-                          <TableCell>₹{Number(p.price).toLocaleString("en-IN")}</TableCell>
-                          <TableCell className="text-muted-foreground font-mono text-xs">{minLevel} units</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            <Badge variant="outline" className="font-normal text-xs">{unitStr}</Badge>
+                          </TableCell>
+                          <TableCell className="font-mono">₹{Number(p.price).toLocaleString("en-IN")}</TableCell>
                           <TableCell>
                             {isOut ? (
-                              <Badge variant="destructive">Out of stock (0)</Badge>
+                              <Badge variant="destructive">Out of stock (0 {unitStr})</Badge>
                             ) : isLow ? (
                               <Badge variant="warning" className="gap-1 font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30">
                                 <AlertTriangle className="size-3 text-amber-600 dark:text-amber-400" />
-                                Low Stock: {currentStock} left
+                                Low: {currentStock} {unitStr}
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">{currentStock} in stock</Badge>
+                              <Badge variant="secondary">{currentStock} {unitStr}</Badge>
                             )}
+                          </TableCell>
+                          <TableCell className="font-mono font-bold text-foreground">
+                            ₹{totalValue.toLocaleString("en-IN")}
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -311,6 +317,8 @@ export function ProductsClient({
                 {products.map((p) => {
                   const currentStock = p.stock ?? 0;
                   const minLevel = p.min_stock_level ?? 5;
+                  const unitStr = p.unit || "Pcs";
+                  const totalValue = currentStock * Number(p.price || 0);
                   const isOut = currentStock <= 0;
                   const isLow = !isOut && currentStock <= minLevel;
 
@@ -319,10 +327,13 @@ export function ProductsClient({
                       <CardContent className="flex flex-col gap-3 py-4">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="font-medium text-foreground">{p.name}</p>
-                            {p.sku && (
-                              <p className="text-xs text-muted-foreground">SKU: {p.sku}</p>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground">{p.name}</p>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">{unitStr}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Price: ₹{Number(p.price).toLocaleString("en-IN")} / {unitStr}
+                            </p>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -352,18 +363,21 @@ export function ProductsClient({
                           </DropdownMenu>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-border/50">
-                          <span className="font-semibold text-foreground">₹{Number(p.price).toLocaleString("en-IN")}</span>
+                        <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block">Stock Value</span>
+                            <span className="font-mono font-bold text-foreground">₹{totalValue.toLocaleString("en-IN")}</span>
+                          </div>
                           <div>
                             {isOut ? (
-                              <Badge variant="destructive">Out of stock</Badge>
+                              <Badge variant="destructive">Out of stock (0 {unitStr})</Badge>
                             ) : isLow ? (
                               <Badge variant="warning" className="gap-1 font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30">
                                 <AlertTriangle className="size-3 text-amber-600 dark:text-amber-400" />
-                                Low Stock: {currentStock} left
+                                Low: {currentStock} {unitStr}
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">{currentStock} in stock</Badge>
+                              <Badge variant="secondary">{currentStock} {unitStr} in stock</Badge>
                             )}
                           </div>
                         </div>
@@ -464,6 +478,7 @@ export function ProductsClient({
           type={stockDialog.type}
           onSaved={refresh}
           onGenerateBill={(product, quantity) => setGenerateBillPrompt({ product, quantity })}
+          onCloseWithoutBill={(product, quantity) => setAuditReasonProduct({ product, quantity })}
         />
       )}
 
@@ -475,8 +490,24 @@ export function ProductsClient({
           initialQuantity={generateBillPrompt.quantity}
           skipStockDeduction={true}
           onSaved={refresh}
+          onCloseUnsaved={() => {
+            setAuditReasonProduct({
+              product: generateBillPrompt.product,
+              quantity: generateBillPrompt.quantity,
+            });
+          }}
         />
       )}
+
+      <StockOutReasonDialog
+        open={!!auditReasonProduct}
+        product={auditReasonProduct?.product ?? null}
+        quantity={auditReasonProduct?.quantity ?? 1}
+        onSaved={() => {
+          setAuditReasonProduct(null);
+          refresh();
+        }}
+      />
 
       {deleting && (
         <ConfirmDeleteDialog

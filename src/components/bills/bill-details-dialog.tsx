@@ -49,7 +49,7 @@ export function BillDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full w-full p-0 gap-0 overflow-visible">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header — hidden on print via .no-print */}
         <DialogHeader className="flex flex-col gap-3 border-b px-6 py-4 space-y-0 sm:flex-row sm:items-center sm:justify-between no-print">
           <DialogTitle className="text-lg font-semibold">

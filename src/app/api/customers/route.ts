@@ -12,7 +12,7 @@ const customerSchema = z.object({
   phone: z.string().optional().or(z.literal("")).default(""),
   address: z.string().optional().or(z.literal("")).default(""),
   notes: z.string().optional().or(z.literal("")).default(""),
-  status: z.enum(["lead", "active", "inactive"]).default("lead"),
+  status: z.enum(["lead", "progress", "active", "inactive"]).default("lead"),
   visited: z.boolean().default(false),
 });
 
@@ -44,9 +44,14 @@ export async function GET(req: NextRequest) {
 
   const statusParams = [...params];
   let statusWhere = where;
-  if (status && ["lead", "active", "inactive"].includes(status)) {
-    statusWhere += " AND c.status = ?";
-    statusParams.push(status);
+  if (status === "trash") {
+    statusWhere += " AND COALESCE(c.is_trashed, 0) = 1";
+  } else {
+    statusWhere += " AND COALESCE(c.is_trashed, 0) = 0";
+    if (status && ["lead", "progress", "active", "inactive"].includes(status)) {
+      statusWhere += " AND c.status = ?";
+      statusParams.push(status);
+    }
   }
 
   const [customers, totalRow, counts] = await Promise.all([
@@ -58,11 +63,14 @@ export async function GET(req: NextRequest) {
       [...statusParams, limit, offset]
     ),
     queryOne<{ c: number }>(`SELECT COUNT(*) as c FROM customers c ${statusWhere}`, statusParams),
-    queryOne<{ all: number; lead: number; active: number; inactive: number }>(
-      `SELECT COUNT(*) AS all_count,
-         SUM(CASE WHEN c.status='lead' THEN 1 ELSE 0 END) AS lead_count,
-         SUM(CASE WHEN c.status='active' THEN 1 ELSE 0 END) AS active_count,
-         SUM(CASE WHEN c.status='inactive' THEN 1 ELSE 0 END) AS inactive_count
+    queryOne<{ all: number; lead: number; progress: number; active: number; inactive: number; trash: number }>(
+      `SELECT
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 THEN 1 ELSE 0 END) AS all_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='lead' THEN 1 ELSE 0 END) AS lead_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='progress' THEN 1 ELSE 0 END) AS progress_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='active' THEN 1 ELSE 0 END) AS active_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='inactive' THEN 1 ELSE 0 END) AS inactive_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 1 THEN 1 ELSE 0 END) AS trash_count
        FROM customers c ${where}`,
       params
     ),
@@ -77,8 +85,10 @@ export async function GET(req: NextRequest) {
     counts: {
       all: c?.all_count ?? 0,
       lead: c?.lead_count ?? 0,
+      progress: c?.progress_count ?? 0,
       active: c?.active_count ?? 0,
       inactive: c?.inactive_count ?? 0,
+      trash: c?.trash_count ?? 0,
     },
   });
 }
