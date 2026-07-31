@@ -170,6 +170,16 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
     return `/api/ledger-transactions/export?${params}`;
   }, [txSearch, txAccountId, txDirection, txYear, txDateFilter]);
 
+  const exportTxLabel = React.useMemo(() => {
+    const parts: string[] = [];
+    if (txAccountId !== "all") parts.push("Filtered Account");
+    if (txDirection !== "all") parts.push(txDirection.charAt(0).toUpperCase() + txDirection.slice(1));
+    if (txYear !== "all") parts.push(txYear);
+    if (txDateFilter.period && txDateFilter.period !== "all") parts.push(txDateFilter.period);
+    if (txSearch) parts.push(`"${txSearch}"`);
+    return parts.length ? parts.join(" · ") : "All";
+  }, [txSearch, txAccountId, txDirection, txYear, txDateFilter]);
+
   const currentYear = new Date().getFullYear();
   const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
 
@@ -407,9 +417,12 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
+            <Button variant="outline" size="sm" className="h-8 text-xs" asChild title={`Export: ${exportTxLabel}`}>
               <Link href={exportTxUrl}>
                 <Download className="size-3.5" /> Export CSV
+                {exportTxLabel !== "All" && (
+                  <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary leading-none">{exportTxLabel}</span>
+                )}
               </Link>
             </Button>
           </div>
