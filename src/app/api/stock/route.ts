@@ -9,6 +9,7 @@ const stockSchema = z.object({
   type: z.enum(["in", "out"]),
   quantity: z.coerce.number().int().positive("Quantity must be greater than 0"),
   note: z.string().optional().or(z.literal("")).default(""),
+  creditor_account_id: z.number().optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
@@ -50,14 +51,42 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
 
-  const product = await query("SELECT id, name FROM products WHERE id = ? AND tenant_id = ?", [d.product_id, tenantId]);
-  if (!product.length) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-  const prodName = (product[0] as any).name || "Product";
+  const productRes = await query<{ id: number; name: string; price: number; unit: string }>(
+    "SELECT id, name, price, COALESCE(unit, 'Pcs') as unit FROM products WHERE id = ? AND tenant_id = ?",
+    [d.product_id, tenantId]
+  );
+  if (!productRes.length) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  const prod = productRes[0];
+  const prodName = prod.name || "Product";
 
   await execute(
     "INSERT INTO stock_transactions (tenant_id, product_id, type, quantity, note, created_by) VALUES (?, ?, ?, ?, ?, ?)",
     [tenantId, d.product_id, d.type, d.quantity, d.note, session.id]
   );
+
+  // If Stock IN and Creditor Account is selected, record purchase in Balance Sheet Creditor account
+  if (d.type === "in" && d.creditor_account_id) {
+    const creditorAcc = await query("SELECT id, name FROM ledger_accounts WHERE id = ? AND tenant_id = ? AND type = 'creditor'", [
+      d.creditor_account_id,
+      tenantId,
+    ]);
+    if (creditorAcc.length > 0) {
+      const totalCost = Number(prod.price || 0) * d.quantity;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      await execute(
+        `INSERT INTO ledger_transactions (tenant_id, account_id, entry_date, direction, amount, description, created_by)
+         VALUES (?, ?, ?, 'increase', ?, ?, ?)`,
+        [
+          tenantId,
+          d.creditor_account_id,
+          todayStr,
+          totalCost,
+          `Stock purchase: ${prodName} (${d.quantity} ${prod.unit})${d.note ? ` - ${d.note}` : ""}`,
+          session.id,
+        ]
+      );
+    }
+  }
 
   logActivity({
     tenantId,
@@ -66,7 +95,7 @@ export async function POST(req: NextRequest) {
     action: d.type === "in" ? "Stock Increased (+)" : "Stock Decreased (-)",
     entityType: "stock",
     entityId: d.product_id,
-    entityLabel: `${prodName} (${d.type === "in" ? "+" : "-"}${d.quantity})`,
+    entityLabel: `${prodName} (${d.type === "in" ? "+" : "-"}${d.quantity} ${prod.unit})`,
   });
 
   if (d.type === "out") {

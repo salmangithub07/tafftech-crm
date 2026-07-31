@@ -16,6 +16,7 @@ import {
   CreditCard,
   AlertCircle,
   CheckCircle2,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { BillDetailsDialog } from "@/components/bills/bill-details-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
+import { RecordPaymentDialog } from "@/components/bills/record-payment-dialog";
 import type { Bill } from "@/lib/types";
 
 function money(n: number) {
@@ -65,6 +67,7 @@ export function BillsClient() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [viewingBill, setViewingBill] = React.useState<Bill | null>(null);
   const [deletingBill, setDeletingBill] = React.useState<Bill | null>(null);
+  const [paymentBill, setPaymentBill] = React.useState<Bill | null>(null);
   const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
 
   const fetchBills = React.useCallback(async () => {
@@ -276,6 +279,14 @@ export function BillsClient() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {b.payment_status !== "paid" && (
+                            <DropdownMenuItem
+                              onClick={() => setPaymentBill(b)}
+                              className="text-emerald-600 dark:text-emerald-400 font-medium"
+                            >
+                              <DollarSign className="size-4" /> Record Payment
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => setViewingBill(b)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
@@ -333,6 +344,14 @@ export function BillsClient() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {b.payment_status !== "paid" && (
+                            <DropdownMenuItem
+                              onClick={() => setPaymentBill(b)}
+                              className="text-emerald-600 dark:text-emerald-400 font-medium"
+                            >
+                              <DollarSign className="size-4" /> Record Payment
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => setViewingBill(b)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
@@ -404,6 +423,13 @@ export function BillsClient() {
         open={!!profileCustomerId}
         onOpenChange={(open) => !open && setProfileCustomerId(null)}
         onCustomerUpdated={fetchBills}
+      />
+
+      <RecordPaymentDialog
+        open={!!paymentBill}
+        onOpenChange={(open) => !open && setPaymentBill(null)}
+        bill={paymentBill}
+        onSaved={fetchBills}
       />
     </div>
   );

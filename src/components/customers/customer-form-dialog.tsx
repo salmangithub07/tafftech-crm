@@ -33,7 +33,7 @@ const formSchema = z.object({
   product: z.string().optional().or(z.literal("")),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
-  status: z.enum(["lead", "active", "inactive"]),
+  status: z.enum(["lead", "progress", "active", "inactive"]),
   visited: z.boolean(),
   address: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
@@ -105,8 +105,8 @@ export function CustomerFormDialog({
           body: JSON.stringify(values),
         }
       );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Save failed");
 
       toast.success(isEdit ? "Customer updated." : "New customer added.");
       onOpenChange(false);
@@ -161,6 +161,7 @@ export function CustomerFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="progress">Progress</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>

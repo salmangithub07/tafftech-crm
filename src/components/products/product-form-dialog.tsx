@@ -21,7 +21,7 @@ import type { Product } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  sku: z.string().optional().or(z.literal("")),
+  unit: z.string(),
   price: z.number().min(0),
   min_stock_level: z.number().int().min(0),
   quantity: z.number().int().min(0).optional(),
@@ -47,7 +47,7 @@ export function ProductFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", sku: "", price: 0, min_stock_level: 5, quantity: 0 },
+    defaultValues: { name: "", unit: "Pcs", price: 0, min_stock_level: 5, quantity: 0 },
   });
 
   React.useEffect(() => {
@@ -56,12 +56,12 @@ export function ProductFormDialog({
         product
           ? {
               name: product.name,
-              sku: product.sku ?? "",
+              unit: product.unit ?? "Pcs",
               price: Number(product.price),
               min_stock_level: product.min_stock_level ?? 5,
               quantity: 0,
             }
-          : { name: "", sku: "", price: 0, min_stock_level: 5, quantity: 0 }
+          : { name: "", unit: "Pcs", price: 0, min_stock_level: 5, quantity: 0 }
       );
     }
   }, [open, product, reset]);
@@ -88,7 +88,7 @@ export function ProductFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Product" : "Add New Product"}</DialogTitle>
-          <DialogDescription>Fill in the product details and stock alert thresholds.</DialogDescription>
+          <DialogDescription>Fill in the product details, measurement unit, and stock thresholds.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -98,11 +98,11 @@ export function ProductFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="sku">SKU</Label>
-              <Input id="sku" {...register("sku")} placeholder="Optional" />
+              <Label htmlFor="unit">Unit (UOM)</Label>
+              <Input id="unit" {...register("unit")} placeholder="e.g. Pcs, Kg, Gm, Box, Ltr" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="price">Price (₹)</Label>
+              <Label htmlFor="price">Unit Price (₹)</Label>
               <Input id="price" type="number" step="0.01" {...register("price", { valueAsNumber: true })} />
             </div>
           </div>

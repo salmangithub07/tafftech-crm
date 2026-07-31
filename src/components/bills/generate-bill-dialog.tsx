@@ -61,6 +61,7 @@ export function GenerateBillDialog({
   initialQuantity = 1,
   skipStockDeduction = false,
   onSaved,
+  onCloseUnsaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,11 +69,13 @@ export function GenerateBillDialog({
   initialQuantity?: number;
   skipStockDeduction?: boolean;
   onSaved?: () => void;
+  onCloseUnsaved?: () => void;
 }) {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [ledgerAccounts, setLedgerAccounts] = React.useState<LedgerAccount[]>([]);
   const [loadingOptions, setLoadingOptions] = React.useState(false);
+  const submittedRef = React.useRef(false);
 
   const {
     register,
@@ -125,6 +128,7 @@ export function GenerateBillDialog({
 
   React.useEffect(() => {
     if (open) {
+      submittedRef.current = false;
       setLoadingOptions(true);
       Promise.all([
         fetch("/api/customers?limit=100").then((r) => r.ok ? r.json() : { data: [] }),
@@ -224,6 +228,7 @@ export function GenerateBillDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate bill");
       toast.success(`Bill #${data.bill_number} generated successfully!`);
+      submittedRef.current = true;
       onOpenChange(false);
       if (onSaved) onSaved();
     } catch (err) {
@@ -231,9 +236,16 @@ export function GenerateBillDialog({
     }
   }
 
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen && !submittedRef.current && initialProduct && onCloseUnsaved) {
+      onCloseUnsaved();
+    }
+    onOpenChange(newOpen);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="size-5 text-primary" /> Generate Bill / Invoice
@@ -496,7 +508,7 @@ export function GenerateBillDialog({
               </div>
 
               <DialogFooter className="mt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+                <Button type="button" variant="outline" size="sm" onClick={() => handleOpenChange(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={isSubmitting}>

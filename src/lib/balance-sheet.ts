@@ -2,10 +2,11 @@ import { query } from "@/lib/db";
 import type { LedgerAccount, FixedAsset, BalanceSheetSummary } from "@/lib/types";
 
 /**
- * Builds the full Balance Sheet for a tenant. Raw material value is always
- * computed live from Products × current stock. Equity is always the
- * balancing figure (Total Assets − Creditors) — never entered manually —
- * so both sides of the sheet are guaranteed to tally.
+ * Builds the full Balance Sheet for a tenant.
+ * - Raw material value is computed live from Products × current stock.
+ * - Bills & Invoices pending/uncollected balance is fetched live from Bills.
+ * - Debtors total includes both manual debtor ledger accounts + live Bills uncollected balance.
+ * - Equity is the balancing figure (Total Assets − Creditors) — so both sides always tally.
  */
 export async function getBalanceSheetSummary(tenantId: number): Promise<BalanceSheetSummary> {
   const accounts = await query<LedgerAccount>(
@@ -38,6 +39,14 @@ export async function getBalanceSheetSummary(tenantId: number): Promise<BalanceS
   );
   const rawMaterialValue = Number(rawMaterialRow[0]?.value ?? 0);
 
+  const billsOutstandingRow = await query<{ value: number }>(
+    `SELECT COALESCE(SUM(total_amount - paid_amount), 0) AS value
+     FROM bills
+     WHERE tenant_id = ? AND (total_amount - paid_amount) > 0`,
+    [tenantId]
+  );
+  const billsOutstandingValue = Number(billsOutstandingRow[0]?.value ?? 0);
+
   const cash = accounts.filter((a) => a.type === "cash");
   const bank = accounts.filter((a) => a.type === "bank");
   const creditors = accounts.filter((a) => a.type === "creditor");
@@ -47,7 +56,8 @@ export async function getBalanceSheetSummary(tenantId: number): Promise<BalanceS
   const cashTotal = sumBalance(cash);
   const bankTotal = sumBalance(bank);
   const creditorsTotal = sumBalance(creditors);
-  const debtorsTotal = sumBalance(debtors);
+  const manualDebtorsTotal = sumBalance(debtors);
+  const debtorsTotal = manualDebtorsTotal + billsOutstandingValue;
   const fixedAssetsTotal = fixedAssets.reduce((s, a) => s + Number(a.quantity) * Number(a.unit_value), 0);
 
   const totalAssets = cashTotal + bankTotal + debtorsTotal + rawMaterialValue + fixedAssetsTotal;
@@ -61,6 +71,7 @@ export async function getBalanceSheetSummary(tenantId: number): Promise<BalanceS
     debtors,
     fixedAssets,
     rawMaterialValue,
+    billsOutstandingValue,
     totals: {
       cash: cashTotal,
       bank: bankTotal,
@@ -68,6 +79,7 @@ export async function getBalanceSheetSummary(tenantId: number): Promise<BalanceS
       debtors: debtorsTotal,
       fixedAssets: fixedAssetsTotal,
       rawMaterial: rawMaterialValue,
+      billsOutstanding: billsOutstandingValue,
       totalAssets,
       totalLiabilities,
       equity,
