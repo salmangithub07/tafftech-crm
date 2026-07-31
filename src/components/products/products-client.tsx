@@ -29,7 +29,7 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { StockDialog } from "@/components/products/stock-dialog";
 import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { ProductDeleteDialog } from "@/components/products/product-delete-dialog";
 import { StockOutReasonDialog } from "@/components/products/stock-out-reason-dialog";
 import type { Product, StockTransaction } from "@/lib/types";
 
@@ -110,10 +110,15 @@ export function ProductsClient({
     router.refresh();
   }
 
-  async function handleDelete(product: Product) {
-    const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+  async function handleDelete(product: Product, reason: string, creditorAccountId?: number | null) {
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason, creditor_account_id: creditorAccountId }),
+    });
     if (!res.ok) {
-      toast.error("Could not delete product.");
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "Could not delete product.");
       return;
     }
     toast.success("Product deleted.");
@@ -250,7 +255,16 @@ export function ProductsClient({
 
                       return (
                         <TableRow key={p.id}>
-                          <TableCell className="font-medium">{p.name}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex flex-col">
+                              <span>{p.name}</span>
+                              {p.supplier_name && (
+                                <span className="text-[11px] text-muted-foreground font-normal">
+                                  Supplier: {p.supplier_name}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-muted-foreground">
                             <Badge variant="outline" className="font-normal text-xs">{unitStr}</Badge>
                           </TableCell>
@@ -327,13 +341,18 @@ export function ProductsClient({
                       <CardContent className="flex flex-col gap-3 py-4">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-medium text-foreground">{p.name}</p>
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0">{unitStr}</Badge>
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               Price: ₹{Number(p.price).toLocaleString("en-IN")} / {unitStr}
                             </p>
+                            {p.supplier_name && (
+                              <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+                                Supplier: {p.supplier_name}
+                              </p>
+                            )}
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -421,47 +440,106 @@ export function ProductsClient({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((t) => (
-                      <TableRow key={t.id}>
-                        <TableCell className="font-medium">{t.product_name}</TableCell>
-                        <TableCell>
-                          <Badge variant={t.type === "in" ? "success" : "destructive"} className="uppercase">
-                            {t.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{t.quantity}</TableCell>
-                        <TableCell className="text-muted-foreground">{t.note || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(t.created_at).toLocaleDateString("en-IN")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {transactions.map((t) => {
+                      const isDeleted = t.note?.startsWith("[DELETED]");
+                      let displayName = t.product_name;
+                      let displayNote = t.note || "—";
+
+                      if (isDeleted) {
+                        if (!displayName && t.note) {
+                          const match = t.note.match(/^\[DELETED\]\s*(.*?)\s*—\s*Reason:/);
+                          displayName = match && match[1] ? match[1].trim() : t.note.replace("[DELETED] ", "").split("—")[0]?.trim() || "Deleted product";
+                        }
+                        if (t.note?.includes("— Reason:")) {
+                          const parts = t.note.split("— Reason:");
+                          displayNote = `Reason: ${parts[1].trim()}`;
+                        } else if (t.note) {
+                          displayNote = t.note.replace("[DELETED] ", "");
+                        }
+                      }
+
+                      return (
+                        <TableRow key={t.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <span>{displayName || "Deleted product"}</span>
+                              {isDeleted && (
+                                <span className="text-[10px] text-muted-foreground italic">(Deleted)</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {isDeleted ? (
+                              <Badge variant="outline" className="uppercase border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold">
+                                Deleted
+                              </Badge>
+                            ) : (
+                              <Badge variant={t.type === "in" ? "success" : "destructive"} className="uppercase">
+                                {t.type}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{t.quantity}</TableCell>
+                          <TableCell className="text-muted-foreground max-w-[260px] truncate">{displayNote}</TableCell>
+                          <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(t.created_at).toLocaleDateString("en-IN")}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </Card>
 
               {/* Mobile Cards */}
               <div className="flex flex-col gap-3 md:hidden">
-                {transactions.map((t) => (
-                  <Card key={t.id}>
-                    <CardContent className="flex flex-col gap-2 py-3.5 px-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-medium text-sm text-foreground">{t.product_name}</span>
-                        <Badge variant={t.type === "in" ? "success" : "destructive"} className="uppercase text-[10px]">
-                          {t.type === "in" ? `+${t.quantity} IN` : `-${t.quantity} OUT`}
-                        </Badge>
-                      </div>
-                      {t.note && (
-                        <p className="text-xs text-muted-foreground">{t.note}</p>
-                      )}
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-                        <span>By: {t.created_by_name || "System"}</span>
-                        <span>{new Date(t.created_at).toLocaleDateString("en-IN")}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {transactions.map((t) => {
+                  const isDeleted = t.note?.startsWith("[DELETED]");
+                  let displayName = t.product_name;
+                  let displayNote = t.note;
+
+                  if (isDeleted) {
+                    if (!displayName && t.note) {
+                      const match = t.note.match(/^\[DELETED\]\s*(.*?)\s*—\s*Reason:/);
+                      displayName = match && match[1] ? match[1].trim() : t.note.replace("[DELETED] ", "").split("—")[0]?.trim() || "Deleted product";
+                    }
+                    if (t.note?.includes("— Reason:")) {
+                      const parts = t.note.split("— Reason:");
+                      displayNote = `Reason: ${parts[1].trim()}`;
+                    } else if (t.note) {
+                      displayNote = t.note.replace("[DELETED] ", "");
+                    }
+                  }
+
+                  return (
+                    <Card key={t.id}>
+                      <CardContent className="flex flex-col gap-2 py-3.5 px-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-medium text-sm text-foreground">
+                            {displayName || "Deleted product"}
+                          </span>
+                          {isDeleted ? (
+                            <Badge variant="outline" className="uppercase text-[10px] border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold">
+                              DELETED
+                            </Badge>
+                          ) : (
+                            <Badge variant={t.type === "in" ? "success" : "destructive"} className="uppercase text-[10px]">
+                              {t.type === "in" ? `+${t.quantity} IN` : `-${t.quantity} OUT`}
+                            </Badge>
+                          )}
+                        </div>
+                        {displayNote && (
+                          <p className="text-xs text-muted-foreground">{displayNote}</p>
+                        )}
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                          <span>By: {t.created_by_name || "System"}</span>
+                          <span>{new Date(t.created_at).toLocaleDateString("en-IN")}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </>
           )}
@@ -509,15 +587,12 @@ export function ProductsClient({
         }}
       />
 
-      {deleting && (
-        <ConfirmDeleteDialog
-          open={!!deleting}
-          onOpenChange={(open) => !open && setDeleting(null)}
-          title={`Delete ${deleting.name}?`}
-          description="Its stock history will also be deleted. This action cannot be undone."
-          onConfirm={() => handleDelete(deleting)}
-        />
-      )}
+      <ProductDeleteDialog
+        open={!!deleting}
+        onOpenChange={(open) => !open && setDeleting(null)}
+        product={deleting}
+        onConfirm={(reason, creditorAccountId) => handleDelete(deleting!, reason, creditorAccountId)}
+      />
     </div>
   );
 }

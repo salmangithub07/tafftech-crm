@@ -11,6 +11,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0).default(0),
   min_stock_level: z.coerce.number().int().min(0).default(5),
   quantity: z.coerce.number().int().min(0).default(0),
+  supplier_id: z.coerce.number().int().positive().optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
@@ -68,12 +69,14 @@ export async function GET(req: NextRequest) {
   const products = pageIds.length
     ? await query(
         `SELECT p.*,
+           l.name AS supplier_name,
            COALESCE(p.min_stock_level, 5) AS min_stock_level,
            COALESCE(SUM(CASE WHEN s.type='in' THEN s.quantity WHEN s.type='out' THEN -s.quantity ELSE 0 END), 0) AS stock
          FROM products p
          LEFT JOIN stock_transactions s ON s.product_id = p.id
+         LEFT JOIN ledger_accounts l ON l.id = p.supplier_id AND l.tenant_id = p.tenant_id
          WHERE p.id IN (${pageIds.map(() => "?").join(",")})
-         GROUP BY p.id
+         GROUP BY p.id, l.name
          ORDER BY p.created_at DESC`,
         pageIds
       )
@@ -109,16 +112,44 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
   const result = await execute(
-    "INSERT INTO products (tenant_id, name, unit, price, min_stock_level) VALUES (?, ?, ?, ?, ?)",
-    [tenantId, d.name, d.unit || "Pcs", d.price, d.min_stock_level]
+    "INSERT INTO products (tenant_id, name, unit, price, min_stock_level, supplier_id) VALUES (?, ?, ?, ?, ?, ?)",
+    [tenantId, d.name, d.unit || "Pcs", d.price, d.min_stock_level, d.supplier_id || null]
   );
+  const productId = result.insertId;
+  const prodName = d.name;
+  const unitStr = d.unit || "Pcs";
+
   if (d.quantity > 0) {
     await execute(
       "INSERT INTO stock_transactions (tenant_id, product_id, type, quantity, note, created_by) VALUES (?, ?, 'in', ?, 'Initial stock', ?)",
-      [tenantId, result.insertId, d.quantity, session.id]
+      [tenantId, productId, d.quantity, session.id]
     );
+
+    // Record purchase in Balance Sheet Creditor account if supplier is selected
+    if (d.supplier_id) {
+      const creditorAcc = await query(
+        "SELECT id, name FROM ledger_accounts WHERE id = ? AND tenant_id = ? AND type = 'creditor'",
+        [d.supplier_id, tenantId]
+      );
+      if (creditorAcc.length > 0) {
+        const totalCost = Number(d.price) * d.quantity;
+        const todayStr = new Date().toISOString().slice(0, 10);
+        await execute(
+          `INSERT INTO ledger_transactions (tenant_id, account_id, entry_date, direction, amount, description, created_by)
+           VALUES (?, ?, ?, 'increase', ?, ?, ?)`,
+          [
+            tenantId,
+            d.supplier_id,
+            todayStr,
+            totalCost,
+            `Stock purchase: ${prodName} (${d.quantity} ${unitStr}) - Initial stock`,
+            session.id,
+          ]
+        );
+      }
+    }
   }
 
-  const product = await query("SELECT * FROM products WHERE id = ?", [result.insertId]);
+  const product = await query("SELECT p.*, l.name AS supplier_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id WHERE p.id = ?", [productId]);
   return NextResponse.json(product[0], { status: 201 });
 }
