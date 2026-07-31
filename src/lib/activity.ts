@@ -58,6 +58,24 @@ export async function ensureActivityTables() {
       ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_trashed SMALLINT DEFAULT 0;
     `).catch(() => {});
 
+    await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INTEGER;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE stock_transactions ALTER COLUMN product_id DROP NOT NULL;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE stock_transactions DROP CONSTRAINT IF EXISTS stock_transactions_product_id_fkey;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE stock_transactions 
+      ADD CONSTRAINT stock_transactions_product_id_fkey 
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
+    `).catch(() => {});
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);

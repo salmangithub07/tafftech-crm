@@ -65,6 +65,8 @@ export type Product = {
   unit?: string | null;
   price: number;
   min_stock_level?: number;
+  supplier_id?: number | null;
+  supplier_name?: string | null;
   stock?: number;
   created_at: string;
 };
