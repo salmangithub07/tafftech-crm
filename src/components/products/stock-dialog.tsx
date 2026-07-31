@@ -183,11 +183,13 @@ export function StockDialog({
                     id="creditor"
                     value={selectedCreditorId}
                     onChange={(e) => setSelectedCreditorId(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="flex h-9 w-full rounded-md border border-input bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100 px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                   >
-                    <option value="">None / Direct Purchase</option>
+                    <option value="" className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">
+                      None / Direct Purchase
+                    </option>
                     {creditors.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id} className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">
                         {c.name}
                       </option>
                     ))}
