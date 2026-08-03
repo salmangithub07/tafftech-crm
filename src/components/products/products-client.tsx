@@ -4,9 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
-import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download } from "lucide-react";
+import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,6 +50,8 @@ export function ProductsClient({
   const [total, setTotal] = React.useState(0);
   const [counts, setCounts] = React.useState<Counts>({ all: 0, in: 0, low: 0, out: 0 });
   const [tab, setTab] = React.useState<"all" | "in" | "low" | "out">("all");
+  const [searchInput, setSearchInput] = React.useState("");
+  const [search, setSearch] = React.useState("");
   const [dateFilter, setDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
@@ -72,6 +75,7 @@ export function ProductsClient({
       page: String(page),
       limit: String(pageSize),
       ...(tab !== "all" ? { stock: tab } : {}),
+      ...(search ? { search } : {}),
       ...dateFilterParams(dateFilter),
     });
     const [pRes, sRes] = await Promise.all([fetch(`/api/products?${params}`), fetch("/api/stock")]);
@@ -82,12 +86,21 @@ export function ProductsClient({
       setCounts(json.counts);
     }
     if (sRes.ok) setTransactions(await sRes.json());
-  }, [tab, page, pageSize, dateFilter]);
+  }, [tab, page, pageSize, search, dateFilter]);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- refetches whenever any filter/pagination input changes
     fetchProducts();
   }, [fetchProducts]);
+
+  // Debounce search
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   function changeTab(next: string) {
     setTab(next as "all" | "in" | "low" | "out");
@@ -211,6 +224,16 @@ export function ProductsClient({
         </TabsList>
 
         <TabsContent value="products" className="mt-4 flex flex-col gap-4">
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search products by name..."
+              className="pl-9"
+            />
+          </div>
           <Tabs value={tab} onValueChange={changeTab}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList>

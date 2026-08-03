@@ -417,6 +417,7 @@ export function AppointmentsClient({
                   <TableHead>Date &amp; Time</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Remarks</TableHead>
+                  <TableHead>Added By</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -448,6 +449,7 @@ export function AppointmentsClient({
                         <Badge variant={statusVariant[a.status]} className="capitalize">{a.status}</Badge>
                       </TableCell>
                       <TableCell className="max-w-[220px] truncate text-muted-foreground">{a.remarks || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{a.created_by_name || "—"}</TableCell>
                       <TableCell>
                         <RowActions
                           appointment={a}
@@ -521,6 +523,7 @@ export function AppointmentsClient({
                           <span className="flex items-center gap-1.5"><Phone className="size-3 shrink-0" />{a.customer_phone}</span>
                         )}
                         {a.remarks && <span className="truncate italic">{a.remarks}</span>}
+                        {a.created_by_name && <span className="truncate">Added by: {a.created_by_name}</span>}
                       </div>
                     )}
 

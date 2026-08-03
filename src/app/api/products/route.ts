@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
   const stockFilter = req.nextUrl.searchParams.get("stock"); // all | in | low | out
   const period = req.nextUrl.searchParams.get("period");
   const date = req.nextUrl.searchParams.get("date");
+  const searchQ = req.nextUrl.searchParams.get("search")?.trim() || "";
   const { page, limit, offset } = paginationParams(req, 10);
 
   const dateFilter = buildDateFilter("p.created_at", period, date);
@@ -32,9 +33,9 @@ export async function GET(req: NextRequest) {
   const base = `
     FROM products p
     LEFT JOIN stock_transactions s ON s.product_id = p.id
-    WHERE p.tenant_id = ?${dateFilter.clause}
+    WHERE p.tenant_id = ?${dateFilter.clause}${searchQ ? " AND p.name ILIKE ?" : ""}
     GROUP BY p.id`;
-  const baseParams = [tenantId, ...dateFilter.params];
+  const baseParams = [tenantId, ...dateFilter.params, ...(searchQ ? [`%${searchQ}%`] : [])];
 
   const productsWithStock = await query<{ id: number; stock: number; min_stock_level: number }>(
     `SELECT p.id,
