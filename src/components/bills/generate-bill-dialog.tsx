@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { Customer, Product, LedgerAccount } from "@/lib/types";
 
 const itemSchema = z.object({
@@ -131,8 +132,8 @@ export function GenerateBillDialog({
       submittedRef.current = false;
       setLoadingOptions(true);
       Promise.all([
-        fetch("/api/customers?limit=100").then((r) => r.ok ? r.json() : { data: [] }),
-        fetch("/api/products?limit=100").then((r) => r.ok ? r.json() : { data: [] }),
+        fetch("/api/customers?limit=500").then((r) => r.ok ? r.json() : { data: [] }),
+        fetch("/api/products?limit=500").then((r) => r.ok ? r.json() : { data: [] }),
         fetch("/api/balance-sheet/summary").then((r) => r.ok ? r.json() : null),
       ]).then(([cRes, pRes, bsRes]) => {
         setCustomers(cRes.data || []);
@@ -179,8 +180,11 @@ export function GenerateBillDialog({
     }
   }, [grandTotal, watchedStatus, setValue]);
 
-  function handleSelectCustomer(val: string) {
-    if (!val || val === "none") {
+  // Derive selected customer_id as string for SearchableSelect
+  const watchedCustomerId = watch("customer_id");
+
+  function handleSelectCustomer(val: string | null) {
+    if (!val) {
       setValue("customer_id", null);
       return;
     }
@@ -195,8 +199,12 @@ export function GenerateBillDialog({
     }
   }
 
-  function handleSelectProduct(index: number, val: string) {
-    if (!val || val === "custom") return;
+  // Track selected product per item for SearchableSelect
+  function handleSelectProduct(index: number, val: string | null) {
+    if (!val) {
+      setValue(`items.${index}.product_id`, null);
+      return;
+    }
     const pId = parseInt(val, 10);
     const found = products.find((p) => p.id === pId);
     if (found) {
@@ -243,6 +251,19 @@ export function GenerateBillDialog({
     onOpenChange(newOpen);
   }
 
+  // Build options for SearchableSelect
+  const customerOptions = customers.map((c) => ({
+    value: String(c.id),
+    label: c.name,
+    sublabel: c.phone || undefined,
+  }));
+
+  const productOptions = products.map((p) => ({
+    value: String(p.id),
+    label: p.name,
+    sublabel: `₹${p.price}`,
+  }));
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -262,19 +283,16 @@ export function GenerateBillDialog({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="existing_customer">Select Existing Customer</Label>
-                <Select onValueChange={handleSelectCustomer}>
-                  <SelectTrigger id="existing_customer">
-                    <SelectValue placeholder="Choose customer..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">-- Manual Entry --</SelectItem>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} {c.phone ? `(${c.phone})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={customerOptions}
+                  value={watchedCustomerId ? String(watchedCustomerId) : null}
+                  onValueChange={handleSelectCustomer}
+                  placeholder={loadingOptions ? "Loading customers..." : "Search & choose customer..."}
+                  searchPlaceholder="Type name or phone..."
+                  emptyLabel="No customer found."
+                  disabled={loadingOptions}
+                  triggerClassName="h-9 text-xs"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -315,25 +333,23 @@ export function GenerateBillDialog({
                 const qty = watch(`items.${index}.quantity`) || 0;
                 const price = watch(`items.${index}.unit_price`) || 0;
                 const rowTotal = qty * price;
+                const currentProductId = watch(`items.${index}.product_id`);
 
                 return (
                   <div key={field.id} className="grid grid-cols-12 gap-2 items-end rounded-md border p-3 bg-card">
                     <div className="col-span-12 sm:col-span-5 flex flex-col gap-1">
                       <Label className="text-[11px]">Product Item *</Label>
                       <div className="flex gap-2">
-                        <Select onValueChange={(val) => handleSelectProduct(index, val)}>
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="Pick catalog product..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="custom">-- Custom Product --</SelectItem>
-                            {products.map((p) => (
-                              <SelectItem key={p.id} value={String(p.id)}>
-                                {p.name} (₹{p.price})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                          options={productOptions}
+                          value={currentProductId ? String(currentProductId) : null}
+                          onValueChange={(val) => handleSelectProduct(index, val)}
+                          placeholder={loadingOptions ? "Loading..." : "Search catalog product..."}
+                          searchPlaceholder="Type product name..."
+                          emptyLabel="No product found."
+                          disabled={loadingOptions}
+                          triggerClassName="h-9 text-xs"
+                        />
                       </div>
                       <Input className="h-9 text-xs mt-1" {...register(`items.${index}.product_name`)} placeholder="Item name" />
                     </div>
