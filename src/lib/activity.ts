@@ -63,6 +63,10 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price NUMERIC(12, 2) DEFAULT 0;
+    `).catch(() => {});
+
+    await execute(`
       ALTER TABLE stock_transactions ALTER COLUMN product_id DROP NOT NULL;
     `).catch(() => {});
 
