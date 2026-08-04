@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("admin@novacrm.com");
+  const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -111,10 +111,6 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Demo access — admin@novacrm.com / admin123
-        </p>
       </div>
     </div>
   );
