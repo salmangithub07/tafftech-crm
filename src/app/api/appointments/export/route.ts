@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
      FROM appointments ap
      LEFT JOIN customers c ON c.id = ap.customer_id
      LEFT JOIN admins a ON a.id = ap.created_by
-     ${where} ORDER BY ap.appointment_date ASC, ap.appointment_time ASC`,
+     ${where} ORDER BY ap.appointment_date DESC, ap.appointment_time DESC, ap.id DESC`,
     params
   );
 
