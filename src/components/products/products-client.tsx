@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
-import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download, Search } from "lucide-react";
+import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download, Search, TrendingUp, DollarSign, PiggyBank, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,12 @@ export function ProductsClient({
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [dateFilter, setDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
+  const [profitSummary, setProfitSummary] = React.useState({
+    total_cost_value: 0,
+    total_sell_value: 0,
+    potential_profit: 0,
+    realized_profit: 0,
+  });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [formOpen, setFormOpen] = React.useState(false);
@@ -84,6 +90,7 @@ export function ProductsClient({
       setProducts(json.data);
       setTotal(json.total);
       setCounts(json.counts);
+      if (json.profit_summary) setProfitSummary(json.profit_summary);
     }
     if (sRes.ok) setTransactions(await sRes.json());
   }, [tab, page, pageSize, search, dateFilter]);
@@ -224,6 +231,53 @@ export function ProductsClient({
         </TabsList>
 
         <TabsContent value="products" className="mt-4 flex flex-col gap-4">
+          {/* Profit & Valuation Summary Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Card className="p-3.5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <span>Stock Cost Value</span>
+                <DollarSign className="size-4 text-muted-foreground" />
+              </div>
+              <p className="text-lg font-bold font-mono text-foreground mt-1">
+                ₹{profitSummary.total_cost_value.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Total purchase value</p>
+            </Card>
+
+            <Card className="p-3.5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <span>Stock Selling Value</span>
+                <Receipt className="size-4 text-muted-foreground" />
+              </div>
+              <p className="text-lg font-bold font-mono text-foreground mt-1">
+                ₹{profitSummary.total_sell_value.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Total selling value</p>
+            </Card>
+
+            <Card className="p-3.5 border-emerald-500/30 bg-emerald-500/5">
+              <div className="flex items-center justify-between text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                <span>Potential Profit</span>
+                <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <p className="text-lg font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1">
+                ₹{profitSummary.potential_profit.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80">If 100% stock is sold</p>
+            </Card>
+
+            <Card className="p-3.5 border-blue-500/30 bg-blue-500/5">
+              <div className="flex items-center justify-between text-xs font-medium text-blue-800 dark:text-blue-300">
+                <span>Realized Profit</span>
+                <PiggyBank className="size-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <p className="text-lg font-bold font-mono text-blue-700 dark:text-blue-400 mt-1">
+                ₹{profitSummary.realized_profit.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[10px] text-blue-600/80 dark:text-blue-400/80">From Stock Out / Bills</p>
+            </Card>
+          </div>
+
           {/* Search Box */}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -261,9 +315,11 @@ export function ProductsClient({
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Unit</TableHead>
-                      <TableHead>Unit Price</TableHead>
+                      <TableHead>Cost Price</TableHead>
+                      <TableHead>Selling Price</TableHead>
+                      <TableHead>Profit / Unit</TableHead>
                       <TableHead>Current Stock</TableHead>
-                      <TableHead>Total Stock Value</TableHead>
+                      <TableHead>Stock Valuation</TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
                   </TableHeader>
@@ -272,7 +328,13 @@ export function ProductsClient({
                       const currentStock = p.stock ?? 0;
                       const minLevel = p.min_stock_level ?? 5;
                       const unitStr = p.unit || "Pcs";
-                      const totalValue = currentStock * Number(p.price || 0);
+                      const costPrice = Number(p.cost_price || 0);
+                      const sellPrice = Number(p.price || 0);
+                      const unitProfit = sellPrice - costPrice;
+                      const marginPct = sellPrice > 0 && costPrice > 0 ? Math.round((unitProfit / sellPrice) * 100) : 0;
+                      const totalCostVal = currentStock * costPrice;
+                      const totalSellVal = currentStock * sellPrice;
+                      const totalPotentialProfit = Math.max(0, totalSellVal - totalCostVal);
                       const isOut = currentStock <= 0;
                       const isLow = !isOut && currentStock <= minLevel;
 
@@ -291,7 +353,20 @@ export function ProductsClient({
                           <TableCell className="text-muted-foreground">
                             <Badge variant="outline" className="font-normal text-xs">{unitStr}</Badge>
                           </TableCell>
-                          <TableCell className="font-mono">₹{Number(p.price).toLocaleString("en-IN")}</TableCell>
+                          <TableCell className="font-mono text-muted-foreground">₹{costPrice.toLocaleString("en-IN")}</TableCell>
+                          <TableCell className="font-mono font-medium">₹{sellPrice.toLocaleString("en-IN")}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className={`font-mono font-medium ${unitProfit > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                                ₹{unitProfit.toLocaleString("en-IN")}
+                              </span>
+                              {marginPct > 0 && (
+                                <span className="text-[10px] text-emerald-600/90 dark:text-emerald-400/90 font-medium">
+                                  {marginPct}% margin
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {isOut ? (
                               <Badge variant="destructive">Out of stock (0 {unitStr})</Badge>
@@ -304,8 +379,15 @@ export function ProductsClient({
                               <Badge variant="secondary">{currentStock} {unitStr}</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono font-bold text-foreground">
-                            ₹{totalValue.toLocaleString("en-IN")}
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-mono font-bold text-foreground">₹{totalSellVal.toLocaleString("en-IN")}</span>
+                              {totalPotentialProfit > 0 && currentStock > 0 && (
+                                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                                  Profit: +₹{totalPotentialProfit.toLocaleString("en-IN")}
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -355,7 +437,11 @@ export function ProductsClient({
                   const currentStock = p.stock ?? 0;
                   const minLevel = p.min_stock_level ?? 5;
                   const unitStr = p.unit || "Pcs";
-                  const totalValue = currentStock * Number(p.price || 0);
+                  const costPrice = Number(p.cost_price || 0);
+                  const sellPrice = Number(p.price || 0);
+                  const unitProfit = sellPrice - costPrice;
+                  const marginPct = sellPrice > 0 && costPrice > 0 ? Math.round((unitProfit / sellPrice) * 100) : 0;
+                  const totalSellVal = currentStock * sellPrice;
                   const isOut = currentStock <= 0;
                   const isLow = !isOut && currentStock <= minLevel;
 
@@ -368,11 +454,17 @@ export function ProductsClient({
                               <p className="font-medium text-foreground">{p.name}</p>
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0">{unitStr}</Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Price: ₹{Number(p.price).toLocaleString("en-IN")} / {unitStr}
-                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                              <span>Cost: ₹{costPrice.toLocaleString("en-IN")}</span>
+                              <span>Sell: ₹{sellPrice.toLocaleString("en-IN")}</span>
+                            </div>
+                            {unitProfit > 0 && (
+                              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                                Profit/unit: ₹{unitProfit.toLocaleString("en-IN")} {marginPct > 0 ? `(${marginPct}% margin)` : ""}
+                              </p>
+                            )}
                             {p.supplier_name && (
-                              <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+                              <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium mt-0.5">
                                 Supplier: {p.supplier_name}
                               </p>
                             )}
@@ -408,7 +500,7 @@ export function ProductsClient({
                         <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
                           <div>
                             <span className="text-[10px] text-muted-foreground block">Stock Value</span>
-                            <span className="font-mono font-bold text-foreground">₹{totalValue.toLocaleString("en-IN")}</span>
+                            <span className="font-mono font-bold text-foreground">₹{totalSellVal.toLocaleString("en-IN")}</span>
                           </div>
                           <div>
                             {isOut ? (

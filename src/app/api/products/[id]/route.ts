@@ -7,6 +7,7 @@ const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   unit: z.string().optional().or(z.literal("")).default("Pcs"),
   price: z.coerce.number().min(0).default(0),
+  cost_price: z.coerce.number().min(0).default(0),
   min_stock_level: z.coerce.number().int().min(0).default(5),
   supplier_id: z.coerce.number().int().positive().optional().nullable(),
 });
@@ -32,10 +33,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!existing.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const d = parsed.data;
-  await execute("UPDATE products SET name=?, unit=?, price=?, min_stock_level=?, supplier_id=? WHERE id=? AND tenant_id=?", [
+  await execute("UPDATE products SET name=?, unit=?, price=?, cost_price=?, min_stock_level=?, supplier_id=? WHERE id=? AND tenant_id=?", [
     d.name,
     d.unit || "Pcs",
     d.price,
+    d.cost_price || 0,
     d.min_stock_level,
     d.supplier_id || null,
     id,

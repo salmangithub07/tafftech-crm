@@ -23,6 +23,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   unit: z.string(),
   price: z.number().min(0),
+  cost_price: z.number().min(0).optional(),
   min_stock_level: z.number().int().min(0),
   quantity: z.number().int().min(0).optional(),
 });
@@ -51,12 +52,16 @@ export function ProductFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", unit: "Pcs", price: 0, min_stock_level: 5, quantity: 0 },
+    defaultValues: { name: "", unit: "Pcs", price: 0, cost_price: 0, min_stock_level: 5, quantity: 0 },
   });
 
   const watchPrice = watch("price") || 0;
+  const watchCostPrice = watch("cost_price") || 0;
   const watchQty = watch("quantity") || 0;
-  const supplierCost = watchPrice * watchQty;
+  const unitCostForSupplier = watchCostPrice > 0 ? watchCostPrice : watchPrice;
+  const supplierCost = unitCostForSupplier * watchQty;
+  const profitPerUnit = watchPrice - watchCostPrice;
+  const profitMarginPercent = watchPrice > 0 && watchCostPrice > 0 ? Math.round((profitPerUnit / watchPrice) * 100) : 0;
 
   React.useEffect(() => {
     if (open) {
@@ -66,10 +71,11 @@ export function ProductFormDialog({
               name: product.name,
               unit: product.unit ?? "Pcs",
               price: Number(product.price),
+              cost_price: Number(product.cost_price || 0),
               min_stock_level: product.min_stock_level ?? 5,
               quantity: 0,
             }
-          : { name: "", unit: "Pcs", price: 0, min_stock_level: 5, quantity: 0 }
+          : { name: "", unit: "Pcs", price: 0, cost_price: 0, min_stock_level: 5, quantity: 0 }
       );
       setSupplierId(product?.supplier_id ? String(product.supplier_id) : "");
 
@@ -88,6 +94,7 @@ export function ProductFormDialog({
     try {
       const payload = {
         ...values,
+        cost_price: Number(values.cost_price) || 0,
         supplier_id: supplierId ? Number(supplierId) : null,
       };
       const res = await fetch(isEdit ? `/api/products/${product!.id}` : "/api/products", {
@@ -110,7 +117,7 @@ export function ProductFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Product" : "Add New Product"}</DialogTitle>
-          <DialogDescription>Fill in the product details, measurement unit, supplier, and stock thresholds.</DialogDescription>
+          <DialogDescription>Fill in product pricing, cost price, measurement unit, and stock thresholds.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -119,16 +126,27 @@ export function ProductFormDialog({
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="unit">Unit (UOM)</Label>
-              <Input id="unit" {...register("unit")} placeholder="e.g. Pcs, Kg, Gm, Box, Ltr" />
+              <Input id="unit" {...register("unit")} placeholder="e.g. Pcs" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="price">Unit Price (₹)</Label>
-              <Input id="price" type="number" step="0.01" {...register("price", { valueAsNumber: true })} />
+              <Label htmlFor="cost_price">Cost Price (₹)</Label>
+              <Input id="cost_price" type="number" step="0.01" min={0} {...register("cost_price", { valueAsNumber: true })} placeholder="0.00" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="price">Selling Price (₹) *</Label>
+              <Input id="price" type="number" step="0.01" min={0} {...register("price", { valueAsNumber: true })} placeholder="0.00" />
             </div>
           </div>
+
+          {watchPrice > 0 && watchCostPrice > 0 && (
+            <div className="rounded-md border p-2.5 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs flex items-center justify-between">
+              <span>Estimated Profit / Unit: <strong className="font-mono">₹{profitPerUnit.toLocaleString("en-IN")}</strong></span>
+              <span className="font-semibold">Margin: {profitMarginPercent}%</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
