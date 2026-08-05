@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Customer } from "@/lib/types";
+import { SearchableSelect, type SearchableOption } from "@/components/ui/searchable-select";
+import type { Customer, Product } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -64,6 +65,12 @@ export function CustomerFormDialog({
 }) {
   const isEdit = !!customer;
 
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = React.useState(false);
+  const [selectedProductValue, setSelectedProductValue] = React.useState<string | null>(null);
+  const [isCustomProduct, setIsCustomProduct] = React.useState(false);
+  const [customProductText, setCustomProductText] = React.useState("");
+
   const {
     register,
     handleSubmit,
@@ -78,6 +85,40 @@ export function CustomerFormDialog({
 
   React.useEffect(() => {
     if (open) {
+      setLoadingProducts(true);
+      fetch("/api/products?limit=500")
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((res) => {
+          const list: Product[] = res.data || [];
+          setProducts(list);
+
+          const existingProd = customer?.product ?? "";
+          if (existingProd) {
+            const matched = list.find((p) => p.name.toLowerCase() === existingProd.toLowerCase());
+            if (matched) {
+              setSelectedProductValue(matched.name);
+              setIsCustomProduct(false);
+              setCustomProductText("");
+              setValue("product", matched.name);
+            } else {
+              // Not in catalog -> render as custom product
+              setSelectedProductValue("__custom__");
+              setIsCustomProduct(true);
+              setCustomProductText(existingProd);
+              setValue("product", existingProd);
+            }
+          } else {
+            setSelectedProductValue(null);
+            setIsCustomProduct(false);
+            setCustomProductText("");
+            setValue("product", "");
+          }
+        })
+        .catch(() => {
+          setProducts([]);
+        })
+        .finally(() => setLoadingProducts(false));
+
       reset(
         customer
           ? {
@@ -93,7 +134,34 @@ export function CustomerFormDialog({
           : emptyValues
       );
     }
-  }, [open, customer, reset]);
+  }, [open, customer, reset, setValue]);
+
+  function handleProductSelect(val: string | null) {
+    if (!val) {
+      setSelectedProductValue(null);
+      setIsCustomProduct(false);
+      setValue("product", "");
+      return;
+    }
+
+    if (val === "__custom__") {
+      setSelectedProductValue("__custom__");
+      setIsCustomProduct(true);
+      setValue("product", customProductText);
+    } else {
+      setSelectedProductValue(val);
+      setIsCustomProduct(false);
+      setValue("product", val);
+    }
+  }
+
+  function handleCustomTextChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const text = e.target.value;
+    setCustomProductText(text);
+    if (isCustomProduct) {
+      setValue("product", text);
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -116,6 +184,18 @@ export function CustomerFormDialog({
     }
   }
 
+  // Options for SearchableSelect
+  const productOptions: SearchableOption[] = [
+    {
+      value: "__custom__",
+      label: "-- Custom Product / Manual Entry --",
+    },
+    ...products.map((p) => ({
+      value: p.name,
+      label: `${p.name} (${p.stock ?? 0})`,
+    })),
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -136,7 +216,29 @@ export function CustomerFormDialog({
 
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="product">Product / Interest</Label>
-              <Input id="product" {...register("product")} placeholder="e.g. Scrubber Packing Machine" />
+              <SearchableSelect
+                options={productOptions}
+                value={selectedProductValue}
+                onValueChange={handleProductSelect}
+                placeholder={loadingProducts ? "Loading catalog products..." : "Search & select product..."}
+                searchPlaceholder="Search catalog product..."
+                emptyLabel="No product found."
+                disabled={loadingProducts}
+                triggerClassName="h-9 text-xs"
+              />
+              {isCustomProduct && (
+                <div className="mt-1.5 flex flex-col gap-1">
+                  <Input
+                    value={customProductText}
+                    onChange={handleCustomTextChange}
+                    placeholder="Enter custom product name..."
+                    className="h-9 text-xs"
+                  />
+                  <span className="text-[11px] text-muted-foreground">
+                    This custom product will be saved for this customer.
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
