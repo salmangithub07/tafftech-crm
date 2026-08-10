@@ -38,6 +38,7 @@ const formSchema = z.object({
   visited: z.boolean(),
   address: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
+  created_by: z.number().int().positive().optional().nullable(),
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -50,6 +51,14 @@ const emptyValues: FormValues = {
   visited: false,
   address: "",
   notes: "",
+  created_by: null,
+};
+
+type TeamMember = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
 };
 
 export function CustomerFormDialog({
@@ -71,6 +80,10 @@ export function CustomerFormDialog({
   const [isCustomProduct, setIsCustomProduct] = React.useState(false);
   const [customProductText, setCustomProductText] = React.useState("");
 
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
+  const [loadingTeam, setLoadingTeam] = React.useState(false);
+
   const {
     register,
     handleSubmit,
@@ -86,55 +99,65 @@ export function CustomerFormDialog({
   React.useEffect(() => {
     if (open) {
       setLoadingProducts(true);
-      fetch("/api/products?limit=500")
-        .then((r) => (r.ok ? r.json() : { data: [] }))
-        .then((res) => {
-          const list: Product[] = res.data || [];
-          setProducts(list);
+      setLoadingTeam(true);
+
+      // Fetch products and team members concurrently
+      Promise.all([
+        fetch("/api/products?limit=500").then((r) => (r.ok ? r.json() : { data: [] })),
+        fetch("/api/team/members").then((r) => (r.ok ? r.json() : { data: [], current_user_id: null })),
+      ])
+        .then(([prodRes, teamRes]) => {
+          const prodList: Product[] = prodRes.data || [];
+          setProducts(prodList);
+
+          const members: TeamMember[] = teamRes.data || [];
+          const curUserId: number | null = teamRes.current_user_id ?? null;
+          setTeamMembers(members);
+          setCurrentUserId(curUserId);
 
           const existingProd = customer?.product ?? "";
           if (existingProd) {
-            const matched = list.find((p) => p.name.toLowerCase() === existingProd.toLowerCase());
+            const matched = prodList.find((p) => p.name.toLowerCase() === existingProd.toLowerCase());
             if (matched) {
               setSelectedProductValue(matched.name);
               setIsCustomProduct(false);
               setCustomProductText("");
-              setValue("product", matched.name);
             } else {
-              // Not in catalog -> render as custom product
               setSelectedProductValue("__custom__");
               setIsCustomProduct(true);
               setCustomProductText(existingProd);
-              setValue("product", existingProd);
             }
           } else {
             setSelectedProductValue(null);
             setIsCustomProduct(false);
             setCustomProductText("");
-            setValue("product", "");
           }
+
+          // Initial created_by: existing customer's created_by, or current logged-in user
+          const initialCreatedBy = customer?.created_by ?? curUserId ?? (members[0]?.id || null);
+
+          reset({
+            name: customer?.name ?? "",
+            product: customer?.product ?? "",
+            email: customer?.email ?? "",
+            phone: customer?.phone ?? "",
+            status: customer?.status ?? "lead",
+            visited: !!customer?.visited,
+            address: customer?.address ?? "",
+            notes: customer?.notes ?? "",
+            created_by: initialCreatedBy,
+          });
         })
         .catch(() => {
           setProducts([]);
+          setTeamMembers([]);
         })
-        .finally(() => setLoadingProducts(false));
-
-      reset(
-        customer
-          ? {
-              name: customer.name,
-              product: customer.product ?? "",
-              email: customer.email ?? "",
-              phone: customer.phone ?? "",
-              status: customer.status,
-              visited: !!customer.visited,
-              address: customer.address ?? "",
-              notes: customer.notes ?? "",
-            }
-          : emptyValues
-      );
+        .finally(() => {
+          setLoadingProducts(false);
+          setLoadingTeam(false);
+        });
     }
-  }, [open, customer, reset, setValue]);
+  }, [open, customer, reset]);
 
   function handleProductSelect(val: string | null) {
     if (!val) {
@@ -273,6 +296,27 @@ export function CustomerFormDialog({
             <div className="flex items-center justify-between gap-2 rounded-md border px-3">
               <Label htmlFor="visited" className="cursor-pointer">Site visited?</Label>
               <Switch id="visited" checked={watch("visited")} onCheckedChange={(v) => setValue("visited", v)} />
+            </div>
+
+            {/* Added By Field */}
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="created_by">Added By</Label>
+              <Select
+                value={watch("created_by") ? String(watch("created_by")) : ""}
+                onValueChange={(v) => setValue("created_by", v ? parseInt(v, 10) : null)}
+                disabled={loadingTeam}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loadingTeam ? "Loading team members..." : "Select team member..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamMembers.map((m) => (
+                    <SelectItem key={m.id} value={String(m.id)}>
+                      {m.name} ({m.role === "admin" ? "Admin" : "Team Member"}){m.id === currentUserId ? " — (You)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-col gap-1.5 sm:col-span-2">

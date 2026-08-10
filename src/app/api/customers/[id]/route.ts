@@ -13,6 +13,7 @@ const customerSchema = z.object({
   notes: z.string().optional().or(z.literal("")).default(""),
   status: z.enum(["lead", "progress", "active", "inactive"]).default("lead"),
   visited: z.boolean().default(false),
+  created_by: z.coerce.number().int().positive().optional().nullable(),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -37,13 +38,18 @@ export async function PUT(req: NextRequest, { params }: Params) {
       );
     }
 
-    const existing = await query("SELECT id FROM customers WHERE id = ? AND tenant_id = ?", [custId, tenantId]);
+    const existing = await query<{ id: number; created_by: number | null }>(
+      "SELECT id, created_by FROM customers WHERE id = ? AND tenant_id = ?",
+      [custId, tenantId]
+    );
     if (!existing.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const d = parsed.data;
+    const createdBy = d.created_by || existing[0].created_by || session.id;
+
     await execute(
-      `UPDATE customers SET name=?, product=?, email=?, phone=?, address=?, notes=?, status=?, visited=? WHERE id=? AND tenant_id=?`,
-      [d.name, d.product, d.email, d.phone, d.address, d.notes, d.status, d.visited ? 1 : 0, custId, tenantId]
+      `UPDATE customers SET name=?, product=?, email=?, phone=?, address=?, notes=?, status=?, visited=?, created_by=? WHERE id=? AND tenant_id=?`,
+      [d.name, d.product, d.email, d.phone, d.address, d.notes, d.status, d.visited ? 1 : 0, createdBy, custId, tenantId]
     );
 
     const customer = await query("SELECT * FROM customers WHERE id = ? AND tenant_id = ?", [custId, tenantId]);
