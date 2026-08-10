@@ -1,4 +1,5 @@
 import type { Admin, PlanStatus, PlanType } from "@/lib/types";
+import type { AppSettings } from "@/lib/settings";
 
 export type SubscriptionInfo = {
   status: PlanStatus;
@@ -7,6 +8,35 @@ export type SubscriptionInfo = {
   formattedExpiry: string | null;
   planType: PlanType;
 };
+
+/**
+ * Returns Max Executives and Max Customers allowed for a given plan type based on Super Admin settings.
+ * Returns -1 if unlimited.
+ */
+export function getPlanLimits(planType: PlanType | string | null | undefined, settings: AppSettings) {
+  const p = (planType || "trial") as PlanType;
+  let maxExecs = -1;
+  let maxCusts = -1;
+
+  if (p === "trial") {
+    maxExecs = parseInt(settings.trial_max_executives || "2", 10);
+    maxCusts = parseInt(settings.trial_max_customers || "50", 10);
+  } else if (p === "yearly") {
+    maxExecs = parseInt(settings.yearly_max_executives || "10", 10);
+    maxCusts = parseInt(settings.yearly_max_customers || "1000", 10);
+  } else if (p === "3_year") {
+    maxExecs = parseInt(settings.three_year_max_executives || "25", 10);
+    maxCusts = parseInt(settings.three_year_max_customers || "5000", 10);
+  } else if (p === "lifetime") {
+    maxExecs = parseInt(settings.lifetime_max_executives || "-1", 10);
+    maxCusts = parseInt(settings.lifetime_max_customers || "-1", 10);
+  }
+
+  return {
+    maxExecutives: isNaN(maxExecs) ? -1 : maxExecs,
+    maxCustomers: isNaN(maxCusts) ? -1 : maxCusts,
+  };
+}
 
 /**
  * Evaluates subscription status for an Admin/Tenant.

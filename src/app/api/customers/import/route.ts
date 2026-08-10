@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execute } from "@/lib/db";
+import { queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
+import { getSettings } from "@/lib/settings";
+import { getPlanLimits } from "@/lib/subscription";
 import { z } from "zod";
 
 const rowSchema = z.object({
@@ -21,6 +23,28 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const rows = Array.isArray(body?.rows) ? body.rows : [];
+
+  // Check customer limits before importing
+  const superAdminSettings = await getSettings(0);
+  const tenantAdmin = await queryOne<{ plan_type: string }>("SELECT plan_type FROM admins WHERE id = ?", [tenantId]);
+  const limits = getPlanLimits(tenantAdmin?.plan_type, superAdminSettings);
+
+  if (limits.maxCustomers !== -1) {
+    const custCountRow = await queryOne<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM customers WHERE tenant_id = ? AND COALESCE(is_trashed, 0) = 0",
+      [tenantId]
+    );
+    const currentCustomers = Number(custCountRow?.count || 0);
+    if (currentCustomers + rows.length > limits.maxCustomers) {
+      return NextResponse.json(
+        {
+          error: `Importing ${rows.length} customers will exceed your plan's customer limit of ${limits.maxCustomers} (Current: ${currentCustomers}). Please upgrade your subscription plan.`,
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   let inserted = 0;
   let skipped = 0;
 

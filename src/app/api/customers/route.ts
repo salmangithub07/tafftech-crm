@@ -3,6 +3,8 @@ import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
 import { logActivity } from "@/lib/activity";
+import { getSettings } from "@/lib/settings";
+import { getPlanLimits } from "@/lib/subscription";
 import { z } from "zod";
 
 const customerSchema = z.object({
@@ -108,6 +110,27 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
   const createdBy = d.created_by || session.id;
+
+  // Check customer/lead limits for this tenant
+  const superAdminSettings = await getSettings(0);
+  const tenantAdmin = await queryOne<{ plan_type: string }>("SELECT plan_type FROM admins WHERE id = ?", [tenantId]);
+  const limits = getPlanLimits(tenantAdmin?.plan_type, superAdminSettings);
+
+  if (limits.maxCustomers !== -1) {
+    const custCountRow = await queryOne<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM customers WHERE tenant_id = ? AND COALESCE(is_trashed, 0) = 0",
+      [tenantId]
+    );
+    const currentCustomers = Number(custCountRow?.count || 0);
+    if (currentCustomers >= limits.maxCustomers) {
+      return NextResponse.json(
+        {
+          error: `Customer/Lead limit reached (${limits.maxCustomers}) for your current ${tenantAdmin?.plan_type || "trial"} plan. Please upgrade your subscription plan to add more customers.`,
+        },
+        { status: 403 }
+      );
+    }
+  }
 
   const result = await execute(
     `INSERT INTO customers (tenant_id, name, product, email, phone, address, notes, status, visited, created_by)

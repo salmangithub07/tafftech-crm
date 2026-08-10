@@ -23,6 +23,17 @@ const settingsSchema = z.object({
   whatsapp_api_key: z.string().optional(),
   whatsapp_instance_id: z.string().optional(),
   whatsapp_reminder_template: z.string().optional(),
+  yearly_plan_price: z.string().optional(),
+  three_year_plan_price: z.string().optional(),
+  payment_qr_code: z.string().optional(),
+  trial_max_executives: z.string().optional(),
+  trial_max_customers: z.string().optional(),
+  yearly_max_executives: z.string().optional(),
+  yearly_max_customers: z.string().optional(),
+  three_year_max_executives: z.string().optional(),
+  three_year_max_customers: z.string().optional(),
+  lifetime_max_executives: z.string().optional(),
+  lifetime_max_customers: z.string().optional(),
 });
 
 export async function GET() {

@@ -93,6 +93,27 @@ export async function ensureActivityTables() {
       ALTER TABLE admins ADD COLUMN IF NOT EXISTS plan_expiry_date DATE DEFAULT NULL;
     `).catch(() => {});
 
+    // Table for tracking tenant subscription payment proofs / UTR submissions
+    await execute(`
+      CREATE TABLE IF NOT EXISTS subscription_payments (
+        id            BIGSERIAL PRIMARY KEY,
+        tenant_id     INTEGER NOT NULL,
+        admin_name    VARCHAR(255) NOT NULL,
+        admin_email   VARCHAR(255) NOT NULL,
+        plan_type     VARCHAR(50) DEFAULT 'yearly',
+        amount        NUMERIC(10, 2) NOT NULL,
+        utr_number    VARCHAR(100) NOT NULL,
+        notes         TEXT,
+        status        VARCHAR(20) DEFAULT 'pending',
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        updated_at    TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(() => {});
+
+    await execute(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_subscription_payments_utr ON subscription_payments (LOWER(utr_number));
+    `).catch(() => {});
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);

@@ -19,6 +19,8 @@ export default async function DashboardLayout({
 
   const tenantId = tenantOf(session) ?? 0;
   const settings = await getSettings(tenantId);
+  const superAdminSettings = await getSettings(0);
+  const superAdminPhone = superAdminSettings.whatsapp_phone || superAdminSettings.company_phone || "+91 9876543210";
 
   let subInfo = null;
   let adminRow: Admin | null = null;
@@ -44,7 +46,11 @@ export default async function DashboardLayout({
         planType={subInfo.planType}
         expiryDate={subInfo.formattedExpiry}
         adminName={adminRow?.name}
-        companyPhone={settings.company_phone}
+        companyPhone={superAdminPhone}
+        yearlyPrice={superAdminSettings.yearly_plan_price}
+        threeYearPrice={superAdminSettings.three_year_plan_price}
+        bankUpiId={superAdminSettings.bank_upi_id}
+        paymentQrCode={superAdminSettings.payment_qr_code}
       />
     );
   }
@@ -62,7 +68,11 @@ export default async function DashboardLayout({
           daysRemaining={subInfo.daysRemaining}
           graceDaysLeft={subInfo.graceDaysRemaining ?? 0}
           planType={subInfo.planType}
-          companyPhone={settings.company_phone}
+          companyPhone={superAdminPhone}
+          yearlyPrice={superAdminSettings.yearly_plan_price}
+          threeYearPrice={superAdminSettings.three_year_plan_price}
+          bankUpiId={superAdminSettings.bank_upi_id}
+          paymentQrCode={superAdminSettings.payment_qr_code}
         />
       )}
       {children}

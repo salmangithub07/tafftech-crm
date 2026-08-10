@@ -207,7 +207,7 @@ export function parsePermissions(raw: string | null | undefined): PermissionModu
   }
 }
 
-export type PlanType = "trial" | "monthly" | "quarterly" | "yearly" | "lifetime";
+export type PlanType = "trial" | "monthly" | "quarterly" | "yearly" | "3_year" | "lifetime";
 export type PlanStatus = "active" | "grace" | "locked";
 
 export type Admin = {

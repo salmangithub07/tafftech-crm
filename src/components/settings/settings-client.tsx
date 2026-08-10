@@ -12,6 +12,7 @@ import {
   Sparkles,
   Phone,
   Shield,
+  ShieldCheck,
   MessageSquare,
   Send,
   HelpCircle,
@@ -57,10 +58,12 @@ export function SettingsClient({
   session,
   initialSettings,
   subscriptionInfo,
+  superAdminPhone,
 }: {
   session: SessionPayload;
   initialSettings: AppSettings;
   subscriptionInfo?: SubscriptionInfo | null;
+  superAdminPhone?: string | null;
 }) {
   const canEditAppearance = session.role === "super_admin" || session.role === "admin";
 
@@ -76,10 +79,18 @@ export function SettingsClient({
         {canEditAppearance && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
         {canEditAppearance && <TabsTrigger value="invoice">Invoice &amp; Bank</TabsTrigger>}
         {canEditAppearance && <TabsTrigger value="whatsapp">WhatsApp Gateway</TabsTrigger>}
+        {session.role === "super_admin" && (
+          <TabsTrigger value="subscription">Subscription Pricing &amp; QR</TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value="profile" className="mt-6">
-        <ProfileTab session={session} subscriptionInfo={subscriptionInfo} companyPhone={initialSettings.company_phone} />
+        <ProfileTab
+          session={session}
+          subscriptionInfo={subscriptionInfo}
+          initialSettings={initialSettings}
+          superAdminPhone={superAdminPhone}
+        />
       </TabsContent>
       {canEditAppearance && (
         <TabsContent value="appearance" className="mt-6">
@@ -96,6 +107,11 @@ export function SettingsClient({
           <WhatsAppTab initialSettings={initialSettings} />
         </TabsContent>
       )}
+      {session.role === "super_admin" && (
+        <TabsContent value="subscription" className="mt-6">
+          <SubscriptionSettingsTab initialSettings={initialSettings} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
@@ -105,11 +121,13 @@ export function SettingsClient({
 function ProfileTab({
   session,
   subscriptionInfo,
-  companyPhone,
+  initialSettings,
+  superAdminPhone,
 }: {
   session: SessionPayload;
   subscriptionInfo?: SubscriptionInfo | null;
-  companyPhone?: string | null;
+  initialSettings: AppSettings;
+  superAdminPhone?: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = React.useState(session.name);
@@ -203,10 +221,27 @@ function ProfileTab({
             </div>
           </CardContent>
           <CardFooter className="border-t border-border/40 py-3 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Need to extend or upgrade your plan?</span>
-            <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
-              <Sparkles className="size-3.5" /> Renew / Upgrade Plan
-            </Button>
+            {subscriptionInfo.status === "grace" ||
+            subscriptionInfo.status === "locked" ||
+            (subscriptionInfo.daysRemaining !== null && subscriptionInfo.daysRemaining <= 3) ? (
+              <>
+                <span className="text-xs text-muted-foreground">Plan expiring soon. Send a renewal request to Super Admin:</span>
+                <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
+                  <Sparkles className="size-3.5" /> Send Renewal Request
+                </Button>
+              </>
+            ) : subscriptionInfo.planType === "yearly" || subscriptionInfo.planType === "trial" ? (
+              <>
+                <span className="text-xs text-muted-foreground">Want to extend your access? Upgrade to 3-Year Plan anytime:</span>
+                <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
+                  <Sparkles className="size-3.5" /> Upgrade to 3-Year Plan
+                </Button>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Check className="size-3.5 text-emerald-500" /> Your subscription is active and up to date.
+              </span>
+            )}
           </CardFooter>
         </Card>
       )}
@@ -216,7 +251,11 @@ function ProfileTab({
         onOpenChange={setRenewDialogOpen}
         planType={subscriptionInfo?.planType}
         expiryDate={subscriptionInfo?.formattedExpiry}
-        companyPhone={companyPhone}
+        companyPhone={superAdminPhone || initialSettings.company_phone}
+        yearlyPrice={initialSettings.yearly_plan_price}
+        threeYearPrice={initialSettings.three_year_plan_price}
+        bankUpiId={initialSettings.bank_upi_id}
+        paymentQrCode={initialSettings.payment_qr_code}
       />
 
       <Card>
@@ -815,3 +854,276 @@ function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
     </form>
   );
 }
+
+/* --------------------------- Subscription Pricing & QR Tab --------------------------- */
+
+function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSettings }) {
+  const router = useRouter();
+  const [yearlyPrice, setYearlyPrice] = React.useState(initialSettings.yearly_plan_price || "4999");
+  const [threeYearPrice, setThreeYearPrice] = React.useState(initialSettings.three_year_plan_price || "12999");
+  const [bankUpi, setBankUpi] = React.useState(initialSettings.bank_upi_id || "");
+  const [paymentQr, setPaymentQr] = React.useState(initialSettings.payment_qr_code || "");
+
+  // Plan limits state
+  const [trialExecs, setTrialExecs] = React.useState(initialSettings.trial_max_executives || "2");
+  const [trialCusts, setTrialCusts] = React.useState(initialSettings.trial_max_customers || "50");
+  const [yearlyExecs, setYearlyExecs] = React.useState(initialSettings.yearly_max_executives || "10");
+  const [yearlyCusts, setYearlyCusts] = React.useState(initialSettings.yearly_max_customers || "1000");
+  const [threeYearExecs, setThreeYearExecs] = React.useState(initialSettings.three_year_max_executives || "25");
+  const [threeYearCusts, setThreeYearCusts] = React.useState(initialSettings.three_year_max_customers || "5000");
+  const [lifetimeExecs, setLifetimeExecs] = React.useState(initialSettings.lifetime_max_executives || "-1");
+  const [lifetimeCusts, setLifetimeCusts] = React.useState(initialSettings.lifetime_max_customers || "-1");
+
+  const [saving, setSaving] = React.useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          yearly_plan_price: yearlyPrice,
+          three_year_plan_price: threeYearPrice,
+          bank_upi_id: bankUpi,
+          payment_qr_code: paymentQr,
+          trial_max_executives: trialExecs,
+          trial_max_customers: trialCusts,
+          yearly_max_executives: yearlyExecs,
+          yearly_max_customers: yearlyCusts,
+          three_year_max_executives: threeYearExecs,
+          three_year_max_customers: threeYearCusts,
+          lifetime_max_executives: lifetimeExecs,
+          lifetime_max_customers: lifetimeCusts,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Subscription pricing & plan feature limits saved!");
+      router.refresh();
+    } catch {
+      toast.error("Could not save subscription settings.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="size-5 text-primary" /> Subscription Pricing &amp; Payment QR
+          </CardTitle>
+          <CardDescription>
+            Manage the 1-Year and 3-Year plan prices, UPI ID, and QR Code image shown to tenants when renewing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="yearly_price">1-Year Subscription Price (₹) *</Label>
+              <Input
+                id="yearly_price"
+                type="number"
+                value={yearlyPrice}
+                onChange={(e) => setYearlyPrice(e.target.value)}
+                placeholder="4999"
+                required
+              />
+              <span className="text-[11px] text-muted-foreground">
+                Price for 1 Year (365 Days) access.
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="three_year_price">3-Year Subscription Price (₹) *</Label>
+              <Input
+                id="three_year_price"
+                type="number"
+                value={threeYearPrice}
+                onChange={(e) => setThreeYearPrice(e.target.value)}
+                placeholder="12999"
+                required
+              />
+              <span className="text-[11px] text-muted-foreground">
+                Price for 3 Years (1095 Days) access.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="bank_upi_id">Super Admin UPI ID for Receiving Payments *</Label>
+            <Input
+              id="bank_upi_id"
+              value={bankUpi}
+              onChange={(e) => setBankUpi(e.target.value)}
+              placeholder="e.g. merchant@upi or 9876543210@paytm"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="payment_qr">Payment QR Code Image URL (Optional)</Label>
+            <Input
+              id="payment_qr"
+              value={paymentQr}
+              onChange={(e) => setPaymentQr(e.target.value)}
+              placeholder="https://... or leave empty for auto-generated UPI QR"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              If left blank, an automatic UPI QR code will be generated for your UPI ID and plan price.
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tiered Plan Limits Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="size-5 text-primary" /> Tiered Plan Feature &amp; Resource Limits
+          </CardTitle>
+          <CardDescription>
+            Set maximum Executives and Customers/Leads allowed per plan tier. Enter <strong>-1</strong> for Unlimited.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Trial Plan Limits */}
+          <div className="space-y-3 p-3.5 rounded-xl border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-foreground">Trial Plan Limits</span>
+              <Badge variant="outline">Trial</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <Label htmlFor="trial_execs">Max Team Executives (-1 = Unlimited)</Label>
+                <Input
+                  id="trial_execs"
+                  type="number"
+                  value={trialExecs}
+                  onChange={(e) => setTrialExecs(e.target.value)}
+                  placeholder="2"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="trial_custs">Max Customers / Leads (-1 = Unlimited)</Label>
+                <Input
+                  id="trial_custs"
+                  type="number"
+                  value={trialCusts}
+                  onChange={(e) => setTrialCusts(e.target.value)}
+                  placeholder="50"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 1-Year Plan Limits */}
+          <div className="space-y-3 p-3.5 rounded-xl border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-foreground">1-Year Plan Limits</span>
+              <Badge variant="secondary">1 Year</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <Label htmlFor="yearly_execs">Max Team Executives (-1 = Unlimited)</Label>
+                <Input
+                  id="yearly_execs"
+                  type="number"
+                  value={yearlyExecs}
+                  onChange={(e) => setYearlyExecs(e.target.value)}
+                  placeholder="10"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="yearly_custs">Max Customers / Leads (-1 = Unlimited)</Label>
+                <Input
+                  id="yearly_custs"
+                  type="number"
+                  value={yearlyCusts}
+                  onChange={(e) => setYearlyCusts(e.target.value)}
+                  placeholder="1000"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 3-Year Plan Limits */}
+          <div className="space-y-3 p-3.5 rounded-xl border border-primary/30 bg-primary/5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-foreground">3-Year Plan Limits</span>
+              <Badge variant="default">3 Years</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <Label htmlFor="three_year_execs">Max Team Executives (-1 = Unlimited)</Label>
+                <Input
+                  id="three_year_execs"
+                  type="number"
+                  value={threeYearExecs}
+                  onChange={(e) => setThreeYearExecs(e.target.value)}
+                  placeholder="25"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="three_year_custs">Max Customers / Leads (-1 = Unlimited)</Label>
+                <Input
+                  id="three_year_custs"
+                  type="number"
+                  value={threeYearCusts}
+                  onChange={(e) => setThreeYearCusts(e.target.value)}
+                  placeholder="5000"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Lifetime Plan Limits */}
+          <div className="space-y-3 p-3.5 rounded-xl border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-foreground">Lifetime Plan Limits</span>
+              <Badge variant="success">Lifetime</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <Label htmlFor="lifetime_execs">Max Team Executives (-1 = Unlimited)</Label>
+                <Input
+                  id="lifetime_execs"
+                  type="number"
+                  value={lifetimeExecs}
+                  onChange={(e) => setLifetimeExecs(e.target.value)}
+                  placeholder="-1"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lifetime_custs">Max Customers / Leads (-1 = Unlimited)</Label>
+                <Input
+                  id="lifetime_custs"
+                  type="number"
+                  value={lifetimeCusts}
+                  onChange={(e) => setLifetimeCusts(e.target.value)}
+                  placeholder="-1"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="border-t">
+          <Button type="submit" disabled={saving} className="ml-auto">
+            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save Settings &amp; Plan Limits
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
+  );
+}
+

@@ -11,12 +11,20 @@ export function SubscriptionGraceBanner({
   graceDaysLeft,
   planType,
   companyPhone,
+  yearlyPrice,
+  threeYearPrice,
+  bankUpiId,
+  paymentQrCode,
 }: {
   expiryDate?: string | null;
   daysRemaining: number | null;
   graceDaysLeft: number;
   planType?: string | null;
   companyPhone?: string | null;
+  yearlyPrice?: string | null;
+  threeYearPrice?: string | null;
+  bankUpiId?: string | null;
+  paymentQrCode?: string | null;
 }) {
   const [dismissed, setDismissed] = React.useState(false);
   const [renewDialogOpen, setRenewDialogOpen] = React.useState(false);
@@ -81,6 +89,10 @@ export function SubscriptionGraceBanner({
         planType={planType}
         expiryDate={expiryDate}
         companyPhone={companyPhone}
+        yearlyPrice={yearlyPrice}
+        threeYearPrice={threeYearPrice}
+        bankUpiId={bankUpiId}
+        paymentQrCode={paymentQrCode}
       />
     </>
   );

@@ -9,6 +9,8 @@ export default async function SettingsPage() {
   const session = await getSession();
   const tenantId = session?.role === "super_admin" ? 0 : (session ? tenantOf(session) ?? 0 : 0);
   const settings = await getSettings(tenantId);
+  const superAdminSettings = await getSettings(0);
+  const superAdminPhone = superAdminSettings.whatsapp_phone || superAdminSettings.company_phone || "+91 9876543210";
 
   let subInfo = null;
   if (session && session.role !== "super_admin" && tenantId) {
@@ -34,7 +36,12 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <SettingsClient session={session!} initialSettings={settings} subscriptionInfo={subInfo} />
+      <SettingsClient
+        session={session!}
+        initialSettings={settings}
+        subscriptionInfo={subInfo}
+        superAdminPhone={superAdminPhone}
+      />
     </div>
   );
 }
