@@ -14,6 +14,7 @@ const customerSchema = z.object({
   notes: z.string().optional().or(z.literal("")).default(""),
   status: z.enum(["lead", "progress", "active", "inactive"]).default("lead"),
   visited: z.boolean().default(false),
+  created_by: z.coerce.number().int().positive().optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
@@ -23,36 +24,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tenantId = tenantOf(session)!;
 
+  const filter = req.nextUrl.searchParams.get("filter") || "all";
   const search = req.nextUrl.searchParams.get("search")?.trim();
-  const status = req.nextUrl.searchParams.get("status");
   const period = req.nextUrl.searchParams.get("period");
   const date = req.nextUrl.searchParams.get("date");
   const { page, limit, offset } = paginationParams(req, 10);
 
   const dateFilter = buildDateFilter("c.created_at", period, date);
 
-  let where = " WHERE c.tenant_id = ?";
-  const params: unknown[] = [tenantId];
+  let statusWhere = " WHERE c.tenant_id = ?";
+  const statusParams: unknown[] = [tenantId];
 
-  if (search) {
-    where += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR c.email ILIKE ?)";
-    const like = `%${search}%`;
-    params.push(like, like, like, like);
-  }
-  where += dateFilter.clause;
-  params.push(...dateFilter.params);
-
-  const statusParams = [...params];
-  let statusWhere = where;
-  if (status === "trash") {
+  if (filter === "trash") {
     statusWhere += " AND COALESCE(c.is_trashed, 0) = 1";
   } else {
     statusWhere += " AND COALESCE(c.is_trashed, 0) = 0";
-    if (status && ["lead", "progress", "active", "inactive"].includes(status)) {
+    if (filter !== "all") {
       statusWhere += " AND c.status = ?";
-      statusParams.push(status);
+      statusParams.push(filter);
     }
   }
+
+  if (search) {
+    statusWhere += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR c.email ILIKE ?)";
+    const like = `%${search}%`;
+    statusParams.push(like, like, like, like);
+  }
+  statusWhere += dateFilter.clause;
+  statusParams.push(...dateFilter.params);
 
   const [customers, totalRow, counts] = await Promise.all([
     query(
@@ -63,7 +62,7 @@ export async function GET(req: NextRequest) {
       [...statusParams, limit, offset]
     ),
     queryOne<{ c: number }>(`SELECT COUNT(*) as c FROM customers c ${statusWhere}`, statusParams),
-    queryOne<{ all: number; lead: number; progress: number; active: number; inactive: number; trash: number }>(
+    queryOne<{ all_count: number; lead_count: number; progress_count: number; active_count: number; inactive_count: number; trash_count: number }>(
       `SELECT
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 THEN 1 ELSE 0 END) AS all_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='lead' THEN 1 ELSE 0 END) AS lead_count,
@@ -71,24 +70,23 @@ export async function GET(req: NextRequest) {
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='active' THEN 1 ELSE 0 END) AS active_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='inactive' THEN 1 ELSE 0 END) AS inactive_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 1 THEN 1 ELSE 0 END) AS trash_count
-       FROM customers c ${where}`,
-      params
+       FROM customers c WHERE c.tenant_id = ?${dateFilter.clause}`,
+      [tenantId, ...dateFilter.params]
     ),
   ]);
 
-  const c = counts as unknown as Record<string, number> | null;
   return NextResponse.json({
     data: customers,
     total: totalRow?.c ?? 0,
     page,
     limit,
     counts: {
-      all: c?.all_count ?? 0,
-      lead: c?.lead_count ?? 0,
-      progress: c?.progress_count ?? 0,
-      active: c?.active_count ?? 0,
-      inactive: c?.inactive_count ?? 0,
-      trash: c?.trash_count ?? 0,
+      all: counts?.all_count ?? 0,
+      lead: counts?.lead_count ?? 0,
+      progress: counts?.progress_count ?? 0,
+      active: counts?.active_count ?? 0,
+      inactive: counts?.inactive_count ?? 0,
+      trash: counts?.trash_count ?? 0,
     },
   });
 }
@@ -109,10 +107,12 @@ export async function POST(req: NextRequest) {
     );
   }
   const d = parsed.data;
+  const createdBy = d.created_by || session.id;
+
   const result = await execute(
     `INSERT INTO customers (tenant_id, name, product, email, phone, address, notes, status, visited, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [tenantId, d.name, d.product, d.email, d.phone, d.address, d.notes, d.status, d.visited ? 1 : 0, session.id]
+    [tenantId, d.name, d.product, d.email, d.phone, d.address, d.notes, d.status, d.visited ? 1 : 0, createdBy]
   );
 
   const customer = await query("SELECT * FROM customers WHERE id = ?", [result.insertId]);
