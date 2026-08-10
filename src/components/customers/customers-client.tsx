@@ -660,7 +660,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                     </div>
 
                     {/* Row 2: contact info (only if present) — indented to align with name */}
-                    {(c.email || c.phone) && (
+                    {(c.email || c.phone || c.created_by_name) && (
                       <div className="ml-[26px] mt-2 flex flex-col gap-0.5 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
                         {c.email && (
                           <span className="flex items-center gap-1.5">
@@ -673,6 +673,9 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                             <Phone className="size-3 shrink-0" />
                             <span>{c.phone}</span>
                           </span>
+                        )}
+                        {c.created_by_name && (
+                          <span className="truncate">Added by: {c.created_by_name}</span>
                         )}
                       </div>
                     )}
