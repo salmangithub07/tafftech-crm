@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { query, execute } from "@/lib/db";
+import { ensureActivityTables } from "@/lib/activity";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
@@ -15,13 +16,28 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.role !== "super_admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const admins = await query(
-    `SELECT ad.id, ad.name, ad.email, ad.role, ad.status, ad.created_at,
-       (SELECT COUNT(*) FROM customers c WHERE c.tenant_id = ad.id) AS customer_count,
-       (SELECT COUNT(*) FROM appointments a WHERE a.tenant_id = ad.id) AS appointment_count,
-       (SELECT COUNT(*) FROM admins e WHERE e.tenant_id = ad.id AND e.role = 'executive') AS executive_count
-     FROM admins ad WHERE ad.role = 'admin' ORDER BY ad.created_at ASC`
-  );
+  await ensureActivityTables();
+
+  let admins = [];
+  try {
+    admins = await query(
+      `SELECT ad.id, ad.name, ad.email, ad.role, ad.status, ad.created_at,
+         ad.plan_type, ad.plan_start_date, ad.plan_expiry_date,
+         (SELECT COUNT(*) FROM customers c WHERE c.tenant_id = ad.id) AS customer_count,
+         (SELECT COUNT(*) FROM appointments a WHERE a.tenant_id = ad.id) AS appointment_count,
+         (SELECT COUNT(*) FROM admins e WHERE e.tenant_id = ad.id AND e.role = 'executive') AS executive_count
+       FROM admins ad WHERE ad.role = 'admin' ORDER BY ad.created_at ASC`
+    );
+  } catch (err) {
+    console.error("Failed to query admins in GET API:", err);
+    admins = await query(
+      `SELECT ad.id, ad.name, ad.email, ad.role, ad.status, ad.created_at,
+         (SELECT COUNT(*) FROM customers c WHERE c.tenant_id = ad.id) AS customer_count,
+         (SELECT COUNT(*) FROM appointments a WHERE a.tenant_id = ad.id) AS appointment_count,
+         (SELECT COUNT(*) FROM admins e WHERE e.tenant_id = ad.id AND e.role = 'executive') AS executive_count
+       FROM admins ad WHERE ad.role = 'admin' ORDER BY ad.created_at ASC`
+    );
+  }
   return NextResponse.json(admins);
 }
 
@@ -46,13 +62,14 @@ export async function POST(req: NextRequest) {
   }
 
   const hash = bcrypt.hashSync(d.password, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
   const result = await execute(
-    "INSERT INTO admins (name, email, password, role, tenant_id, created_by, status) VALUES (?, ?, ?, 'admin', NULL, ?, 'active')",
-    [d.name, d.email.toLowerCase(), hash, session.id]
+    "INSERT INTO admins (name, email, password, role, tenant_id, created_by, status, plan_type, plan_start_date) VALUES (?, ?, ?, 'admin', NULL, ?, 'active', 'trial', ?)",
+    [d.name, d.email.toLowerCase(), hash, session.id, todayStr]
   );
 
   const admin = await query(
-    "SELECT id, name, email, role, status, created_at FROM admins WHERE id = ?",
+    "SELECT id, name, email, role, status, created_at, plan_type, plan_start_date, plan_expiry_date FROM admins WHERE id = ?",
     [result.insertId]
   );
   return NextResponse.json(admin[0], { status: 201 });

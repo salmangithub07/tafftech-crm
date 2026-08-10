@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const tenantId = tenantOf(session)!;
 
   const url = req.nextUrl;
-  const status = url.searchParams.get("status") || "";
+  const status = url.searchParams.get("status") || url.searchParams.get("filter") || "";
   const search = url.searchParams.get("search") || "";
   const period = url.searchParams.get("period") || "";
   const date = url.searchParams.get("date") || "";

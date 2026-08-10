@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tenantId = tenantOf(session)!;
 
-  const filter = req.nextUrl.searchParams.get("filter") || "all";
+  const filter = req.nextUrl.searchParams.get("filter") || req.nextUrl.searchParams.get("status") || "all";
   const search = req.nextUrl.searchParams.get("search")?.trim();
   const period = req.nextUrl.searchParams.get("period");
   const date = req.nextUrl.searchParams.get("date");

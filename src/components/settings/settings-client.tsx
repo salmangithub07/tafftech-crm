@@ -39,6 +39,8 @@ import { useAccentColor } from "@/components/accent-color-provider";
 import { ACCENT_PRESETS } from "@/lib/colors";
 import type { SessionPayload } from "@/lib/types";
 import type { AppSettings, InvoiceTemplateType, WhatsAppProviderType } from "@/lib/settings";
+import type { SubscriptionInfo } from "@/lib/subscription";
+import { TenantRenewDialog } from "@/components/tenant-renew-dialog";
 import { cn } from "@/lib/utils";
 
 function initials(name: string) {
@@ -54,9 +56,11 @@ const roleLabel: Record<string, string> = {
 export function SettingsClient({
   session,
   initialSettings,
+  subscriptionInfo,
 }: {
   session: SessionPayload;
   initialSettings: AppSettings;
+  subscriptionInfo?: SubscriptionInfo | null;
 }) {
   const canEditAppearance = session.role === "super_admin" || session.role === "admin";
 
@@ -75,7 +79,7 @@ export function SettingsClient({
       </TabsList>
 
       <TabsContent value="profile" className="mt-6">
-        <ProfileTab session={session} />
+        <ProfileTab session={session} subscriptionInfo={subscriptionInfo} companyPhone={initialSettings.company_phone} />
       </TabsContent>
       {canEditAppearance && (
         <TabsContent value="appearance" className="mt-6">
@@ -98,12 +102,21 @@ export function SettingsClient({
 
 /* ---------------------------- Profile tab ---------------------------- */
 
-function ProfileTab({ session }: { session: SessionPayload }) {
+function ProfileTab({
+  session,
+  subscriptionInfo,
+  companyPhone,
+}: {
+  session: SessionPayload;
+  subscriptionInfo?: SubscriptionInfo | null;
+  companyPhone?: string | null;
+}) {
   const router = useRouter();
   const [name, setName] = React.useState(session.name);
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -151,6 +164,60 @@ function ProfileTab({ session }: { session: SessionPayload }) {
           </div>
         </CardHeader>
       </Card>
+
+      {subscriptionInfo && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-5 text-primary" />
+                <CardTitle className="text-base font-bold">Subscription &amp; Plan Details</CardTitle>
+              </div>
+              <Badge
+                variant={
+                  subscriptionInfo.status === "active"
+                    ? "success"
+                    : subscriptionInfo.status === "grace"
+                    ? "warning"
+                    : "destructive"
+                }
+                className="capitalize text-xs"
+              >
+                {subscriptionInfo.status === "grace"
+                  ? `Grace Period (${subscriptionInfo.graceDaysRemaining}d left)`
+                  : subscriptionInfo.status}
+              </Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Current subscription plan details for your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4 text-xs py-2">
+            <div>
+              <span className="text-muted-foreground font-medium">Plan Type:</span>
+              <p className="font-semibold text-foreground text-sm capitalize">{subscriptionInfo.planType}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground font-medium">Expiry Date:</span>
+              <p className="font-semibold text-foreground text-sm">{subscriptionInfo.formattedExpiry}</p>
+            </div>
+          </CardContent>
+          <CardFooter className="border-t border-border/40 py-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Need to extend or upgrade your plan?</span>
+            <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
+              <Sparkles className="size-3.5" /> Renew / Upgrade Plan
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      <TenantRenewDialog
+        open={renewDialogOpen}
+        onOpenChange={setRenewDialogOpen}
+        planType={subscriptionInfo?.planType}
+        expiryDate={subscriptionInfo?.formattedExpiry}
+        companyPhone={companyPhone}
+      />
 
       <Card>
         <CardHeader>
