@@ -207,6 +207,9 @@ export function parsePermissions(raw: string | null | undefined): PermissionModu
   }
 }
 
+export type PlanType = "trial" | "monthly" | "quarterly" | "yearly" | "lifetime";
+export type PlanStatus = "active" | "grace" | "locked";
+
 export type Admin = {
   id: number;
   name: string;
@@ -221,6 +224,10 @@ export type Admin = {
   customer_count?: number;
   appointment_count?: number;
   executive_count?: number;
+  // Subscription
+  plan_type?: PlanType | null;
+  plan_start_date?: string | null;
+  plan_expiry_date?: string | null;
 };
 
 /* --------------------------- Balance Sheet --------------------------- */

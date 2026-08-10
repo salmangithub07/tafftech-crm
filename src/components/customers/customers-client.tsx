@@ -97,7 +97,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
         page: String(page),
         limit: String(pageSize),
         ...(search ? { search } : {}),
-        ...(tab !== "all" ? { status: tab } : {}),
+        ...(tab !== "all" ? { filter: tab, status: tab } : {}),
         ...dateFilterParams(dateFilter),
       });
       const res = await fetch(`/api/customers?${params}`);

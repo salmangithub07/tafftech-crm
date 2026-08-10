@@ -80,6 +80,19 @@ export async function ensureActivityTables() {
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
     `).catch(() => {});
 
+    // Subscription plan columns
+    await execute(`
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS plan_type VARCHAR(50) DEFAULT 'trial';
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS plan_start_date DATE DEFAULT NULL;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS plan_expiry_date DATE DEFAULT NULL;
+    `).catch(() => {});
+
     tablesInitialized = true;
   } catch (err) {
     console.error("Failed to initialize activity tables:", err);
