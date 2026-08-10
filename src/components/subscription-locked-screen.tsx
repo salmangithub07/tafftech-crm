@@ -10,11 +10,19 @@ export function SubscriptionLockedScreen({
   expiryDate,
   adminName,
   companyPhone,
+  yearlyPrice,
+  threeYearPrice,
+  bankUpiId,
+  paymentQrCode,
 }: {
   planType?: string | null;
   expiryDate?: string | null;
   adminName?: string | null;
   companyPhone?: string | null;
+  yearlyPrice?: string | null;
+  threeYearPrice?: string | null;
+  bankUpiId?: string | null;
+  paymentQrCode?: string | null;
 }) {
   const [renewDialogOpen, setRenewDialogOpen] = React.useState(false);
 
@@ -66,6 +74,10 @@ export function SubscriptionLockedScreen({
         planType={planType}
         expiryDate={expiryDate}
         companyPhone={companyPhone}
+        yearlyPrice={yearlyPrice}
+        threeYearPrice={threeYearPrice}
+        bankUpiId={bankUpiId}
+        paymentQrCode={paymentQrCode}
       />
     </>
   );

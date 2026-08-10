@@ -134,16 +134,23 @@ export function SubscriptionDialog({
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="plan_type">Subscription Plan *</Label>
-            <Select value={planType} onValueChange={(v) => setPlanType(v as PlanType)}>
+            <Select value={planType} onValueChange={(v) => {
+              const val = v as PlanType;
+              setPlanType(val);
+              if (val === "lifetime" || val === "trial") {
+                setExpiryDate("");
+              } else if (val === "yearly" && !expiryDate) {
+                quickSetExpiry(365);
+              }
+            }}>
               <SelectTrigger id="plan_type" className="w-full">
                 <SelectValue placeholder="Select plan type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="trial">Trial Plan (No Expiry by default)</SelectItem>
-                <SelectItem value="monthly">Monthly Plan (30 Days)</SelectItem>
-                <SelectItem value="quarterly">Quarterly Plan (90 Days)</SelectItem>
                 <SelectItem value="yearly">Yearly Plan (365 Days)</SelectItem>
-                <SelectItem value="lifetime">Lifetime Plan (Unlimited)</SelectItem>
+                <SelectItem value="3_year">3-Year Plan (1095 Days)</SelectItem>
+                <SelectItem value="lifetime">Lifetime Plan (Unlimited / No Expiry)</SelectItem>
+                <SelectItem value="trial">Trial Plan</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,7 +164,7 @@ export function SubscriptionDialog({
                   onClick={() => setExpiryDate("")}
                   className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
                 >
-                  Clear Expiry (Never)
+                  Clear Expiry (Unlimited)
                 </button>
               )}
             </div>
@@ -172,7 +179,7 @@ export function SubscriptionDialog({
           {/* Quick extension shortcuts */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-              <Clock className="size-3" /> Quick Add Expiry from Today:
+              <Clock className="size-3" /> Quick Expiry Shortcuts:
             </span>
             <div className="flex flex-wrap gap-1.5">
               <Button
@@ -180,36 +187,27 @@ export function SubscriptionDialog({
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs px-2.5"
-                onClick={() => quickSetExpiry(30)}
-              >
-                +30 Days
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs px-2.5"
-                onClick={() => quickSetExpiry(90)}
-              >
-                +90 Days
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs px-2.5"
                 onClick={() => quickSetExpiry(365)}
               >
-                +1 Year
+                +1 Year (365d)
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs px-2.5"
-                onClick={() => quickSetExpiry(30 + (currentInfo.daysRemaining && currentInfo.daysRemaining < 0 ? 0 : currentInfo.daysRemaining || 0))}
+                onClick={() => quickSetExpiry(1095)}
               >
-                Extend +30 Days
+                +3 Years (1095d)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs px-2.5"
+                onClick={() => setExpiryDate("")}
+              >
+                Clear Expiry (Lifetime)
               </Button>
             </div>
           </div>

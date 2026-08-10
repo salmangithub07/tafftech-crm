@@ -62,7 +62,15 @@ const PAGE_SIZE_KEY = "nova-crm:pageSize:customers";
 
 type Counts = { all: number; lead: number; progress: number; active: number; inactive: number; trash: number };
 
-export function CustomersClient({ initialCustomers }: { initialCustomers: Customer[] }) {
+export function CustomersClient({
+  initialCustomers,
+  maxCustomers = -1,
+  planType = "trial",
+}: {
+  initialCustomers: Customer[];
+  maxCustomers?: number;
+  planType?: string;
+}) {
   const router = useRouter();
   const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
   const [total, setTotal] = React.useState(0);
@@ -315,13 +323,48 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
     return parts.length ? parts.join(" · ") : "All";
   }, [tab, search, dateFilter]);
 
+  const isLimitReached = maxCustomers !== -1 && counts.all >= maxCustomers;
+
+  function handleAddCustomerClick() {
+    if (isLimitReached) {
+      toast.error(
+        `Customer/Lead limit reached (${maxCustomers}) for your current ${planType} plan. Please upgrade your subscription plan to add more customers.`
+      );
+      return;
+    }
+    setEditing(null);
+    setFormOpen(true);
+  }
+
+  function handleImportClick() {
+    if (isLimitReached) {
+      toast.error(
+        `Customer/Lead limit reached (${maxCustomers}) for your current ${planType} plan. Please upgrade your subscription plan to import more customers.`
+      );
+      return;
+    }
+    importInputRef.current?.click();
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2 sm:text-2xl">
-            Customers {isTrashTab && <Badge variant="destructive" className="text-xs font-normal">Trash Bin</Badge>}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              Customers
+            </h1>
+            {isTrashTab ? (
+              <Badge variant="destructive" className="text-xs font-normal">Trash Bin</Badge>
+            ) : (
+              <Badge
+                variant={isLimitReached ? "destructive" : "secondary"}
+                className="text-xs font-medium"
+              >
+                Leads: {counts.all} / {maxCustomers === -1 ? "∞ Unlimited" : maxCustomers}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground sm:text-sm">
             {isTrashTab
               ? "Manage trashed customers, restore or purge."
@@ -337,7 +380,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
             onChange={handleImportFile}
           />
           {/* Mobile: icon-only buttons */}
-          <Button variant="outline" size="icon" className="size-8 sm:hidden" onClick={() => importInputRef.current?.click()} title="Import">
+          <Button variant="outline" size="icon" className="size-8 sm:hidden" onClick={handleImportClick} title="Import">
             <Upload className="size-4" />
           </Button>
           <Button variant="outline" size="icon" className="size-8 sm:hidden" asChild title={`Export: ${exportLabel}`}>
@@ -345,23 +388,20 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
               <Download className="size-4" />
             </Link>
           </Button>
-          <Button size="icon" className="size-8 sm:hidden" onClick={() => { setEditing(null); setFormOpen(true); }} title="Add Customer">
+          <Button size="icon" className="size-8 sm:hidden" onClick={handleAddCustomerClick} disabled={isLimitReached} title="Add Customer">
             <Plus className="size-4" />
           </Button>
           {/* Desktop: full buttons */}
-          <Button variant="outline" size="sm" className="hidden sm:flex" onClick={() => importInputRef.current?.click()}>
-            <Upload className="size-4" /> Import
+          <Button variant="outline" size="sm" className="hidden sm:flex" onClick={handleImportClick}>
+            <Upload className="size-4" /> Import CSV
           </Button>
           <Button variant="outline" size="sm" className="hidden sm:flex" asChild title={`Export: ${exportLabel}`}>
             <Link href={exportUrl}>
-              <Download className="size-4" /> Export
-              {exportLabel !== "All" && (
-                <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary leading-none">{exportLabel}</span>
-              )}
+              <Download className="size-4" /> Export CSV
             </Link>
           </Button>
-          <Button size="sm" className="hidden sm:flex" onClick={() => { setEditing(null); setFormOpen(true); }}>
-            <Plus className="size-4" /> Add Customer
+          <Button size="sm" className="hidden sm:flex" onClick={handleAddCustomerClick} disabled={isLimitReached}>
+            <Plus className="size-4" /> Add customer
           </Button>
         </div>
       </div>

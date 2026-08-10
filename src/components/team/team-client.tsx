@@ -42,13 +42,33 @@ function parsePermissionList(raw: string | null): string[] {
   }
 }
 
-export function TeamClient({ initialTeam }: { initialTeam: Admin[] }) {
+export function TeamClient({
+  initialTeam,
+  maxExecutives = -1,
+  planType = "trial",
+}: {
+  initialTeam: Admin[];
+  maxExecutives?: number;
+  planType?: string;
+}) {
   const router = useRouter();
   const [team, setTeam] = React.useState(initialTeam);
   const [formOpen, setFormOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState<Admin | null>(null);
   const [resetting, setResetting] = React.useState<Admin | null>(null);
   const [editingPermissions, setEditingPermissions] = React.useState<Admin | null>(null);
+
+  const isLimitReached = maxExecutives !== -1 && team.length >= maxExecutives;
+
+  function handleAddMemberClick() {
+    if (isLimitReached) {
+      toast.error(
+        `Executive limit reached (${maxExecutives}) for your current ${planType} plan. Please upgrade your plan to add more members.`
+      );
+      return;
+    }
+    setFormOpen(true);
+  }
 
   async function refresh() {
     const res = await fetch("/api/team");
@@ -66,7 +86,7 @@ export function TeamClient({ initialTeam }: { initialTeam: Admin[] }) {
       toast.error("Could not update.");
       return;
     }
-    toast.success(member.status === "active" ? "Member deactivated." : "Member activated.");
+    toast.success(member.status === "active" ? "Executive deactivated." : "Executive activated.");
     refresh();
   }
 
@@ -76,7 +96,7 @@ export function TeamClient({ initialTeam }: { initialTeam: Admin[] }) {
       toast.error("Could not remove.");
       return;
     }
-    toast.success(`${member.name} removed.`);
+    toast.success(`${member.name} has been removed.`);
     refresh();
   }
 
@@ -96,12 +116,20 @@ export function TeamClient({ initialTeam }: { initialTeam: Admin[] }) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Team</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">Team</h1>
+            <Badge
+              variant={isLimitReached ? "destructive" : "secondary"}
+              className="text-xs font-medium"
+            >
+              Execs: {team.length} / {maxExecutives === -1 ? "∞ Unlimited" : maxExecutives}
+            </Badge>
+          </div>
           <p className="text-sm text-muted-foreground">
             Create login accounts for your sales/support team members.
           </p>
         </div>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
+        <Button size="sm" onClick={handleAddMemberClick} disabled={isLimitReached}>
           <Plus className="size-4" /> Add member
         </Button>
       </div>

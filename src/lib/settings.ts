@@ -21,6 +21,17 @@ export type AppSettings = {
   whatsapp_api_key: string;
   whatsapp_instance_id: string;
   whatsapp_reminder_template: string;
+  yearly_plan_price: string;
+  three_year_plan_price: string;
+  payment_qr_code: string;
+  trial_max_executives: string;
+  trial_max_customers: string;
+  yearly_max_executives: string;
+  yearly_max_customers: string;
+  three_year_max_executives: string;
+  three_year_max_customers: string;
+  lifetime_max_executives: string;
+  lifetime_max_customers: string;
 };
 
 const DEFAULTS: AppSettings = {
@@ -41,6 +52,17 @@ const DEFAULTS: AppSettings = {
   whatsapp_api_key: "",
   whatsapp_instance_id: "",
   whatsapp_reminder_template: "Namaste {customer_name}! 🔔\nRemind karne ke liye text hai ki aapka appointment aaj {appointment_date} ko {appointment_time} baje scheduled hai for {product_name}.\nThank you! — {company_name}",
+  yearly_plan_price: "4999",
+  three_year_plan_price: "12999",
+  payment_qr_code: "",
+  trial_max_executives: "2",
+  trial_max_customers: "50",
+  yearly_max_executives: "10",
+  yearly_max_customers: "1000",
+  three_year_max_executives: "25",
+  three_year_max_customers: "5000",
+  lifetime_max_executives: "-1",
+  lifetime_max_customers: "-1",
 };
 
 /**
@@ -97,6 +119,17 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       whatsapp_api_key: tenantMap.whatsapp_api_key ?? globalMap.whatsapp_api_key ?? DEFAULTS.whatsapp_api_key,
       whatsapp_instance_id: tenantMap.whatsapp_instance_id ?? globalMap.whatsapp_instance_id ?? DEFAULTS.whatsapp_instance_id,
       whatsapp_reminder_template: tenantMap.whatsapp_reminder_template ?? globalMap.whatsapp_reminder_template ?? DEFAULTS.whatsapp_reminder_template,
+      yearly_plan_price: tenantMap.yearly_plan_price ?? globalMap.yearly_plan_price ?? DEFAULTS.yearly_plan_price,
+      three_year_plan_price: tenantMap.three_year_plan_price ?? globalMap.three_year_plan_price ?? DEFAULTS.three_year_plan_price,
+      payment_qr_code: tenantMap.payment_qr_code ?? globalMap.payment_qr_code ?? DEFAULTS.payment_qr_code,
+      trial_max_executives: tenantMap.trial_max_executives ?? globalMap.trial_max_executives ?? DEFAULTS.trial_max_executives,
+      trial_max_customers: tenantMap.trial_max_customers ?? globalMap.trial_max_customers ?? DEFAULTS.trial_max_customers,
+      yearly_max_executives: tenantMap.yearly_max_executives ?? globalMap.yearly_max_executives ?? DEFAULTS.yearly_max_executives,
+      yearly_max_customers: tenantMap.yearly_max_customers ?? globalMap.yearly_max_customers ?? DEFAULTS.yearly_max_customers,
+      three_year_max_executives: tenantMap.three_year_max_executives ?? globalMap.three_year_max_executives ?? DEFAULTS.three_year_max_executives,
+      three_year_max_customers: tenantMap.three_year_max_customers ?? globalMap.three_year_max_customers ?? DEFAULTS.three_year_max_customers,
+      lifetime_max_executives: tenantMap.lifetime_max_executives ?? globalMap.lifetime_max_executives ?? DEFAULTS.lifetime_max_executives,
+      lifetime_max_customers: tenantMap.lifetime_max_customers ?? globalMap.lifetime_max_customers ?? DEFAULTS.lifetime_max_customers,
     };
   } catch {
     return DEFAULTS;
