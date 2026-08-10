@@ -25,7 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Appointment, Customer } from "@/lib/types";
+import { SearchableSelect, type SearchableOption } from "@/components/ui/searchable-select";
+import type { Appointment, Customer, Product } from "@/lib/types";
 
 const formSchema = z.object({
   title: z.string().optional().or(z.literal("")),
@@ -48,6 +49,8 @@ function emptyValues(defaultCustomerId?: string): FormValues {
   };
 }
 
+const CUSTOM_TITLE = "__custom__";
+
 export function AppointmentFormDialog({
   open,
   onOpenChange,
@@ -65,6 +68,14 @@ export function AppointmentFormDialog({
 }) {
   const isEdit = !!appointment;
 
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = React.useState(false);
+
+  // Separate state for the title/product SearchableSelect
+  const [selectedTitleValue, setSelectedTitleValue] = React.useState<string | null>(null);
+  const [isCustomTitle, setIsCustomTitle] = React.useState(false);
+  const [customTitleText, setCustomTitleText] = React.useState("");
+
   const {
     register,
     handleSubmit,
@@ -76,6 +87,46 @@ export function AppointmentFormDialog({
     resolver: zodResolver(formSchema),
     defaultValues: emptyValues(defaultCustomerId),
   });
+
+  // Fetch products when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setLoadingProducts(true);
+      fetch("/api/products?limit=500")
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((res) => {
+          setProducts(res.data || []);
+        })
+        .catch(() => setProducts([]))
+        .finally(() => setLoadingProducts(false));
+    }
+  }, [open]);
+
+  // Resolve selected title state when products are ready or form resets
+  React.useEffect(() => {
+    if (!open) return;
+
+    const existingTitle = appointment?.title ?? "";
+
+    if (existingTitle) {
+      const matchedProd = products.find(
+        (p) => p.name.toLowerCase() === existingTitle.toLowerCase()
+      );
+      if (matchedProd) {
+        setSelectedTitleValue(matchedProd.name);
+        setIsCustomTitle(false);
+        setCustomTitleText("");
+      } else {
+        setSelectedTitleValue(CUSTOM_TITLE);
+        setIsCustomTitle(true);
+        setCustomTitleText(existingTitle);
+      }
+    } else {
+      setSelectedTitleValue(null);
+      setIsCustomTitle(false);
+      setCustomTitleText("");
+    }
+  }, [open, appointment, products]);
 
   React.useEffect(() => {
     if (open) {
@@ -91,8 +142,37 @@ export function AppointmentFormDialog({
             }
           : emptyValues(defaultCustomerId)
       );
+      if (!appointment) {
+        setSelectedTitleValue(null);
+        setIsCustomTitle(false);
+        setCustomTitleText("");
+      }
     }
   }, [open, appointment, defaultCustomerId, reset]);
+
+  function handleTitleSelect(val: string | null) {
+    if (!val) {
+      setSelectedTitleValue(null);
+      setIsCustomTitle(false);
+      setValue("title", "");
+      return;
+    }
+    if (val === CUSTOM_TITLE) {
+      setSelectedTitleValue(CUSTOM_TITLE);
+      setIsCustomTitle(true);
+      setValue("title", customTitleText);
+    } else {
+      setSelectedTitleValue(val);
+      setIsCustomTitle(false);
+      setValue("title", val);
+    }
+  }
+
+  function handleCustomTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const text = e.target.value;
+    setCustomTitleText(text);
+    if (isCustomTitle) setValue("title", text);
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -115,6 +195,22 @@ export function AppointmentFormDialog({
     }
   }
 
+  // Customer options for SearchableSelect
+  const customerOptions: SearchableOption[] = customers.map((c) => ({
+    value: String(c.id),
+    label: c.name,
+    sublabel: [c.phone, c.product].filter(Boolean).join(" · "),
+  }));
+
+  // Title/Product options for SearchableSelect
+  const titleOptions: SearchableOption[] = [
+    { value: CUSTOM_TITLE, label: "-- Custom Title / Manual Entry --" },
+    ...products.map((p) => ({
+      value: p.name,
+      label: `${p.name} (${p.stock ?? 0})`,
+    })),
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -130,41 +226,70 @@ export function AppointmentFormDialog({
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Customer — Searchable */}
               <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <Label>Customer *</Label>
-                <Select
-                  value={watch("customer_id")}
+                <SearchableSelect
+                  options={customerOptions}
+                  value={watch("customer_id") || null}
                   onValueChange={(v) => {
-                    setValue("customer_id", v);
-                    const selectedCust = customers.find((c) => String(c.id) === v);
-                    if (selectedCust?.product && (!watch("title") || !isEdit)) {
-                      setValue("title", selectedCust.product);
+                    setValue("customer_id", v ?? "");
+                    if (v) {
+                      const selectedCust = customers.find((c) => String(c.id) === v);
+                      if (selectedCust?.product && (!watch("title") || !isEdit)) {
+                        // Auto-fill title from customer product
+                        const matchedProd = products.find(
+                          (p) => p.name.toLowerCase() === (selectedCust.product ?? "").toLowerCase()
+                        );
+                        if (matchedProd) {
+                          setSelectedTitleValue(matchedProd.name);
+                          setIsCustomTitle(false);
+                          setValue("title", matchedProd.name);
+                        } else if (selectedCust.product) {
+                          setSelectedTitleValue(CUSTOM_TITLE);
+                          setIsCustomTitle(true);
+                          setCustomTitleText(selectedCust.product);
+                          setValue("title", selectedCust.product);
+                        }
+                      }
                     }
                   }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} {c.product ? `(${c.product})` : ""} {c.phone ? `· ${c.phone}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Search & select customer..."
+                  searchPlaceholder="Search by name, phone, product..."
+                  emptyLabel="No customer found."
+                  triggerClassName="h-9 text-xs"
+                />
                 {errors.customer_id && (
                   <p className="text-xs text-destructive">{errors.customer_id.message}</p>
                 )}
               </div>
 
+              {/* Title / Product — Searchable */}
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="title">Title / Product</Label>
-                <Input
-                  id="title"
-                  {...register("title")}
-                  placeholder="Auto-fetched from Customer Product (or enter custom title)"
+                <Label>Title / Product</Label>
+                <SearchableSelect
+                  options={titleOptions}
+                  value={selectedTitleValue}
+                  onValueChange={handleTitleSelect}
+                  placeholder={loadingProducts ? "Loading products..." : "Search & select product..."}
+                  searchPlaceholder="Search catalog product..."
+                  emptyLabel="No product found."
+                  disabled={loadingProducts}
+                  triggerClassName="h-9 text-xs"
                 />
+                {isCustomTitle && (
+                  <div className="mt-1.5 flex flex-col gap-1">
+                    <Input
+                      value={customTitleText}
+                      onChange={handleCustomTitleChange}
+                      placeholder="Enter custom title..."
+                      className="h-9 text-xs"
+                    />
+                    <span className="text-[11px] text-muted-foreground">
+                      Custom title will be saved for this appointment.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
