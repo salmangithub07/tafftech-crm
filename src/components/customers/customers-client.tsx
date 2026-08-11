@@ -602,7 +602,7 @@ export function CustomersClient({
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                        <div className="flex items-center gap-1.5 text-xs font-medium">
                           <Calendar className="size-3.5 text-muted-foreground shrink-0" />
                           <span>{formatDate(c.created_at)}</span>
                         </div>
@@ -737,7 +737,7 @@ export function CustomersClient({
                           </span>
                         )}
                         {c.created_at && (
-                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                          <span className="flex items-center gap-1.5 font-medium">
                             <Calendar className="size-3 shrink-0 text-muted-foreground" />
                             <span>Date: {formatDate(c.created_at)}</span>
                           </span>
