@@ -9,6 +9,9 @@ import { SubscriptionLockedScreen } from "@/components/subscription-locked-scree
 import { SubscriptionGraceBanner } from "@/components/subscription-grace-banner";
 import type { Admin } from "@/lib/types";
 
+import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { BroadcastAnnouncementBanner } from "@/components/broadcast-announcement-banner";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -61,22 +64,38 @@ export default async function DashboardLayout({
       (subInfo.daysRemaining !== null && subInfo.daysRemaining <= 3));
 
   return (
-    <DashboardShell session={session} siteName={settings.site_name}>
-      {showWarningBanner && subInfo && (
-        <SubscriptionGraceBanner
-          expiryDate={subInfo.formattedExpiry}
-          daysRemaining={subInfo.daysRemaining}
-          graceDaysLeft={subInfo.graceDaysRemaining ?? 0}
-          planType={subInfo.planType}
-          companyPhone={superAdminPhone}
-          yearlyPrice={superAdminSettings.yearly_plan_price}
-          threeYearPrice={superAdminSettings.three_year_plan_price}
-          bankUpiId={superAdminSettings.bank_upi_id}
-          paymentQrCode={superAdminSettings.payment_qr_code}
+    <div className="flex flex-col min-h-svh">
+      {session.is_impersonating && (
+        <ImpersonationBanner
+          tenantName={session.name}
+          tenantEmail={session.email}
+          superAdminName={session.original_super_admin_name}
         />
       )}
-      {children}
-    </DashboardShell>
+      <DashboardShell session={session} siteName={settings.site_name}>
+        <BroadcastAnnouncementBanner
+          enabled={superAdminSettings.broadcast_announcement_enabled}
+          message={superAdminSettings.broadcast_announcement_message}
+          type={superAdminSettings.broadcast_announcement_type}
+          targetPlan={superAdminSettings.broadcast_announcement_target_plan}
+          currentPlanType={adminRow?.plan_type || "trial"}
+        />
+        {showWarningBanner && subInfo && (
+          <SubscriptionGraceBanner
+            expiryDate={subInfo.formattedExpiry}
+            daysRemaining={subInfo.daysRemaining}
+            graceDaysLeft={subInfo.graceDaysRemaining ?? 0}
+            planType={subInfo.planType}
+            companyPhone={superAdminPhone}
+            yearlyPrice={superAdminSettings.yearly_plan_price}
+            threeYearPrice={superAdminSettings.three_year_plan_price}
+            bankUpiId={superAdminSettings.bank_upi_id}
+            paymentQrCode={superAdminSettings.payment_qr_code}
+          />
+        )}
+        {children}
+      </DashboardShell>
+    </div>
   );
 }
 

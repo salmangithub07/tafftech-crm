@@ -22,6 +22,7 @@ import {
   RotateCcw,
   ShieldAlert,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,20 @@ import { CustomerFormDialog } from "@/components/customers/customer-form-dialog"
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import type { Customer, CustomerStatus } from "@/lib/types";
+
+function formatDate(dateStr?: string | null) {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary" | "info" | "outline"> = {
   active: "success",
@@ -535,6 +550,7 @@ export function CustomersClient({
                   <TableHead>Status</TableHead>
                   <TableHead>Visited</TableHead>
                   <TableHead>Added by</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -585,6 +601,12 @@ export function CustomersClient({
                         </button>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                          <Calendar className="size-3.5 text-muted-foreground shrink-0" />
+                          <span>{formatDate(c.created_at)}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <RowActions
                           customer={c}
@@ -712,6 +734,12 @@ export function CustomersClient({
                           <span className="flex items-center gap-1.5">
                             <Phone className="size-3 shrink-0" />
                             <span>{c.phone}</span>
+                          </span>
+                        )}
+                        {c.created_at && (
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <Calendar className="size-3 shrink-0 text-muted-foreground" />
+                            <span>Date: {formatDate(c.created_at)}</span>
                           </span>
                         )}
                         {c.created_by_name && (

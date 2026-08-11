@@ -32,6 +32,10 @@ export type AppSettings = {
   three_year_max_customers: string;
   lifetime_max_executives: string;
   lifetime_max_customers: string;
+  broadcast_announcement_enabled: string;
+  broadcast_announcement_message: string;
+  broadcast_announcement_type: string;
+  broadcast_announcement_target_plan: string;
 };
 
 const DEFAULTS: AppSettings = {
@@ -63,6 +67,10 @@ const DEFAULTS: AppSettings = {
   three_year_max_customers: "5000",
   lifetime_max_executives: "-1",
   lifetime_max_customers: "-1",
+  broadcast_announcement_enabled: "0",
+  broadcast_announcement_message: "",
+  broadcast_announcement_type: "info",
+  broadcast_announcement_target_plan: "all",
 };
 
 /**
@@ -130,6 +138,10 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       three_year_max_customers: tenantMap.three_year_max_customers ?? globalMap.three_year_max_customers ?? DEFAULTS.three_year_max_customers,
       lifetime_max_executives: tenantMap.lifetime_max_executives ?? globalMap.lifetime_max_executives ?? DEFAULTS.lifetime_max_executives,
       lifetime_max_customers: tenantMap.lifetime_max_customers ?? globalMap.lifetime_max_customers ?? DEFAULTS.lifetime_max_customers,
+      broadcast_announcement_enabled: tenantMap.broadcast_announcement_enabled ?? globalMap.broadcast_announcement_enabled ?? DEFAULTS.broadcast_announcement_enabled,
+      broadcast_announcement_message: tenantMap.broadcast_announcement_message ?? globalMap.broadcast_announcement_message ?? DEFAULTS.broadcast_announcement_message,
+      broadcast_announcement_type: tenantMap.broadcast_announcement_type ?? globalMap.broadcast_announcement_type ?? DEFAULTS.broadcast_announcement_type,
+      broadcast_announcement_target_plan: tenantMap.broadcast_announcement_target_plan ?? globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
     };
   } catch {
     return DEFAULTS;
