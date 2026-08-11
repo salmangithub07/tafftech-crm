@@ -174,6 +174,10 @@ export type SessionPayload = {
   tenantId: number | null;
   /** Modules this account can access. Only meaningful for role === 'executive'. */
   permissions: PermissionModule[];
+  /** Optional impersonation details when Super Admin is logged in as a tenant for support */
+  is_impersonating?: boolean;
+  original_super_admin_id?: number;
+  original_super_admin_name?: string;
 };
 
 /** The tenant (admin) id whose data this session should see. Null for super_admin. */

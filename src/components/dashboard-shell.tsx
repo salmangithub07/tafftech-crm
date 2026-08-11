@@ -42,7 +42,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-svh">
+    <div className="flex min-h-svh" suppressHydrationWarning>
       {/* Desktop sidebar */}
       <aside
         className={cn(

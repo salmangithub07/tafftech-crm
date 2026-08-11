@@ -24,6 +24,12 @@ import {
   FileSpreadsheet,
   Copy,
   CheckCheck,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  PieChart,
+  ArrowUpRight,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -214,8 +220,22 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
     setTimeout(() => setCopiedUtrId(null), 2000);
   }
 
+  async function handleImpersonate(admin: Admin) {
+    try {
+      toast.loading(`Logging in as ${admin.name}...`);
+      const res = await fetch(`/api/admins/${admin.id}/impersonate`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to impersonate tenant");
+
+      toast.success(`Logged in as ${admin.name}! Entering support mode...`);
+      window.location.href = data.redirectUrl || "/dashboard";
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to enter support mode.");
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" suppressHydrationWarning>
       {/* Top Title Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -319,21 +339,182 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
       )}
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="admins" className="w-full">
+      <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
+          <TabsTrigger value="dashboard" className="gap-1.5">
+            <BarChart3 className="size-4" /> SaaS Revenue Dashboard
+          </TabsTrigger>
           <TabsTrigger value="admins">Tenants &amp; Admins ({admins.length})</TabsTrigger>
-          <TabsTrigger value="payments" className="relative">
-            Payment History &amp; Records
+          <TabsTrigger value="payments" className="relative gap-1.5">
+            <IndianRupee className="size-4" /> Payment History &amp; Records
             {analytics.pending_count > 0 && (
               <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-bold text-white">
                 {analytics.pending_count}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="expiring">
-            Upcoming Expiries (7d) ({expiringSoonAdmins.length})
+          <TabsTrigger value="expiring" className="gap-1.5">
+            <Clock className="size-4" /> Upcoming Expiries (7d) ({expiringSoonAdmins.length})
           </TabsTrigger>
         </TabsList>
+
+        {/* Tab 0: SaaS Revenue Dashboard */}
+        <TabsContent value="dashboard" className="mt-4 space-y-6">
+          {/* Revenue Performance & Highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="p-4 flex flex-col justify-between border-emerald-500/20 bg-emerald-500/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">This Month Revenue</span>
+                <Badge variant="success" className="gap-1 text-[10px]">
+                  {analytics.growth_percent >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                  {analytics.growth_percent >= 0 ? `+${analytics.growth_percent}%` : `${analytics.growth_percent}%`}
+                </Badge>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-black text-foreground tracking-tight">
+                  ₹{Number(analytics.this_month_revenue || 0).toLocaleString("en-IN")}
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-1">
+                  vs ₹{Number(analytics.last_month_revenue || 0).toLocaleString("en-IN")} last month
+                </span>
+              </div>
+            </Card>
+
+            <Card className="p-4 flex flex-col justify-between border-amber-500/20 bg-amber-500/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Pending Approval Revenue</span>
+                <Badge variant="warning" className="text-[10px]">
+                  {analytics.pending_count || 0} Pending
+                </Badge>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                  ₹{Number(analytics.pending_revenue || 0).toLocaleString("en-IN")}
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-1">
+                  Awaiting Super Admin review in Payment History tab
+                </span>
+              </div>
+            </Card>
+
+            <Card className="p-4 flex flex-col justify-between border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Active Paid Conversion Rate</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {admins.length > 0 ? Math.round(((analytics.approved_count || 0) / admins.length) * 100) : 0}% Paid
+                </Badge>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-black text-foreground tracking-tight">
+                  {analytics.approved_count || 0} / {admins.length} Tenants
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-1">
+                  Total approved payment renewals processed
+                </span>
+              </div>
+            </Card>
+          </div>
+
+          {/* Revenue Trends & Plan Distribution Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Monthly Revenue Growth Chart */}
+            <Card className="lg:col-span-2 p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between border-b pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="size-5 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Monthly Revenue Growth (Last 12 Months)</h3>
+                    <p className="text-[11px] text-muted-foreground font-normal">Approved subscription payments collected per month</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs font-semibold">
+                  Lifetime Total: ₹{Number(analytics.total_revenue || 0).toLocaleString("en-IN")}
+                </Badge>
+              </div>
+
+              {/* Responsive Styled Bar Chart */}
+              {(!analytics.monthly_trends || analytics.monthly_trends.length === 0) ? (
+                <div className="h-48 flex items-center justify-center text-xs text-muted-foreground">
+                  No monthly revenue trends recorded yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-end gap-2 h-44 pt-4 border-b border-border/50 px-2">
+                    {analytics.monthly_trends.map((m: any, idx: number) => {
+                      const maxRev = Math.max(...analytics.monthly_trends.map((t: any) => Number(t.revenue) || 1));
+                      const heightPercent = Math.max(14, Math.round((Number(m.revenue) / maxRev) * 100));
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                          {/* Tooltip on hover */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-popover text-popover-foreground border text-[10px] font-bold px-2 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-10">
+                            ₹{Number(m.revenue).toLocaleString("en-IN")} ({m.count} payments)
+                          </div>
+                          <div
+                            style={{ height: `${heightPercent}%` }}
+                            className="w-full max-w-[36px] bg-primary/80 hover:bg-primary rounded-t transition-all group-hover:scale-105 cursor-pointer"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Month X-Axis Labels */}
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono px-2">
+                    {analytics.monthly_trends.map((m: any, idx: number) => (
+                      <div key={idx} className="flex-1 text-center truncate">
+                        {m.month_label || m.month_key}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Tenant Subscription Plan Distribution */}
+            <Card className="p-5 flex flex-col justify-between">
+              <div className="flex items-center gap-2 border-b pb-3 mb-4">
+                <PieChart className="size-5 text-primary" />
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Subscription Plan Distribution</h3>
+                  <p className="text-[11px] text-muted-foreground font-normal">Breakdown of tenants across plan tiers</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 my-auto">
+                {["yearly", "3_year", "lifetime", "trial"].map((pt) => {
+                  const dist = (analytics.plan_distribution || []).find((d: any) => d.plan_type === pt);
+                  const count = dist?.count || 0;
+                  const percent = admins.length > 0 ? Math.round((count / admins.length) * 100) : 0;
+                  const labelMap: Record<string, string> = {
+                    yearly: "1-Year Plan (365d)",
+                    "3_year": "3-Year Plan (1095d)",
+                    lifetime: "Lifetime Plan",
+                    trial: "Trial Plan",
+                  };
+                  const colorMap: Record<string, string> = {
+                    yearly: "bg-primary",
+                    "3_year": "bg-emerald-500",
+                    lifetime: "bg-purple-500",
+                    trial: "bg-amber-500",
+                  };
+                  return (
+                    <div key={pt} className="space-y-1 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{labelMap[pt]}</span>
+                        <span className="font-mono text-muted-foreground">{count} ({percent}%)</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          style={{ width: `${percent}%` }}
+                          className={`h-full rounded-full ${colorMap[pt]} transition-all`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Tab 1: Admins Table */}
         <TabsContent value="admins" className="mt-4">
@@ -428,36 +609,53 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                         <TableCell className="hidden text-muted-foreground md:table-cell">
                           {admin.executive_count ?? 0}
                         </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="size-8">
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSubscriptionAdmin(admin)}>
-                                <ShieldCheck className="size-4 text-primary" /> Manage Plan
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setResetting(admin)}>
-                                <KeyRound className="size-4" /> Reset password
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toggleStatus(admin)}>
-                                {admin.status === "active" ? (
-                                  <>
-                                    <Ban className="size-4" /> Deactivate
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle2 className="size-4" /> Activate
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem variant="destructive" onClick={() => setDeleting(admin)}>
-                                <Trash2 className="size-4" /> Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2.5 text-[11px] font-semibold gap-1 border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300 shadow-xs shrink-0"
+                              onClick={() => handleImpersonate(admin)}
+                              title={`Login as ${admin.name} for Support`}
+                            >
+                              <UserCheck className="size-3.5 text-purple-600 dark:text-purple-400" />
+                              <span className="hidden sm:inline">Login as Tenant</span>
+                              <span className="sm:hidden">Login</span>
+                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8">
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleImpersonate(admin)} className="font-semibold text-purple-700 dark:text-purple-300">
+                                  <UserCheck className="size-4 text-purple-600" /> Login as Tenant (Support)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSubscriptionAdmin(admin)}>
+                                  <ShieldCheck className="size-4 text-primary" /> Manage Plan
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setResetting(admin)}>
+                                  <KeyRound className="size-4" /> Reset password
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleStatus(admin)}>
+                                  {admin.status === "active" ? (
+                                    <>
+                                      <Ban className="size-4" /> Deactivate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="size-4" /> Activate
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem variant="destructive" onClick={() => setDeleting(admin)}>
+                                  <Trash2 className="size-4" /> Remove
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

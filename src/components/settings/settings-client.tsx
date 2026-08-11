@@ -874,6 +874,12 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
   const [lifetimeExecs, setLifetimeExecs] = React.useState(initialSettings.lifetime_max_executives || "-1");
   const [lifetimeCusts, setLifetimeCusts] = React.useState(initialSettings.lifetime_max_customers || "-1");
 
+  // Broadcast announcement state
+  const [announcementEnabled, setAnnouncementEnabled] = React.useState(initialSettings.broadcast_announcement_enabled || "0");
+  const [announcementMessage, setAnnouncementMessage] = React.useState(initialSettings.broadcast_announcement_message || "");
+  const [announcementType, setAnnouncementType] = React.useState(initialSettings.broadcast_announcement_type || "info");
+  const [announcementTarget, setAnnouncementTarget] = React.useState(initialSettings.broadcast_announcement_target_plan || "all");
+
   const [saving, setSaving] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
@@ -896,10 +902,14 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
           three_year_max_customers: threeYearCusts,
           lifetime_max_executives: lifetimeExecs,
           lifetime_max_customers: lifetimeCusts,
+          broadcast_announcement_enabled: announcementEnabled,
+          broadcast_announcement_message: announcementMessage,
+          broadcast_announcement_type: announcementType,
+          broadcast_announcement_target_plan: announcementTarget,
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Subscription pricing & plan feature limits saved!");
+      toast.success("Subscription pricing, limits & system announcements saved!");
       router.refresh();
     } catch {
       toast.error("Could not save subscription settings.");
@@ -910,6 +920,83 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+      {/* Broadcast System Announcement Card */}
+      <Card className="border-purple-500/30 bg-purple-500/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="size-5 text-purple-600 dark:text-purple-400" /> System Announcement &amp; Broadcast Alert
+          </CardTitle>
+          <CardDescription>
+            Broadcast a live announcement banner across tenant dashboards (e.g. maintenance updates or new features).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-bold text-foreground">Enable Live Broadcast Banner</span>
+              <span className="text-[11px] text-muted-foreground">Toggle on to display this announcement to active tenants</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={announcementEnabled === "1" ? "success" : "secondary"}>
+                {announcementEnabled === "1" ? "Active" : "Disabled"}
+              </Badge>
+              <Button
+                type="button"
+                size="sm"
+                variant={announcementEnabled === "1" ? "destructive" : "default"}
+                className="h-8 text-xs"
+                onClick={() => setAnnouncementEnabled(announcementEnabled === "1" ? "0" : "1")}
+              >
+                {announcementEnabled === "1" ? "Disable Alert" : "Enable Alert"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="announcement_message">Announcement Message Text *</Label>
+            <Input
+              id="announcement_message"
+              value={announcementMessage}
+              onChange={(e) => setAnnouncementMessage(e.target.value)}
+              placeholder="e.g., ⚠️ Scheduled maintenance tonight at 11 PM (IST). Please save your work."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="announcement_type">Alert Style / Banner Type</Label>
+              <Select value={announcementType} onValueChange={setAnnouncementType}>
+                <SelectTrigger id="announcement_type">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="info">🔵 Info (Blue - System Updates)</SelectItem>
+                  <SelectItem value="warning">🟡 Warning (Amber - Scheduled Maintenance)</SelectItem>
+                  <SelectItem value="danger">🔴 Critical Alert (Red - Urgent Notice)</SelectItem>
+                  <SelectItem value="success">🟢 Success (Green - New Feature Live)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="announcement_target">Target Tenant Plan</Label>
+              <Select value={announcementTarget} onValueChange={setAnnouncementTarget}>
+                <SelectTrigger id="announcement_target">
+                  <SelectValue placeholder="Select target" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Active Tenants</SelectItem>
+                  <SelectItem value="trial">Trial Plan Tenants Only</SelectItem>
+                  <SelectItem value="yearly">1-Year Plan Tenants Only</SelectItem>
+                  <SelectItem value="3_year">3-Year Plan Tenants Only</SelectItem>
+                  <SelectItem value="lifetime">Lifetime Plan Tenants Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1119,7 +1206,7 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
         </CardContent>
         <CardFooter className="border-t">
           <Button type="submit" disabled={saving} className="ml-auto">
-            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save Settings &amp; Plan Limits
+            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save All Settings &amp; Broadcasts
           </Button>
         </CardFooter>
       </Card>

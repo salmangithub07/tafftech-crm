@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     params.push(like, like, like);
   }
 
-  const [payments, summary, expiringSoon] = await Promise.all([
+  const [payments, summary, expiringSoon, monthlyTrends, planDist] = await Promise.all([
     query(
       `SELECT sp.*, a.status AS admin_status, a.plan_expiry_date
        FROM subscription_payments sp
@@ -38,35 +38,81 @@ export async function GET(req: NextRequest) {
     ),
     queryOne<{
       total_revenue: number;
+      this_month_revenue: number;
+      last_month_revenue: number;
+      pending_revenue: number;
       approved_count: number;
       pending_count: number;
       rejected_count: number;
     }>(
       `SELECT
          COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) AS total_revenue,
+         COALESCE(SUM(CASE WHEN status = 'approved' AND created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) AS this_month_revenue,
+         COALESCE(SUM(CASE WHEN status = 'approved' AND created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND created_at < DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) AS last_month_revenue,
+         COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_revenue,
          COALESCE(SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END), 0) AS approved_count,
          COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending_count,
          COALESCE(SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END), 0) AS rejected_count
        FROM subscription_payments`
     ),
-    query<{ id: number; name: string; email: string; plan_expiry_date: string }>(
-      `SELECT id, name, email, plan_expiry_date
+    query<{ id: number; name: string; email: string; plan_type: string; plan_expiry_date: string }>(
+      `SELECT id, name, email, plan_type, plan_expiry_date
        FROM admins
        WHERE role = 'admin'
          AND plan_expiry_date IS NOT NULL
          AND (plan_expiry_date::date - CURRENT_DATE) BETWEEN 0 AND 7
        ORDER BY plan_expiry_date ASC`
     ),
+    query<{ month_key: string; month_label: string; revenue: number; count: number }>(
+      `SELECT
+         TO_CHAR(created_at, 'YYYY-MM') AS month_key,
+         TO_CHAR(created_at, 'Mon YYYY') AS month_label,
+         COALESCE(SUM(amount), 0) AS revenue,
+         COUNT(*) AS count
+       FROM subscription_payments
+       WHERE status = 'approved'
+       GROUP BY TO_CHAR(created_at, 'YYYY-MM'), TO_CHAR(created_at, 'Mon YYYY')
+       ORDER BY month_key ASC
+       LIMIT 12`
+    ),
+    query<{ plan_type: string; count: number }>(
+      `SELECT COALESCE(plan_type, 'trial') AS plan_type, COUNT(*) AS count
+       FROM admins
+       WHERE role = 'admin'
+       GROUP BY COALESCE(plan_type, 'trial')`
+    ),
   ]);
+
+  const thisMonthRev = Number(summary?.this_month_revenue || 0);
+  const lastMonthRev = Number(summary?.last_month_revenue || 0);
+  let growthPercent = 0;
+  if (lastMonthRev > 0) {
+    growthPercent = Math.round(((thisMonthRev - lastMonthRev) / lastMonthRev) * 100);
+  } else if (thisMonthRev > 0) {
+    growthPercent = 100;
+  }
 
   return NextResponse.json({
     payments,
     analytics: {
       total_revenue: Number(summary?.total_revenue || 0),
+      this_month_revenue: thisMonthRev,
+      last_month_revenue: lastMonthRev,
+      growth_percent: growthPercent,
+      pending_revenue: Number(summary?.pending_revenue || 0),
       approved_count: Number(summary?.approved_count || 0),
       pending_count: Number(summary?.pending_count || 0),
       rejected_count: Number(summary?.rejected_count || 0),
       expiring_soon_count: expiringSoon.length,
+      monthly_trends: monthlyTrends.map((t) => ({
+        ...t,
+        revenue: Number(t.revenue),
+        count: Number(t.count),
+      })),
+      plan_distribution: planDist.map((p) => ({
+        plan_type: p.plan_type,
+        count: Number(p.count),
+      })),
     },
     expiring_soon: expiringSoon,
   });

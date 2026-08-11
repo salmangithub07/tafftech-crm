@@ -34,6 +34,10 @@ const settingsSchema = z.object({
   three_year_max_customers: z.string().optional(),
   lifetime_max_executives: z.string().optional(),
   lifetime_max_customers: z.string().optional(),
+  broadcast_announcement_enabled: z.string().optional(),
+  broadcast_announcement_message: z.string().optional(),
+  broadcast_announcement_type: z.string().optional(),
+  broadcast_announcement_target_plan: z.string().optional(),
 });
 
 export async function GET() {

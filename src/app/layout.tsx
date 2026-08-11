@@ -32,6 +32,12 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Suppress browser extension (Bitdefender anti-tracker) DOM attribute hydration error overlay */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(typeof window!=='undefined'){var o=console.error;console.error=function(){if(arguments[0]&&typeof arguments[0]==='string'&&arguments[0].indexOf('bis_skin_checked')!==-1)return;o.apply(console,arguments);};}})();`,
+          }}
+        />
         {/* Applied before paint so the saved accent color never flashes to the default blue */}
         <style
           dangerouslySetInnerHTML={{
