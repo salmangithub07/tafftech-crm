@@ -111,7 +111,11 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     await execute(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_subscription_payments_utr ON subscription_payments (LOWER(utr_number));
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ DEFAULT NULL;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ DEFAULT NULL;
     `).catch(() => {});
 
     tablesInitialized = true;
@@ -144,6 +148,7 @@ export async function logActivity({
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [tenantId, actorId, actorName, action, entityType, entityId || null, entityLabel || null]
     );
+    await execute(`UPDATE admins SET last_activity_at = NOW() WHERE id = ?`, [tenantId]).catch(() => {});
   } catch (err) {
     console.error("Failed to record activity log:", err);
   }

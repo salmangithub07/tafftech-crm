@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { queryOne } from "@/lib/db";
+import { queryOne, execute } from "@/lib/db";
 import {
   signSession,
   SESSION_COOKIE,
@@ -50,6 +50,9 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     );
   }
+
+  // Update last_login_at timestamp
+  await execute("UPDATE admins SET last_login_at = NOW() WHERE id = ?", [admin.id]).catch(() => {});
 
   const sessionPayload: SessionPayload = {
     id: admin.id,

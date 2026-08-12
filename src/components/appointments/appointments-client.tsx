@@ -333,14 +333,14 @@ export function AppointmentsClient({
       {/* Tabs + Date Filter */}
       <Tabs value={tab} onValueChange={changeTab}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
-            <TabsTrigger value="today" className="text-xs sm:text-sm">Today ({counts.today})</TabsTrigger>
-            <TabsTrigger value="tomorrow" className="text-xs sm:text-sm">Tomorrow ({counts.tomorrow})</TabsTrigger>
-            <TabsTrigger value="past" className="text-xs sm:text-sm">Past ({counts.past})</TabsTrigger>
+          <TabsList className="grid grid-cols-3 sm:flex w-full sm:w-fit h-auto p-1 gap-1">
+            <TabsTrigger value="all" className="text-xs">All ({counts.all})</TabsTrigger>
+            <TabsTrigger value="today" className="text-xs">Today ({counts.today})</TabsTrigger>
+            <TabsTrigger value="tomorrow" className="text-xs">Tomorrow ({counts.tomorrow})</TabsTrigger>
+            <TabsTrigger value="past" className="text-xs">Past ({counts.past})</TabsTrigger>
             <TabsTrigger
               value="trash"
-              className="gap-1 text-xs sm:text-sm data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+              className="gap-1 text-xs col-span-2 sm:col-span-1 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
             >
               <Trash2 className="size-3" /> Trash ({counts.trash})
             </TabsTrigger>
