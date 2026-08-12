@@ -44,8 +44,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
     tenantId,
   ]);
   const product = await query(
-    "SELECT p.*, l.name AS supplier_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id WHERE p.id = ?",
-    [id]
+    "SELECT p.*, l.name AS supplier_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id WHERE p.id = ? AND p.tenant_id = ?",
+    [id, tenantId]
   );
   return NextResponse.json(product[0]);
 }

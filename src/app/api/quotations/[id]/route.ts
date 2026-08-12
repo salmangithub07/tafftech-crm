@@ -31,8 +31,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
   ]);
   const quotation = await query(
     `SELECT q.*, c.name AS customer_name FROM quotations q
-     LEFT JOIN customers c ON c.id = q.customer_id WHERE q.id = ?`,
-    [id]
+     LEFT JOIN customers c ON c.id = q.customer_id WHERE q.id = ? AND q.tenant_id = ?`,
+    [id, tenantId]
   );
   return NextResponse.json(quotation[0]);
 }
