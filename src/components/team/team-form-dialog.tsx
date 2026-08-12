@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -39,6 +39,7 @@ export function TeamFormDialog({
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
+  const [showPassword, setShowPassword] = React.useState(false);
   const {
     register,
     handleSubmit,
@@ -52,7 +53,10 @@ export function TeamFormDialog({
   });
 
   React.useEffect(() => {
-    if (open) reset({ name: "", email: "", password: "", permissions: DEFAULT_PERMISSIONS });
+    if (open) {
+      reset({ name: "", email: "", password: "", permissions: DEFAULT_PERMISSIONS });
+      setShowPassword(false);
+    }
   }, [open, reset]);
 
   async function onSubmit(values: FormValues) {
@@ -94,7 +98,24 @@ export function TeamFormDialog({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">Password *</Label>
-            <Input id="password" type="password" {...register("password")} placeholder="At least 6 characters" />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                placeholder="At least 6 characters"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
             {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
           <PermissionsFields value={watch("permissions")} onChange={(v) => setValue("permissions", v)} />
