@@ -160,6 +160,7 @@ function ProfileTab({
 }) {
   const router = useRouter();
   const [name, setName] = React.useState(session.name);
+  const [email, setEmail] = React.useState(session.email);
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
@@ -177,7 +178,7 @@ function ProfileTab({
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, ...(password ? { password } : {}) }),
+        body: JSON.stringify({ name, email, ...(password ? { password } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not update.");
@@ -291,13 +292,20 @@ function ProfileTab({
       <Card>
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
-          <CardDescription>Update your display name and login password.</CardDescription>
+          <CardDescription>Update your email address, display name, and login password.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSave}>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={session.email} disabled className="bg-muted" />
+              <Label htmlFor="email">Email / Username</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                required
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
