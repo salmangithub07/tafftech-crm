@@ -48,8 +48,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const appointment = await query(
     `SELECT ap.*, c.name AS customer_name FROM appointments ap
-     LEFT JOIN customers c ON c.id = ap.customer_id WHERE ap.id = ?`,
-    [id]
+     LEFT JOIN customers c ON c.id = ap.customer_id WHERE ap.id = ? AND ap.tenant_id = ?`,
+    [id, tenantId]
   );
   return NextResponse.json(appointment[0]);
 }
@@ -77,8 +77,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   ]);
   const appointment = await query(
     `SELECT ap.*, c.name AS customer_name FROM appointments ap
-     LEFT JOIN customers c ON c.id = ap.customer_id WHERE ap.id = ?`,
-    [id]
+     LEFT JOIN customers c ON c.id = ap.customer_id WHERE ap.id = ? AND ap.tenant_id = ?`,
+    [id, tenantId]
   );
   return NextResponse.json(appointment[0]);
 }
