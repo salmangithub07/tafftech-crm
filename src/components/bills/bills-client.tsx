@@ -210,7 +210,7 @@ export function BillsClient() {
         </div>
 
         <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }}>
-          <TabsList className="w-fit">
+          <TabsList className="grid grid-cols-4 w-full sm:w-fit text-xs">
             <TabsTrigger value="all">All Bills</TabsTrigger>
             <TabsTrigger value="paid">Paid</TabsTrigger>
             <TabsTrigger value="unpaid">Unpaid</TabsTrigger>

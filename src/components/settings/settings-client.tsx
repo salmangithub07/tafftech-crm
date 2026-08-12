@@ -16,6 +16,8 @@ import {
   MessageSquare,
   Send,
   HelpCircle,
+  User,
+  IndianRupee,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -74,13 +76,38 @@ export function SettingsClient({
 
   return (
     <Tabs defaultValue={defaultTab} className="w-full">
-      <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
-        <TabsTrigger value="profile">Profile</TabsTrigger>
-        {canEditAppearance && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
-        {canEditAppearance && <TabsTrigger value="invoice">Invoice &amp; Bank</TabsTrigger>}
-        {canEditAppearance && <TabsTrigger value="whatsapp">WhatsApp Gateway</TabsTrigger>}
+      <TabsList className="grid grid-cols-2 w-full h-auto p-1 gap-1 sm:flex sm:w-fit sm:h-9">
+        <TabsTrigger value="profile" className="gap-1.5 text-xs py-1.5 sm:py-1">
+          <User className="size-3.5 shrink-0" />
+          <span>Profile</span>
+        </TabsTrigger>
+        {canEditAppearance && (
+          <TabsTrigger value="appearance" className="gap-1.5 text-xs py-1.5 sm:py-1">
+            <Palette className="size-3.5 shrink-0" />
+            <span className="hidden sm:inline">Appearance</span>
+            <span className="sm:hidden">Theme</span>
+          </TabsTrigger>
+        )}
+        {canEditAppearance && (
+          <TabsTrigger value="invoice" className="gap-1.5 text-xs py-1.5 sm:py-1">
+            <FileText className="size-3.5 shrink-0" />
+            <span className="hidden sm:inline">Invoice &amp; Bank</span>
+            <span className="sm:hidden">Invoice &amp; Bank</span>
+          </TabsTrigger>
+        )}
+        {canEditAppearance && (
+          <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
+            <MessageSquare className="size-3.5 shrink-0" />
+            <span className="hidden sm:inline">WhatsApp Gateway</span>
+            <span className="sm:hidden">WhatsApp</span>
+          </TabsTrigger>
+        )}
         {session.role === "super_admin" && (
-          <TabsTrigger value="subscription">Subscription Pricing &amp; QR</TabsTrigger>
+          <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1 col-span-2 sm:col-span-1">
+            <IndianRupee className="size-3.5 shrink-0" />
+            <span className="hidden sm:inline">Subscription Pricing &amp; QR</span>
+            <span className="sm:hidden">Pricing &amp; QR</span>
+          </TabsTrigger>
         )}
       </TabsList>
 

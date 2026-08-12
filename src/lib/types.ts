@@ -228,6 +228,16 @@ export type Admin = {
   customer_count?: number;
   appointment_count?: number;
   executive_count?: number;
+  bill_count?: number;
+  quotation_count?: number;
+  product_count?: number;
+  last_login_at?: string | null;
+  last_activity_at?: string | null;
+  daily_active_days?: number;
+  weekly_activity_count?: number;
+  total_records?: number;
+  est_db_size_kb?: number;
+  health_score?: number;
   // Subscription
   plan_type?: PlanType | null;
   plan_start_date?: string | null;

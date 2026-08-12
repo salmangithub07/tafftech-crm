@@ -157,7 +157,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
 
       <Tabs value={tab} onValueChange={changeTab}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList>
+          <TabsList className="grid grid-cols-4 w-full sm:w-fit text-xs">
             <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
             <TabsTrigger value="accepted">Accepted ({counts.accepted})</TabsTrigger>
