@@ -142,6 +142,26 @@ export async function logActivity({
   entityLabel?: string | null;
 }) {
   try {
+    // 🔒 SUPER ADMIN & SUPPORT IMPERSONATION PRIVACY GUARANTEE:
+    // Super Admin activities (including actions during Support Impersonation "Login as Tenant")
+    // must NEVER produce notifications or activity log entries for any tenant.
+    if (
+      actorName?.toLowerCase().includes("super admin") ||
+      actorName?.toLowerCase().includes("superadmin")
+    ) {
+      return;
+    }
+
+    // Verify if actorId belongs to a Super Admin account
+    const actorRoleRes = await query<{ role: string }>(
+      "SELECT role FROM admins WHERE id = ?",
+      [actorId]
+    ).catch(() => []);
+
+    if (actorRoleRes.length > 0 && actorRoleRes[0].role === "super_admin") {
+      return;
+    }
+
     await ensureActivityTables();
     await execute(
       `INSERT INTO activity_log (tenant_id, actor_id, actor_name, action, entity_type, entity_id, entity_label)

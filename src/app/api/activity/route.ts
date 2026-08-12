@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   // Build WHERE clause:
   // For executives, exclude their own actions so they only see actions performed by OTHER team members.
   // For admins, see actions by all team members (including themselves/others, as per request: "admin ko sabhi team members ki recent activity notifications k through aani chahiye").
-  let whereSql = `WHERE tenant_id = ?`;
+  let whereSql = `WHERE tenant_id = ? AND LOWER(actor_name) NOT LIKE '%super admin%' AND LOWER(actor_name) NOT LIKE '%superadmin%' AND actor_id NOT IN (SELECT id FROM admins WHERE role = 'super_admin')`;
   const params: unknown[] = [tenantId];
 
   if (isExecutive) {
