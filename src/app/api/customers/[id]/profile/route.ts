@@ -58,6 +58,9 @@ export async function GET(
     query(
       `SELECT * FROM activity_log
        WHERE tenant_id = ? AND entity_type = 'customer' AND entity_id = ?
+         AND LOWER(actor_name) NOT LIKE '%super admin%'
+         AND LOWER(actor_name) NOT LIKE '%superadmin%'
+         AND actor_id NOT IN (SELECT id FROM admins WHERE role = 'super_admin')
        ORDER BY created_at DESC`,
       [tenantId, customerId]
     ),

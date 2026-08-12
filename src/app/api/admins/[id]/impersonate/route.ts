@@ -53,17 +53,6 @@ export async function POST(req: NextRequest, { params }: Params) {
     maxAge: 60 * 60 * 24, // 24 hours
   });
 
-  // Log activity
-  await logActivity({
-    tenantId: targetAdmin.id,
-    actorId: superAdminId,
-    actorName: superAdminName,
-    action: "🕵️ Impersonated Tenant Account for Support",
-    entityType: "team",
-    entityId: targetAdmin.id,
-    entityLabel: `Super Admin ${superAdminName} logged into ${targetAdmin.name} (${targetAdmin.email})`,
-  });
-
   return NextResponse.json({
     success: true,
     message: `Logged in as ${targetAdmin.name}. Redirecting to tenant dashboard...`,
