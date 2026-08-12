@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute } from "@/lib/db";
+import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { ensureActivityTables } from "@/lib/activity";
 import { z } from "zod";
+import type { CustomerStatus } from "@/lib/types";
 
 const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -57,6 +58,37 @@ export async function PUT(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     console.error("Error updating customer:", err);
     return NextResponse.json({ error: err.message || "Failed to update customer" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    await ensureActivityTables();
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canAccess(session, "customers"))
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const tenantId = tenantOf(session)!;
+    const { id } = await params;
+    const custId = parseInt(id, 10);
+
+    const body = await req.json().catch(() => null);
+    const status = body?.status as CustomerStatus;
+
+    if (!["lead", "progress", "active", "inactive"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    await execute(
+      "UPDATE customers SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?",
+      [status, custId, tenantId]
+    );
+
+    const updated = await queryOne("SELECT * FROM customers WHERE id = ? AND tenant_id = ?", [custId, tenantId]);
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error("Error updating customer status:", err);
+    return NextResponse.json({ error: err.message || "Failed to update status" }, { status: 500 });
   }
 }
 
