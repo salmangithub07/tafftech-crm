@@ -262,57 +262,109 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
 
   return (
     <div className="flex flex-col gap-6" suppressHydrationWarning>
-      {/* Top Title Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">SaaS Tenants &amp; Payments</h1>
-          <p className="text-sm text-muted-foreground">
+      {/* Top Title Bar — 2 Columns on Mobile */}
+      <div className="flex items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 pr-1">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+            SaaS Tenants &amp; Payments
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
             Manage all tenant accounts, subscription plans, payment history, and revenue analytics.
           </p>
         </div>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
+        <Button size="sm" onClick={() => setFormOpen(true)} className="shrink-0 text-xs sm:text-sm font-semibold h-9 px-3 gap-1">
           <Plus className="size-4" /> Add admin
         </Button>
       </div>
 
-      {/* Top SaaS Analytics KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      {/* Top SaaS Analytics KPI Cards — Icons on Left */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Total Revenue */}
-        <Card className="p-3 sm:p-4 flex flex-col items-center justify-center text-center border-primary/20 bg-primary/5">
-          <div className="flex size-9 sm:size-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1.5 sm:mb-2">
-            <IndianRupee className="size-4 sm:size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
+              <IndianRupee className="size-5" />
+            </div>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                TOTAL REVENUE
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground truncate">
+                ₹{Number(analytics.total_revenue || 0).toLocaleString("en-IN")}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                {admins.filter((a) => a.status === "active").length} active accounts
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-medium line-clamp-1">Total Revenue</span>
-          <span className="text-lg sm:text-2xl font-black text-foreground tracking-tight mt-0.5 sm:mt-1 truncate max-w-full">
-            ₹{Number(analytics.total_revenue || 0).toLocaleString("en-IN")}
-          </span>
         </Card>
 
         {/* Card 2: Active Tenants */}
-        <Card className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-          <div className="flex size-9 sm:size-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-1.5 sm:mb-2">
-            <Users className="size-4 sm:size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-emerald-500/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-xs">
+              <Users className="size-5" />
+            </div>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                ACTIVE TENANTS
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {admins.filter((a) => a.status === "active").length}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                {admins.length} total registered
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-medium line-clamp-1">Active Tenants</span>
-          <span className="text-lg sm:text-2xl font-black text-foreground tracking-tight mt-0.5 sm:mt-1">{admins.length}</span>
         </Card>
 
         {/* Card 3: Pending Approvals */}
-        <Card className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-          <div className="flex size-9 sm:size-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 mb-1.5 sm:mb-2">
-            <Clock className="size-4 sm:size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-amber-500/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:scale-105 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 shadow-xs">
+              <Clock className="size-5" />
+            </div>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                PENDING APPROVALS
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {analytics.pending_count || 0}
+              </p>
+              <p className={`text-[11px] font-medium truncate ${
+                (analytics.pending_count || 0) > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400"
+              }`}>
+                {(analytics.pending_count || 0) > 0 ? "Action required" : "All payments cleared"}
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-medium line-clamp-1">Pending Approvals</span>
-          <span className="text-lg sm:text-2xl font-black text-amber-500 tracking-tight mt-0.5 sm:mt-1">{analytics.pending_count || 0}</span>
         </Card>
 
-        {/* Card 4: Expiring Soon */}
-        <Card className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-          <div className="flex size-9 sm:size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive mb-1.5 sm:mb-2">
-            <AlertTriangle className="size-4 sm:size-5" />
+        {/* Card 4: Expiring (7 Days) */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-destructive/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 group-hover:scale-105 group-hover:bg-destructive group-hover:text-white transition-all duration-300 shadow-xs">
+              <AlertTriangle className="size-5" />
+            </div>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                EXPIRING (7 DAYS)
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {expiringSoonAdmins.length}
+              </p>
+              <p className={`text-[11px] font-medium truncate ${
+                expiringSoonAdmins.length > 0
+                  ? "text-destructive"
+                  : "text-emerald-600 dark:text-emerald-400"
+              }`}>
+                {expiringSoonAdmins.length > 0 ? "Follow-up due" : "No urgent expiries"}
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-medium line-clamp-1">Expiring (7 Days)</span>
-          <span className="text-lg sm:text-2xl font-black text-destructive tracking-tight mt-0.5 sm:mt-1">{expiringSoonAdmins.length}</span>
         </Card>
       </div>
 

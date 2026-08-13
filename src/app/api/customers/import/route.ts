@@ -12,6 +12,8 @@ const rowSchema = z.object({
   email: z.string().optional().default(""),
   address: z.string().optional().default(""),
   notes: z.string().optional().default(""),
+  status: z.string().optional().default("lead"),
+  visited: z.any().optional().default(0),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,7 +24,13 @@ export async function POST(req: NextRequest) {
   const tenantId = tenantOf(session)!;
 
   const body = await req.json().catch(() => null);
-  const rows = Array.isArray(body?.rows) ? body.rows : [];
+  const rows = Array.isArray(body?.customers)
+    ? body.customers
+    : Array.isArray(body?.rows)
+    ? body.rows
+    : Array.isArray(body)
+    ? body
+    : [];
 
   // Check customer limits before importing
   const superAdminSettings = await getSettings(0);
@@ -55,13 +63,23 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const d = parsed.data;
+    const statusVal = ["lead", "progress", "active", "inactive"].includes(String(d.status).toLowerCase())
+      ? String(d.status).toLowerCase()
+      : "lead";
+    const visitedVal = d.visited === true || d.visited === 1 || d.visited === "1" || String(d.visited).toLowerCase() === "true" ? 1 : 0;
+
     await execute(
       `INSERT INTO customers (tenant_id, name, product, phone, email, address, notes, status, visited, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'lead', 0, ?)`,
-      [tenantId, d.name, d.product, d.phone, d.email, d.address, d.notes, session.id]
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tenantId, d.name, d.product, d.phone, d.email, d.address, d.notes, statusVal, visitedVal, session.id]
     );
     inserted++;
   }
 
-  return NextResponse.json({ inserted, skipped });
+  return NextResponse.json({
+    inserted,
+    skipped,
+    importedCount: inserted,
+    skippedCount: skipped,
+  });
 }
