@@ -30,17 +30,20 @@ export default async function DashboardPage() {
   if (!tenantId) return null;
 
   const totalCustomers = (
-    await queryOne<{ c: number }>("SELECT COUNT(*) as c FROM customers WHERE tenant_id = ?", [tenantId])
+    await queryOne<{ c: number }>(
+      "SELECT COUNT(*) as c FROM customers WHERE tenant_id = ? AND COALESCE(is_trashed, 0) = 0",
+      [tenantId]
+    )
   )?.c ?? 0;
   const activeCustomers = (
     await queryOne<{ c: number }>(
-      "SELECT COUNT(*) as c FROM customers WHERE tenant_id = ? AND status = 'active'",
+      "SELECT COUNT(*) as c FROM customers WHERE tenant_id = ? AND status = 'active' AND COALESCE(is_trashed, 0) = 0",
       [tenantId]
     )
   )?.c ?? 0;
   const pendingAppointments = (
     await queryOne<{ c: number }>(
-      "SELECT COUNT(*) as c FROM appointments WHERE tenant_id = ? AND status = 'pending'",
+      "SELECT COUNT(*) as c FROM appointments WHERE tenant_id = ? AND status = 'pending' AND COALESCE(is_trashed, 0) = 0",
       [tenantId]
     )
   )?.c ?? 0;
@@ -52,14 +55,14 @@ export default async function DashboardPage() {
   )?.c ?? 0;
 
   const recentCustomers = await query<Customer>(
-    "SELECT * FROM customers WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 5",
+    "SELECT * FROM customers WHERE tenant_id = ? AND COALESCE(is_trashed, 0) = 0 ORDER BY created_at DESC LIMIT 5",
     [tenantId]
   );
 
   const upcoming = await query<Appointment>(
     `SELECT ap.*, c.name AS customer_name FROM appointments ap
      LEFT JOIN customers c ON c.id = ap.customer_id
-     WHERE ap.tenant_id = ? AND ap.status = 'pending'
+     WHERE ap.tenant_id = ? AND ap.status = 'pending' AND COALESCE(ap.is_trashed, 0) = 0
      ORDER BY ap.appointment_date ASC LIMIT 5`,
     [tenantId]
   );

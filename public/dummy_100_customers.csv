@@ -1,0 +1,101 @@
+id,name,product,phone,email,address,notes,status,visited,created_by,created_at
+1,Rajesh Kumar,Scrubber Packing Machine,+91 9810087654,rajesh.kumar101@example.com,"Nagpur, Maharashtra","Interested in automatic model.",lead,0,Demo Admin,2026-08-02 10:01:00.000000
+2,Priya Sharma,Band Sealer,+91 9810175308,priya.sharma102@example.com,"Mumbai, Maharashtra","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-03 10:02:00.000000
+3,Amit Patel,Automatic Pouch Packaging Machine,+91 9810262962,amit.patel103@example.com,"Pune, Maharashtra","Follow up next Monday.",active,1,Demo Admin,2026-08-04 10:03:00.000000
+4,Vikram Singh,Continuous Sealer,+91 9810350616,vikram.singh104@example.com,"Ahmedabad, Gujarat","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-05 10:04:00.000000
+5,Sneha Kulkarni,Vacuum Packing Machine,+91 9810438270,sneha.kulkarni105@example.com,"Surat, Gujarat","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-06 10:05:00.000000
+6,Suresh Verma,Liquid Filling Machine,+91 9810525924,suresh.verma106@example.com,"Indore, Madhya Pradesh","Demo scheduled for next week.",progress,1,Demo Admin,2026-08-07 10:06:00.000000
+7,Ananya Roy,Shrink Wrapping Machine,+91 9810613578,ananya.roy107@example.com,"Bhopal, Madhya Pradesh","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-08 10:07:00.000000
+8,Manish Gupta,Spices Packaging Machine,+91 9810701232,manish.gupta108@example.com,"Jaipur, Rajasthan","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-09 10:08:00.000000
+9,Kavita Joshi,Auger Filler Machine,+91 9810788886,kavita.joshi109@example.com,"Delhi NCR","Interested in automatic model.",lead,1,Demo Admin,2026-08-10 10:09:00.000000
+10,Deepak Agarwal,Pneumatic Collar Packing Machine,+91 9810876540,deepak.agarwal110@example.com,"Hyderabad, Telangana","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-11 10:10:00.000000
+11,Rahul Deshmukh,Scrubber Packing Machine,+91 9810964194,rahul.deshmukh111@example.com,"Bangalore, Karnataka","Follow up next Monday.",active,0,Demo Admin,2026-08-12 10:11:00.000000
+12,Pooja Iyer,Band Sealer,+91 9811051848,pooja.iyer112@example.com,"Nashik, Maharashtra","Requested product catalog & video.",inactive,1,Demo Admin,2026-08-13 10:12:00.000000
+13,Nitin Malhotra,Automatic Pouch Packaging Machine,+91 9811139502,nitin.malhotra113@example.com,"Nagpur, Maharashtra","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-14 10:13:00.000000
+14,Swati Reddy,Continuous Sealer,+91 9811227156,swati.reddy114@example.com,"Mumbai, Maharashtra","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-15 10:14:00.000000
+15,Alok Pandey,Vacuum Packing Machine,+91 9811314810,alok.pandey115@example.com,"Pune, Maharashtra","Existing customer asking for spare parts.",active,1,Demo Admin,2026-08-16 10:15:00.000000
+16,Sunita Rao,Liquid Filling Machine,+91 9811402464,sunita.rao116@example.com,"Ahmedabad, Gujarat","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-17 10:16:00.000000
+17,Ganesh Bhosale,Shrink Wrapping Machine,+91 9811490118,ganesh.bhosale117@example.com,"Surat, Gujarat","Interested in automatic model.",lead,0,Demo Admin,2026-08-18 10:17:00.000000
+18,Megha Bhatt,Spices Packaging Machine,+91 9811577772,megha.bhatt118@example.com,"Indore, Madhya Pradesh","Quotation sent via WhatsApp.",progress,1,Demo Admin,2026-08-19 10:18:00.000000
+19,Sanjay Mehta,Auger Filler Machine,+91 9811665426,sanjay.mehta119@example.com,"Bhopal, Madhya Pradesh","Follow up next Monday.",active,0,Demo Admin,2026-08-20 10:19:00.000000
+20,Ritu Saxena,Pneumatic Collar Packing Machine,+91 9811753080,ritu.saxena120@example.com,"Jaipur, Rajasthan","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-21 10:20:00.000000
+21,Ashok Chauhan,Scrubber Packing Machine,+91 9811840734,ashok.chauhan121@example.com,"Delhi NCR","Looking for bulk order discount.",lead,1,Demo Admin,2026-08-22 10:21:00.000000
+22,Divya Nair,Band Sealer,+91 9811928388,divya.nair122@example.com,"Hyderabad, Telangana","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-23 10:22:00.000000
+23,Manoj Tripathi,Automatic Pouch Packaging Machine,+91 9812016042,manoj.tripathi123@example.com,"Bangalore, Karnataka","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-24 10:23:00.000000
+24,Neha Jain,Continuous Sealer,+91 9812103696,neha.jain124@example.com,"Nashik, Maharashtra","Payment terms under discussion.",inactive,1,Demo Admin,2026-08-25 10:24:00.000000
+25,Pankaj Bansal,Vacuum Packing Machine,+91 9812191350,pankaj.bansal125@example.com,"Nagpur, Maharashtra","Interested in automatic model.",lead,0,Demo Admin,2026-08-26 10:25:00.000000
+26,Trupti Patil,Liquid Filling Machine,+91 9812279004,trupti.patil126@example.com,"Mumbai, Maharashtra","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-27 10:26:00.000000
+27,Varun Shah,Shrink Wrapping Machine,+91 9812366658,varun.shah127@example.com,"Pune, Maharashtra","Follow up next Monday.",active,1,Demo Admin,2026-08-28 10:27:00.000000
+28,Shweta Sen,Spices Packaging Machine,+91 9812454312,shweta.sen128@example.com,"Ahmedabad, Gujarat","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-01 10:28:00.000000
+29,Harish Chandra,Auger Filler Machine,+91 9812541966,harish.chandra129@example.com,"Surat, Gujarat","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-02 10:29:00.000000
+30,Preeti Mishra,Pneumatic Collar Packing Machine,+91 9812629620,preeti.mishra130@example.com,"Indore, Madhya Pradesh","Demo scheduled for next week.",progress,1,Demo Admin,2026-08-03 10:30:00.000000
+31,Vijay Kelkar,Scrubber Packing Machine,+91 9812717274,vijay.kelkar131@example.com,"Bhopal, Madhya Pradesh","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-04 10:31:00.000000
+32,Ruchika Das,Band Sealer,+91 9812804928,ruchika.das132@example.com,"Jaipur, Rajasthan","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-05 10:32:00.000000
+33,Anil Solanki,Automatic Pouch Packaging Machine,+91 9812892582,anil.solanki133@example.com,"Delhi NCR","Interested in automatic model.",lead,1,Demo Admin,2026-08-06 10:33:00.000000
+34,Bhavna Kothari,Continuous Sealer,+91 9812980236,bhavna.kothari134@example.com,"Hyderabad, Telangana","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-07 10:34:00.000000
+35,Chetan Shetty,Vacuum Packing Machine,+91 9813067890,chetan.shetty135@example.com,"Bangalore, Karnataka","Follow up next Monday.",active,0,Demo Admin,2026-08-08 10:35:00.000000
+36,Dipti Wadkar,Liquid Filling Machine,+91 9813155544,dipti.wadkar136@example.com,"Nashik, Maharashtra","Requested product catalog & video.",inactive,1,Demo Admin,2026-08-09 10:36:00.000000
+37,Eknath Shinde,Shrink Wrapping Machine,+91 9813243198,eknath.shinde137@example.com,"Nagpur, Maharashtra","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-10 10:37:00.000000
+38,Farhan Khan,Spices Packaging Machine,+91 9813330852,farhan.khan138@example.com,"Mumbai, Maharashtra","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-11 10:38:00.000000
+39,Gauri Gadkari,Auger Filler Machine,+91 9813418506,gauri.gadkari139@example.com,"Pune, Maharashtra","Existing customer asking for spare parts.",active,1,Demo Admin,2026-08-12 10:39:00.000000
+40,Hitesh Parekh,Pneumatic Collar Packing Machine,+91 9813506160,hitesh.parekh140@example.com,"Ahmedabad, Gujarat","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-13 10:40:00.000000
+41,Inderjeet Singh,Scrubber Packing Machine,+91 9813593814,inderjeet.singh141@example.com,"Surat, Gujarat","Interested in automatic model.",lead,0,Demo Admin,2026-08-14 10:41:00.000000
+42,Jyoti Mohite,Band Sealer,+91 9813681468,jyoti.mohite142@example.com,"Indore, Madhya Pradesh","Quotation sent via WhatsApp.",progress,1,Demo Admin,2026-08-15 10:42:00.000000
+43,Kiran Sawant,Automatic Pouch Packaging Machine,+91 9813769122,kiran.sawant143@example.com,"Bhopal, Madhya Pradesh","Follow up next Monday.",active,0,Demo Admin,2026-08-16 10:43:00.000000
+44,Lalit Somani,Continuous Sealer,+91 9813856776,lalit.somani144@example.com,"Jaipur, Rajasthan","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-17 10:44:00.000000
+45,Madhavi Gore,Vacuum Packing Machine,+91 9813944430,madhavi.gore145@example.com,"Delhi NCR","Looking for bulk order discount.",lead,1,Demo Admin,2026-08-18 10:45:00.000000
+46,Nilesh Rane,Liquid Filling Machine,+91 9814032084,nilesh.rane146@example.com,"Hyderabad, Telangana","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-19 10:46:00.000000
+47,Omkar Jadhav,Shrink Wrapping Machine,+91 9814119738,omkar.jadhav147@example.com,"Bangalore, Karnataka","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-20 10:47:00.000000
+48,Pradeep Tandon,Spices Packaging Machine,+91 9814207392,pradeep.tandon148@example.com,"Nashik, Maharashtra","Payment terms under discussion.",inactive,1,Demo Admin,2026-08-21 10:48:00.000000
+49,Qasim Rizvi,Auger Filler Machine,+91 9814295046,qasim.rizvi149@example.com,"Nagpur, Maharashtra","Interested in automatic model.",lead,0,Demo Admin,2026-08-22 10:49:00.000000
+50,Ramesh Tawde,Pneumatic Collar Packing Machine,+91 9814382700,ramesh.tawde150@example.com,"Mumbai, Maharashtra","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-23 10:50:00.000000
+51,Saritha Pillai,Scrubber Packing Machine,+91 9814470354,saritha.pillai151@example.com,"Pune, Maharashtra","Follow up next Monday.",active,1,Demo Admin,2026-08-24 10:51:00.000000
+52,Tarun Mittal,Band Sealer,+91 9814558008,tarun.mittal152@example.com,"Ahmedabad, Gujarat","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-25 10:52:00.000000
+53,Umesh Pal,Automatic Pouch Packaging Machine,+91 9814645662,umesh.pal153@example.com,"Surat, Gujarat","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-26 10:53:00.000000
+54,Vaishali Phadke,Continuous Sealer,+91 9814733316,vaishali.phadke154@example.com,"Indore, Madhya Pradesh","Demo scheduled for next week.",progress,1,Demo Admin,2026-08-27 10:54:00.000000
+55,Waman Tilak,Vacuum Packing Machine,+91 9814820970,waman.tilak155@example.com,"Bhopal, Madhya Pradesh","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-28 10:55:00.000000
+56,Yogesh Gawande,Liquid Filling Machine,+91 9814908624,yogesh.gawande156@example.com,"Jaipur, Rajasthan","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-01 10:56:00.000000
+57,Zainab Merchant,Shrink Wrapping Machine,+91 9814996278,zainab.merchant157@example.com,"Delhi NCR","Interested in automatic model.",lead,1,Demo Admin,2026-08-02 10:57:00.000000
+58,Aarav Choudhury,Spices Packaging Machine,+91 9815083932,aarav.choudhury158@example.com,"Hyderabad, Telangana","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-03 10:58:00.000000
+59,Bharati Hegde,Auger Filler Machine,+91 9815171586,bharati.hegde159@example.com,"Bangalore, Karnataka","Follow up next Monday.",active,0,Demo Admin,2026-08-04 10:59:00.000000
+60,Chandrakant Mule,Pneumatic Collar Packing Machine,+91 9815259240,chandrakant.mule160@example.com,"Nashik, Maharashtra","Requested product catalog & video.",inactive,1,Demo Admin,2026-08-05 10:00:00.000000
+61,Devendra Fadnavis,Scrubber Packing Machine,+91 9815346894,devendra.fadnavis161@example.com,"Nagpur, Maharashtra","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-06 10:01:00.000000
+62,Ekta Kapoor,Band Sealer,+91 9815434548,ekta.kapoor162@example.com,"Mumbai, Maharashtra","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-07 10:02:00.000000
+63,Gautam Adani,Automatic Pouch Packaging Machine,+91 9815522202,gautam.adani163@example.com,"Pune, Maharashtra","Existing customer asking for spare parts.",active,1,Demo Admin,2026-08-08 10:03:00.000000
+64,Hemant Soren,Continuous Sealer,+91 9815609856,hemant.soren164@example.com,"Ahmedabad, Gujarat","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-09 10:04:00.000000
+65,Ila Arun,Vacuum Packing Machine,+91 9815697510,ila.arun165@example.com,"Surat, Gujarat","Interested in automatic model.",lead,0,Demo Admin,2026-08-10 10:05:00.000000
+66,Jagdish Bhagwati,Liquid Filling Machine,+91 9815785164,jagdish.bhagwati166@example.com,"Indore, Madhya Pradesh","Quotation sent via WhatsApp.",progress,1,Demo Admin,2026-08-11 10:06:00.000000
+67,Kalpana Chawla,Shrink Wrapping Machine,+91 9815872818,kalpana.chawla167@example.com,"Bhopal, Madhya Pradesh","Follow up next Monday.",active,0,Demo Admin,2026-08-12 10:07:00.000000
+68,Lata Mangeshkar,Spices Packaging Machine,+91 9815960472,lata.mangeshkar168@example.com,"Jaipur, Rajasthan","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-13 10:08:00.000000
+69,Mahesh Bhupathi,Auger Filler Machine,+91 9816048126,mahesh.bhupathi169@example.com,"Delhi NCR","Looking for bulk order discount.",lead,1,Demo Admin,2026-08-14 10:09:00.000000
+70,Nandita Das,Pneumatic Collar Packing Machine,+91 9816135780,nandita.das170@example.com,"Hyderabad, Telangana","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-15 10:10:00.000000
+71,Om Puri,Scrubber Packing Machine,+91 9816223434,om.puri171@example.com,"Bangalore, Karnataka","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-16 10:11:00.000000
+72,Pratibha Patil,Band Sealer,+91 9816311088,pratibha.patil172@example.com,"Nashik, Maharashtra","Payment terms under discussion.",inactive,1,Demo Admin,2026-08-17 10:12:00.000000
+73,Raghuram Rajan,Automatic Pouch Packaging Machine,+91 9816398742,raghuram.rajan173@example.com,"Nagpur, Maharashtra","Interested in automatic model.",lead,0,Demo Admin,2026-08-18 10:13:00.000000
+74,Sachin Tendulkar,Continuous Sealer,+91 9816486396,sachin.tendulkar174@example.com,"Mumbai, Maharashtra","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-19 10:14:00.000000
+75,Usha Uthup,Vacuum Packing Machine,+91 9816574050,usha.uthup175@example.com,"Pune, Maharashtra","Follow up next Monday.",active,1,Demo Admin,2026-08-20 10:15:00.000000
+76,Vikram Sarabhai,Liquid Filling Machine,+91 9816661704,vikram.sarabhai176@example.com,"Ahmedabad, Gujarat","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-21 10:16:00.000000
+77,Yash Chopra,Shrink Wrapping Machine,+91 9816749358,yash.chopra177@example.com,"Surat, Gujarat","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-22 10:17:00.000000
+78,Zakir Hussain,Spices Packaging Machine,+91 9816837012,zakir.hussain178@example.com,"Indore, Madhya Pradesh","Demo scheduled for next week.",progress,1,Demo Admin,2026-08-23 10:18:00.000000
+79,Aishwarya Rai,Auger Filler Machine,+91 9816924666,aishwarya.rai179@example.com,"Bhopal, Madhya Pradesh","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-24 10:19:00.000000
+80,Bhuvan Bam,Pneumatic Collar Packing Machine,+91 9817012320,bhuvan.bam180@example.com,"Jaipur, Rajasthan","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-25 10:20:00.000000
+81,Chetan Bhagat,Scrubber Packing Machine,+91 9817099974,chetan.bhagat181@example.com,"Delhi NCR","Interested in automatic model.",lead,1,Demo Admin,2026-08-26 10:21:00.000000
+82,Dharmendra Deol,Band Sealer,+91 9817187628,dharmendra.deol182@example.com,"Hyderabad, Telangana","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-27 10:22:00.000000
+83,Emraan Hashmi,Automatic Pouch Packaging Machine,+91 9817275282,emraan.hashmi183@example.com,"Bangalore, Karnataka","Follow up next Monday.",active,0,Demo Admin,2026-08-28 10:23:00.000000
+84,Farhan Akhtar,Continuous Sealer,+91 9817362936,farhan.akhtar184@example.com,"Nashik, Maharashtra","Requested product catalog & video.",inactive,1,Demo Admin,2026-08-01 10:24:00.000000
+85,Govinda Ahuja,Vacuum Packing Machine,+91 9817450590,govinda.ahuja185@example.com,"Nagpur, Maharashtra","Looking for bulk order discount.",lead,0,Demo Admin,2026-08-02 10:25:00.000000
+86,Hema Malini,Liquid Filling Machine,+91 9817538244,hema.malini186@example.com,"Mumbai, Maharashtra","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-03 10:26:00.000000
+87,Irfan Pathan,Shrink Wrapping Machine,+91 9817625898,irfan.pathan187@example.com,"Pune, Maharashtra","Existing customer asking for spare parts.",active,1,Demo Admin,2026-08-04 10:27:00.000000
+88,Jackie Shroff,Spices Packaging Machine,+91 9817713552,jackie.shroff188@example.com,"Ahmedabad, Gujarat","Payment terms under discussion.",inactive,0,Demo Admin,2026-08-05 10:28:00.000000
+89,Karisma Kapoor,Auger Filler Machine,+91 9817801206,karisma.kapoor189@example.com,"Surat, Gujarat","Interested in automatic model.",lead,0,Demo Admin,2026-08-06 10:29:00.000000
+90,Lara Dutta,Pneumatic Collar Packing Machine,+91 9817888860,lara.dutta190@example.com,"Indore, Madhya Pradesh","Quotation sent via WhatsApp.",progress,1,Demo Admin,2026-08-07 10:30:00.000000
+91,Madhuri Dixit,Scrubber Packing Machine,+91 9817976514,madhuri.dixit191@example.com,"Bhopal, Madhya Pradesh","Follow up next Monday.",active,0,Demo Admin,2026-08-08 10:31:00.000000
+92,Nawazuddin Siddiqui,Band Sealer,+91 9818064168,nawazuddin.siddiqui192@example.com,"Jaipur, Rajasthan","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-09 10:32:00.000000
+93,Pankaj Tripathi,Automatic Pouch Packaging Machine,+91 9818151822,pankaj.tripathi193@example.com,"Delhi NCR","Looking for bulk order discount.",lead,1,Demo Admin,2026-08-10 10:33:00.000000
+94,Rajesh Khanna,Continuous Sealer,+91 9818239476,rajesh.khanna194@example.com,"Hyderabad, Telangana","Demo scheduled for next week.",progress,0,Demo Admin,2026-08-11 10:34:00.000000
+95,Sharmila Tagore,Vacuum Packing Machine,+91 9818327130,sharmila.tagore195@example.com,"Bangalore, Karnataka","Existing customer asking for spare parts.",active,0,Demo Admin,2026-08-12 10:35:00.000000
+96,Tabu Hashmi,Liquid Filling Machine,+91 9818414784,tabu.hashmi196@example.com,"Nashik, Maharashtra","Payment terms under discussion.",inactive,1,Demo Admin,2026-08-13 10:36:00.000000
+97,Udit Narayan,Shrink Wrapping Machine,+91 9818502438,udit.narayan197@example.com,"Nagpur, Maharashtra","Interested in automatic model.",lead,0,Demo Admin,2026-08-14 10:37:00.000000
+98,Vidya Balan,Spices Packaging Machine,+91 9818590092,vidya.balan198@example.com,"Mumbai, Maharashtra","Quotation sent via WhatsApp.",progress,0,Demo Admin,2026-08-15 10:38:00.000000
+99,Yami Gautam,Auger Filler Machine,+91 9818677746,yami.gautam199@example.com,"Pune, Maharashtra","Follow up next Monday.",active,1,Demo Admin,2026-08-16 10:39:00.000000
+100,Zeenat Aman,Pneumatic Collar Packing Machine,+91 9818765400,zeenat.aman200@example.com,"Ahmedabad, Gujarat","Requested product catalog & video.",inactive,0,Demo Admin,2026-08-17 10:40:00.000000

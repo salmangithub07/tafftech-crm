@@ -302,8 +302,10 @@ export function CustomersClient({
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Import failed");
 
+          const importedCount = data.importedCount ?? data.inserted ?? 0;
+          const skippedCount = data.skippedCount ?? data.skipped ?? 0;
           toast.success(
-            `Imported ${data.importedCount} customers.${data.skippedCount ? ` Skipped ${data.skippedCount}.` : ""}`
+            `Imported ${importedCount} customer(s).${skippedCount ? ` Skipped ${skippedCount}.` : ""}`
           );
           refresh();
         } catch (err) {
