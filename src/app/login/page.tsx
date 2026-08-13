@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, LayoutDashboard, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -104,13 +105,28 @@ export default function LoginPage() {
                 </p>
               )}
 
-              <Button type="submit" className="mt-1 w-full" disabled={loading}>
+              <Button type="submit" className="mt-1 w-full font-bold" disabled={loading}>
                 {loading && <Loader2 className="size-4 animate-spin" />}
                 Sign in
               </Button>
+
+              <div className="text-center pt-2 text-xs text-muted-foreground border-t border-border/40 mt-2">
+                Don&apos;t have a tenant account?{" "}
+                <Link href="/register" className="font-bold text-primary hover:underline">
+                  Start 14-Day Free Trial
+                </Link>
+              </div>
             </form>
           </CardContent>
         </Card>
+
+        {/* Signup Footer Link */}
+        <div className="mt-4 text-center text-xs text-muted-foreground">
+          Need help? Contact support or{" "}
+          <Link href="/register" className="font-bold text-primary hover:underline">
+            Register your business
+          </Link>
+        </div>
       </div>
     </div>
   );

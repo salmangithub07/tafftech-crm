@@ -315,7 +315,9 @@ export type ActivityEntityType =
   | "quotation"
   | "product"
   | "stock"
-  | "team";
+  | "team"
+  | "tenant"
+  | "admin";
 
 export type ActivityLogItem = {
   id: number;
