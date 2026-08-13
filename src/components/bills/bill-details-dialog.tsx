@@ -29,22 +29,95 @@ export function BillDetailsDialog({
 
   // Fetch CRM settings & invoice defaults — isolated per tenant
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || !bill) return;
+    if (bill.tenant_id === 4) {
+      setTemplate("tafftech_custom" as any);
+    }
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
         if (data?.site_name) setSiteName(data.site_name);
-        if (data?.invoice_template) setTemplate(data.invoice_template);
+        if (bill.tenant_id !== 4 && data?.invoice_template) setTemplate(data.invoice_template);
         if (data?.invoice_terms) setTerms(data.invoice_terms);
         if (data?.bank_details) setBankDetails(data.bank_details);
       })
       .catch(() => {});
-  }, [open]);
+  }, [open, bill]);
 
   if (!bill) return null;
 
   function handlePrint() {
-    window.print();
+    const printElement = document.getElementById("bill-print-root");
+    if (!printElement) {
+      window.print();
+      return;
+    }
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <base href="${typeof window !== "undefined" ? window.location.origin : ""}/" />
+          <title>Invoice - ${bill?.bill_number || "Print"}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 5mm;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              margin: 0;
+              padding: 8px;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background-color: #ffffff !important;
+              color: #000000 !important;
+            }
+            .bg-yellow-banner {
+              background-color: #facc15 !important;
+              color: #000000 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          </style>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body>
+          ${printElement.outerHTML}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.focus();
+                window.print();
+                setTimeout(function() {
+                  if (window.frameElement) window.frameElement.remove();
+                }, 1000);
+              }, 300);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    doc.close();
   }
 
   return (
@@ -57,24 +130,26 @@ export function BillDetailsDialog({
           </DialogTitle>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Template Switcher */}
-            <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border text-xs">
-              <LayoutTemplate className="size-3.5 text-muted-foreground ml-1.5" />
-              {(["modern", "classic", "minimal", "compact"] as const).map((tpl) => (
-                <button
-                  key={tpl}
-                  type="button"
-                  onClick={() => setTemplate(tpl)}
-                  className={`px-2 py-1 rounded text-xs font-medium capitalize transition-colors ${
-                    template === tpl
-                      ? "bg-primary text-primary-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-                >
-                  {tpl}
-                </button>
-              ))}
-            </div>
+            {/* Template Switcher — hidden for Tenant ID #4 */}
+            {bill.tenant_id !== 4 && (
+              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border text-xs">
+                <LayoutTemplate className="size-3.5 text-muted-foreground ml-1.5" />
+                {(["modern", "classic", "minimal", "compact"] as const).map((tpl) => (
+                  <button
+                    key={tpl}
+                    type="button"
+                    onClick={() => setTemplate(tpl)}
+                    className={`px-2 py-1 rounded text-xs font-medium capitalize transition-colors ${
+                      template === tpl
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {tpl}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
               <Printer className="size-4 no-print" /> Print / Save PDF

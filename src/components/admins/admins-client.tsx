@@ -599,7 +599,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                                 <AvatarFallback className="text-[11px]">{initials(admin.name)}</AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
-                                <span className="font-medium">{admin.name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-sm text-foreground">{admin.name}</span>
+                                  <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                                    ID: #{admin.id}
+                                  </Badge>
+                                </div>
                                 <span className="text-xs text-muted-foreground sm:hidden">{admin.email}</span>
                               </div>
                             </div>
@@ -719,7 +724,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                             <AvatarFallback className="text-[11px]">{initials(admin.name)}</AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-sm text-foreground truncate leading-snug">{admin.name}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-sm text-foreground truncate leading-snug">{admin.name}</span>
+                              <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0 shrink-0">
+                                ID: #{admin.id}
+                              </Badge>
+                            </div>
                             <span className="text-[11px] text-muted-foreground truncate">{admin.email}</span>
                           </div>
                         </div>
@@ -905,7 +915,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                       <TableRow key={p.id}>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-foreground">{p.admin_name}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-sm text-foreground">{p.admin_name}</span>
+                              <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                                ID: #{p.admin_id}
+                              </Badge>
+                            </div>
                             <span className="text-xs text-muted-foreground">{p.admin_email}</span>
                           </div>
                         </TableCell>
@@ -989,7 +1004,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                     {/* Header: Name & Status */}
                     <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
                       <div className="flex flex-col min-w-0">
-                        <span className="font-bold text-sm text-foreground truncate leading-snug">{p.admin_name}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-sm text-foreground truncate leading-snug">{p.admin_name}</span>
+                          <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0 shrink-0">
+                            ID: #{p.admin_id}
+                          </Badge>
+                        </div>
                         <span className="text-[11px] text-muted-foreground truncate">{p.admin_email}</span>
                       </div>
                       <Badge
@@ -1099,7 +1119,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                       className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card text-xs"
                     >
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-foreground">{ad.name}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-foreground">{ad.name}</span>
+                          <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                            ID: #{ad.id}
+                          </Badge>
+                        </div>
                         <span className="text-muted-foreground">{ad.email}</span>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1237,7 +1262,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                                     <AvatarFallback className="text-xs">{initials(ad.name)}</AvatarFallback>
                                   </Avatar>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-sm text-foreground">{ad.name}</span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-bold text-sm text-foreground">{ad.name}</span>
+                                      <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                                        ID: #{ad.id}
+                                      </Badge>
+                                    </div>
                                     <span className="text-xs text-muted-foreground">{ad.email}</span>
                                   </div>
                                 </div>
@@ -1341,7 +1371,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                                 <AvatarFallback className="text-[11px]">{initials(ad.name)}</AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-sm text-foreground truncate">{ad.name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-sm text-foreground truncate">{ad.name}</span>
+                                  <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0 shrink-0">
+                                    ID: #{ad.id}
+                                  </Badge>
+                                </div>
                                 <span className="text-[11px] text-muted-foreground truncate">{ad.email}</span>
                               </div>
                             </div>
