@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE, type Role, type PermissionModule } from "@/lib/auth";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/register"];
 
 /** Route prefix -> roles allowed to view it, no matter what. */
 const ROLE_ONLY_RULES: { prefix: string; roles: Role[] }[] = [
@@ -37,7 +37,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (session && pathname === "/login") {
+  if (session && (pathname === "/login" || pathname === "/register")) {
     const url = req.nextUrl.clone();
     url.pathname = homeFor(session.role);
     return NextResponse.redirect(url);
