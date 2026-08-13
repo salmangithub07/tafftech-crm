@@ -37,6 +37,24 @@ export async function GET(req: NextRequest) {
   if (!canAccess(session, "bills")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tenantId = tenantOf(session)!;
 
+  // Auto-heal payment_status for bills where paid_amount >= total_amount
+  try {
+    await execute(
+      "UPDATE bills SET payment_status = 'paid' WHERE tenant_id = ? AND paid_amount >= (total_amount - 0.01) AND payment_status != 'paid'",
+      [tenantId]
+    );
+    await execute(
+      "UPDATE bills SET payment_status = 'partial' WHERE tenant_id = ? AND paid_amount > 0 AND paid_amount < (total_amount - 0.01) AND payment_status != 'partial'",
+      [tenantId]
+    );
+    await execute(
+      "UPDATE bills SET payment_status = 'unpaid' WHERE tenant_id = ? AND paid_amount = 0 AND payment_status != 'unpaid'",
+      [tenantId]
+    );
+  } catch (err) {
+    console.error("Auto-heal payment_status error:", err);
+  }
+
   const url = req.nextUrl;
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const limit = Math.max(1, parseInt(url.searchParams.get("limit") || "10", 10));
@@ -188,10 +206,18 @@ export async function POST(req: NextRequest) {
   const nextSeq = maxBill[0]?.max_num || 1;
   const billNumber = `INV-${currentYear}-${String(nextSeq).padStart(4, "0")}`;
 
-  // Calculate totals
+  // Calculate totals & derive actual payment status
   const subtotal = d.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   const totalAmount = subtotal + d.tax_amount - d.discount_amount;
   const paidAmount = d.payment_status === "paid" ? totalAmount : d.payment_status === "unpaid" ? 0 : d.paid_amount;
+  let computedStatus: "paid" | "partial" | "unpaid" = "unpaid";
+  if (paidAmount >= totalAmount - 0.01) {
+    computedStatus = "paid";
+  } else if (paidAmount > 0) {
+    computedStatus = "partial";
+  } else {
+    computedStatus = "unpaid";
+  }
 
   // Insert Bill
   const billRes = await execute(
@@ -214,7 +240,7 @@ export async function POST(req: NextRequest) {
       d.discount_amount,
       totalAmount,
       paidAmount,
-      d.payment_status,
+      computedStatus,
       d.payment_method,
       d.notes,
       session.id,

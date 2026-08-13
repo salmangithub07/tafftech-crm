@@ -180,36 +180,84 @@
 }
 
 /* ── Print styles: hide everything except the invoice ── */
+@page {
+  size: A4 portrait;
+  margin: 6mm;
+}
+
 @media print {
-  .no-print {
+  /* Reset html & body to visible flow */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide header/nav/buttons, sidebar, main page content and non-print UI */
+  .no-print,
+  button,
+  header,
+  nav,
+  aside,
+  main,
+  [role="dialog"] > button {
     display: none !important;
   }
 
-  body {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
+  /* Flatten Radix Dialog overlay wrappers so they don't clip or transform the bill */
+  div[role="dialog"],
+  [data-radix-portal],
+  div[data-state="open"] {
+    position: static !important;
+    transform: none !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    inset: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Target bill-print-root */
+  #bill-print-root,
+  #bill-print-root * {
+    visibility: visible !important;
   }
 
   #bill-print-root {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: none !important;
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 8px !important;
     box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  #bill-print-root * {
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-    background-color: transparent !important;
-  }
-
-  #bill-print-root .bg-slate-900 {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-  }
-
-  #bill-print-root .bg-slate-900 * {
-    color: #ffffff !important;
+  #bill-print-root .bg-yellow-banner {
+    background-color: #facc15 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 

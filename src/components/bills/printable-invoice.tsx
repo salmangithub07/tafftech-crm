@@ -11,6 +11,39 @@ function formatCurrency(amount: number) {
   })}`;
 }
 
+function numberToWords(amount: number): string {
+  const words = [
+    "", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN",
+    "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"
+  ];
+  const tens = ["", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"];
+
+  function convertLessThanThousand(n: number): string {
+    if (n === 0) return "";
+    if (n < 20) return words[n] + " ";
+    if (n < 100) return tens[Math.floor(n / 10)] + " " + convertLessThanThousand(n % 10);
+    return words[Math.floor(n / 100)] + " HUNDRED " + convertLessThanThousand(n % 100);
+  }
+
+  if (!amount || amount <= 0) return "ZERO RUPEES ONLY/-";
+  let num = Math.floor(amount);
+  let result = "";
+
+  const crore = Math.floor(num / 10000000);
+  num %= 10000000;
+  const lakh = Math.floor(num / 100000);
+  num %= 100000;
+  const thousand = Math.floor(num / 1000);
+  num %= 1000;
+
+  if (crore > 0) result += convertLessThanThousand(crore) + "CRORE ";
+  if (lakh > 0) result += convertLessThanThousand(lakh) + "LAKH ";
+  if (thousand > 0) result += convertLessThanThousand(thousand) + "THOUSAND ";
+  if (num > 0) result += convertLessThanThousand(num);
+
+  return (result.trim() + " RUPEES ONLY/-").toUpperCase();
+}
+
 export function PrintableInvoice({
   bill,
   siteName,
@@ -40,6 +73,170 @@ export function PrintableInvoice({
   });
 
   const balanceDue = Math.max(0, Number(bill.total_amount) - Number(bill.paid_amount));
+
+  // ------------------------- TAFF TECH CUSTOM FORMAT (TENANT ID #4) -------------------------
+  if (bill.tenant_id === 4 || (template as string) === "tafftech_custom") {
+    const subtotalAmt = Number(bill.subtotal || bill.total_amount || 0);
+    const taxAmt = Number(bill.tax_amount || 0);
+    const grandTotal = Number(bill.total_amount || 0);
+
+    return (
+      <div
+        id="bill-print-root"
+        className="printable-invoice w-full p-4 sm:p-6 bg-white text-black font-sans border-2 border-black rounded-none shadow-none text-xs leading-tight select-text"
+        style={{ color: "#000", backgroundColor: "#fff" }}
+      >
+        {/* Header Metadata */}
+        <div className="flex justify-between items-start text-[11px] font-bold font-mono tracking-tight pb-1 border-b border-black">
+          <div>
+            <p>GSTIN : 27CENPA9070D1ZI</p>
+            <p>PAN NO : CENPA9070D</p>
+          </div>
+          <div className="text-right">
+            <p>PH : 9607086390 / 8788099744</p>
+            <p>DATE : {formattedDate}</p>
+          </div>
+        </div>
+
+        {/* Main Logo & Yellow Industrial Banner */}
+        <div className="text-center my-2">
+          <div className="flex justify-center items-center py-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/tafftech-logo.png"
+              alt="TAFF TECH Logo"
+              className="h-10 sm:h-12 w-auto object-contain max-w-[320px]"
+            />
+          </div>
+          <div className="bg-[#facc15] bg-yellow-banner text-black font-mono font-black text-sm sm:text-base tracking-[0.25em] uppercase py-1 border-y-2 border-black my-1">
+            INDUSTRIAL SOLUTIONS
+          </div>
+          <div className="text-[11px] font-bold mt-1.5 space-y-0.5 leading-snug">
+            <p>PLOT NO 4, NIZAMUDDIN COLONY, NAGPUR</p>
+            <p>NAGPUR , MAHARASHTRA , INDIA – 440001</p>
+            <p>Mobile No - 9607086390/8788099744</p>
+          </div>
+        </div>
+
+        {/* Order / Customer & Transport Details Box — 2 Horizontal Columns with Border Divider */}
+        <div className="border-2 border-black grid grid-cols-2 my-2 text-xs">
+          <div className="p-2 border-r-2 border-black space-y-1">
+            <p className="font-extrabold uppercase text-sm">PROFORMA INVOICE : {bill.bill_number}</p>
+            <p className="font-bold">NAME : <span className="uppercase">{bill.customer_name}</span></p>
+            <p className="font-semibold">ADDRESS : {bill.customer_address || "MANGOLDOI DARRANG ASSAM 784147"}</p>
+            <p className="font-semibold">MOB NO : {bill.customer_phone || "N/A"}</p>
+            <p className="font-semibold">BOOK TO : GUWAHATI CITY (GWTCTY-6818)</p>
+          </div>
+          <div className="p-2 space-y-1">
+            <p className="font-bold">GR.NO . {bill.bill_number}</p>
+            <p className="font-semibold text-gray-800">VEHICLE NO. ------------------------------------------</p>
+            <p className="font-semibold text-gray-800">TRANSPORT. ----VRL GUWAHATI CITY (GWTCTY-6818)--</p>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <table className="w-full border-collapse border-2 border-black text-xs my-2">
+          <thead>
+            <tr className="border-b-2 border-black font-bold uppercase text-center bg-gray-100">
+              <th className="border-r border-black p-1.5 w-12 align-bottom">S.NO</th>
+              <th className="border-r border-black p-1.5 text-left align-bottom">PARTICULAR</th>
+              <th className="border-r border-black p-1.5 w-28 align-bottom">HSN CODE</th>
+              <th className="border-r border-black p-1.5 w-20 align-bottom">QUANTITY</th>
+              <th className="border-r border-black p-1.5 w-28 text-center leading-snug align-bottom">
+                <div>RATE/Unit</div>
+                <div className="text-[10px]">(RS)</div>
+              </th>
+              <th className="p-1.5 w-36 leading-snug align-bottom">
+                <div>AMOUNT</div>
+                <div className="flex justify-between px-2 text-[10px] font-bold">
+                  <span>RS</span>
+                  <span>P.</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            {bill.items && bill.items.length > 0 ? (
+              bill.items.map((item, idx) => (
+                <tr key={idx} className="border-b border-black text-center font-medium">
+                  <td className="border-r border-black p-2 font-bold">{idx + 1}</td>
+                  <td className="border-r border-black p-2 text-left font-bold uppercase">{item.product_name}</td>
+                  <td className="border-r border-black p-2 font-mono">{item.product_id || "87341000"}</td>
+                  <td className="border-r border-black p-2 font-bold">{item.quantity}</td>
+                  <td className="border-r border-black p-2 text-right font-mono font-semibold">
+                    {Number(item.unit_price).toLocaleString("en-IN")}/-
+                  </td>
+                  <td className="p-2 text-right font-mono font-bold">
+                    {Number(item.total_price).toLocaleString("en-IN")}/-
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr className="border-b border-black text-center font-medium">
+                <td className="border-r border-black p-2 font-bold">1</td>
+                <td className="border-r border-black p-2 text-left font-bold uppercase">BANDSEALER MACHINE</td>
+                <td className="border-r border-black p-2 font-mono">87341000</td>
+                <td className="border-r border-black p-2 font-bold">1</td>
+                <td className="border-r border-black p-2 text-right font-mono font-semibold">11,500/-</td>
+                <td className="p-2 text-right font-mono font-bold">11,500/-</td>
+              </tr>
+            )}
+            <tr className="border-b-2 border-black font-bold">
+              <td colSpan={5} className="border-r border-black p-2 text-right uppercase">TOTAL .</td>
+              <td className="p-2 text-right font-mono font-bold">{grandTotal.toLocaleString("en-IN")}/-</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Financials & Bank Info Footer Grid — 2 Horizontal Columns with Border Divider */}
+        <div className="border-2 border-black grid grid-cols-2 text-xs my-2">
+          <div className="p-2 border-r-2 border-black space-y-1 font-semibold">
+            <p><strong className="font-bold">Bank Name :</strong> ICICI BANK .</p>
+            <p><strong className="font-bold">Branch :</strong> Rani Khothi, Police Lane,GN Road-441002 Maharashtra</p>
+            <p><strong className="font-bold">A/C :</strong> 146205002969</p>
+            <p><strong className="font-bold">RTGS/NEFT IFS Code :</strong> ICIC0001462</p>
+          </div>
+          <div className="p-2 space-y-1 font-semibold text-right">
+            <div className="flex justify-between">
+              <span>Freight other charge</span>
+              <span className="font-mono">00</span>
+            </div>
+            <div className="flex justify-between border-t border-gray-300 pt-1">
+              <span>TAXABLE AMOUNT</span>
+              <span className="font-mono font-bold">{subtotalAmt.toLocaleString("en-IN")}/-</span>
+            </div>
+            <div className="flex justify-between border-t border-gray-300 pt-1">
+              <span>IGST(18%)</span>
+              <span className="font-mono font-bold">{taxAmt > 0 ? taxAmt.toLocaleString("en-IN") : "00"}/-</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Grand Total Bar — 2 Columns with Vertical Border Divider */}
+        <div className="border-2 border-black grid grid-cols-[68%_32%] my-2 text-xs font-bold bg-gray-50">
+          <div className="p-2 border-r-2 border-black flex items-center">
+            <span>Rupees in word. <span className="font-extrabold uppercase">{numberToWords(grandTotal)}</span></span>
+          </div>
+          <div className="p-2 flex items-center justify-between font-black text-sm">
+            <span>GRAND TOTAL</span>
+            <span className="font-mono">{grandTotal.toLocaleString("en-IN")}/-</span>
+          </div>
+        </div>
+
+        {/* Authorization & Signature Block */}
+        <div className="pt-8 pb-4 flex flex-col items-end text-right">
+          <p className="font-extrabold text-xs uppercase">FOR TAFFTECH</p>
+          <div className="h-12"></div>
+          <p className="font-bold text-xs uppercase border-t border-black pt-1 px-4">AUTHORISED SIGNATURE</p>
+        </div>
+
+        {/* Dispute Jurisdiction Footer Note */}
+        <div className="border-t border-black pt-1.5 text-[10px] font-bold uppercase tracking-tight text-gray-800">
+          ATTACHEMENT: 1) ALL DISPUTES SUBJECT TO NAGPUR JURISDICTION
+        </div>
+      </div>
+    );
+  }
 
   // ------------------------- CLASSIC TEMPLATE -------------------------
   if (template === "classic") {
