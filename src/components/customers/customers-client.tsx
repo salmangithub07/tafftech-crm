@@ -578,12 +578,20 @@ export function CustomersClient({
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         <div className="flex flex-col gap-0.5 text-xs">
-                          {c.email && <span>{c.email}</span>}
-                          {c.phone && <span>{c.phone}</span>}
+                          {c.email && <span className="font-mono text-[11px] text-muted-foreground">{c.email}</span>}
+                          {c.phone && <span className="font-semibold text-foreground">{c.phone}</span>}
                           {!c.email && !c.phone && <span>—</span>}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{c.product || "—"}</TableCell>
+                      <TableCell>
+                        {c.product ? (
+                          <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-foreground shadow-2xs">
+                            {c.product}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant[c.status]} className="capitalize">
                           {c.status}
@@ -592,14 +600,17 @@ export function CustomersClient({
                       <TableCell>
                         <button
                           onClick={() => toggleVisited(c)}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                          className="flex items-center gap-1 text-xs transition-all"
                         >
                           {c.visited ? (
-                            <CheckCircle2 className="size-4 text-success" />
+                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/80 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400 shadow-2xs">
+                              <CheckCircle2 className="size-3.5 shrink-0" /> Visited
+                            </span>
                           ) : (
-                            <Circle className="size-4" />
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground shadow-2xs">
+                              <Circle className="size-3.5 shrink-0" /> Mark visited
+                            </span>
                           )}
-                          {c.visited ? "Visited" : "Mark visited"}
                         </button>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>

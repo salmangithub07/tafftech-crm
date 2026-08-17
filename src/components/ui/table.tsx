@@ -9,7 +9,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return <thead data-slot="table-header" className={cn("bg-muted/40 backdrop-blur-xs [&_tr]:border-b border-border/60", className)} {...props} />;
+  return <thead data-slot="table-header" className={cn("bg-muted/70 dark:bg-muted/50 border-b border-border/80 [&_tr]:border-b-0", className)} {...props} />;
 }
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return <tbody data-slot="table-body" className={cn("[&_tr:last-child]:border-0", className)} {...props} />;
@@ -21,7 +21,10 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
-      className={cn("hover:bg-primary/5 dark:hover:bg-primary/10 data-[state=selected]:bg-primary/10 border-b border-border/40 transition-colors duration-150", className)}
+      className={cn(
+        "hover:bg-primary/5 dark:hover:bg-primary/10 even:bg-muted/25 dark:even:bg-muted/10 data-[state=selected]:bg-primary/10 data-[state=selected]:border-l-4 data-[state=selected]:border-l-primary border-b border-border/40 transition-all duration-150",
+        className
+      )}
       {...props}
     />
   );
@@ -31,7 +34,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-muted-foreground h-10 px-4 text-left align-middle text-[11px] font-bold uppercase tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "text-muted-foreground/90 h-10 px-4 text-left align-middle text-[11px] font-extrabold uppercase tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -42,7 +45,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       data-slot="table-cell"
-      className={cn("px-4 py-3.5 align-middle text-sm text-foreground whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
+      className={cn("px-4 py-3 align-middle text-sm text-foreground whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
       {...props}
     />
   );

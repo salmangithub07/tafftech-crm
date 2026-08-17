@@ -277,22 +277,22 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
         </Button>
       </div>
 
-      {/* Top SaaS Analytics KPI Cards — Icons on Left */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Top SaaS Analytics KPI Cards — 2 Columns (50-50) on Mobile */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {/* Card 1: Total Revenue */}
-        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
-              <IndianRupee className="size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
+              <IndianRupee className="size-4 sm:size-5" />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 TOTAL REVENUE
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground truncate">
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate" title={`₹${Number(analytics.total_revenue || 0).toLocaleString("en-IN")}`}>
                 ₹{Number(analytics.total_revenue || 0).toLocaleString("en-IN")}
               </p>
-              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+              <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
                 {admins.filter((a) => a.status === "active").length} active accounts
               </p>
             </div>
@@ -300,19 +300,19 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
         </Card>
 
         {/* Card 2: Active Tenants */}
-        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-emerald-500/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-xs">
-              <Users className="size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-emerald-500/5 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-xs">
+              <Users className="size-4 sm:size-5" />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 ACTIVE TENANTS
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
                 {admins.filter((a) => a.status === "active").length}
               </p>
-              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+              <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
                 {admins.length} total registered
               </p>
             </div>
@@ -320,19 +320,19 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
         </Card>
 
         {/* Card 3: Pending Approvals */}
-        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-amber-500/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:scale-105 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 shadow-xs">
-              <Clock className="size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-amber-500/5 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:scale-105 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 shadow-xs">
+              <Clock className="size-4 sm:size-5" />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 PENDING APPROVALS
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
                 {analytics.pending_count || 0}
               </p>
-              <p className={`text-[11px] font-medium truncate ${
+              <p className={`text-[10px] sm:text-[11px] font-medium truncate ${
                 (analytics.pending_count || 0) > 0
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-emerald-600 dark:text-emerald-400"
@@ -344,19 +344,19 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
         </Card>
 
         {/* Card 4: Expiring (7 Days) */}
-        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-destructive/5 p-4 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 group-hover:scale-105 group-hover:bg-destructive group-hover:text-white transition-all duration-300 shadow-xs">
-              <AlertTriangle className="size-5" />
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-destructive/5 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 group-hover:scale-105 group-hover:bg-destructive group-hover:text-white transition-all duration-300 shadow-xs">
+              <AlertTriangle className="size-4 sm:size-5" />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 EXPIRING (7 DAYS)
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
                 {expiringSoonAdmins.length}
               </p>
-              <p className={`text-[11px] font-medium truncate ${
+              <p className={`text-[10px] sm:text-[11px] font-medium truncate ${
                 expiringSoonAdmins.length > 0
                   ? "text-destructive"
                   : "text-emerald-600 dark:text-emerald-400"
