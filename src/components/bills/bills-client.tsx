@@ -126,66 +126,90 @@ export function BillsClient() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Bills &amp; Invoices</h1>
-          <p className="text-sm text-muted-foreground">
+      {/* Header - 50/50 2 Columns on Mobile */}
+      <div className="flex items-start justify-between gap-3 sm:items-center">
+        {/* Left Column (50%) */}
+        <div className="flex flex-col min-w-0 flex-1">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Bills &amp; Invoices</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
             Generate, manage, and print official customer bills and tax invoices.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild title={`Export: ${exportLabel}`}>
-            <Link href={exportUrl}>
-              <Download className="size-4" /> Export CSV
-              {exportLabel !== "All" && (
-                <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary leading-none">{exportLabel}</span>
-              )}
-            </Link>
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+
+        {/* Right Column (50%) */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[130px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
             <Plus className="size-4" /> Create Bill
+          </Button>
+
+          <Button variant="outline" size="sm" asChild title={`Export: ${exportLabel}`} className="w-full sm:w-auto h-8 px-2 text-[11px] font-medium justify-center gap-1">
+            <Link href={exportUrl}>
+              <Download className="size-3" /> Export CSV
+            </Link>
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-md-4 gap-2 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">Total Invoiced</CardTitle>
-            <Receipt className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">{money(stats.totalInvoiced)}</div>
-            <p className="text-xs text-muted-foreground mt-1">{total} bills recorded</p>
-          </CardContent>
+      {/* Stats Cards - Outstanding/Pending is col-span-2 on Mobile */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
+        {/* Card 1: Total Invoiced */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="space-y-0.5 min-w-0 flex-1 pr-0.5">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Total Invoiced
+              </p>
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate" title={money(stats.totalInvoiced)}>
+                {money(stats.totalInvoiced)}
+              </p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                {total} bills recorded
+              </p>
+            </div>
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <Receipt className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">Total Collected</CardTitle>
-            <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-              {money(stats.totalCollected)}
+        {/* Card 2: Total Collected */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="space-y-0.5 min-w-0 flex-1 pr-0.5">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Total Collected
+              </p>
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 truncate" title={money(stats.totalCollected)}>
+                {money(stats.totalCollected)}
+              </p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                Paid in full or partial
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Paid in full or partial</p>
-          </CardContent>
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <CheckCircle2 className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">Outstanding / Pending</CardTitle>
-            <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
-              {money(stats.totalPending)}
+        {/* Card 3: Outstanding / Pending */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-amber-500/5 p-3 sm:p-4 shadow-2xs hover:shadow-md hover:border-amber-500/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="space-y-0.5 min-w-0 flex-1 pr-0.5">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Outstanding / Pending
+              </p>
+              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 truncate" title={money(stats.totalPending)}>
+                {money(stats.totalPending)}
+              </p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-amber-600/80 dark:text-amber-400/80 truncate">
+                Uncollected balance
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Uncollected balance</p>
-          </CardContent>
+            <div className="flex size-8 xs:size-9 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <AlertCircle className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
       </div>
 

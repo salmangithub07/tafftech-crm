@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { PlanType } from "@/lib/types";
 
 const subscriptionSchema = z.object({
-  plan_type: z.enum(["trial", "monthly", "quarterly", "yearly", "lifetime"]),
+  plan_type: z.enum(["trial", "yearly", "3_year", "lifetime"]),
   plan_expiry_date: z.string().nullable().optional(),
 });
 
@@ -31,30 +31,27 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   const { plan_type, plan_expiry_date } = parsed.data;
+  const planTypeToSave: PlanType = plan_type as PlanType;
 
   const todayStr = new Date().toISOString().slice(0, 10);
   let finalExpiry = plan_expiry_date || null;
 
   // Auto calculate expiry if not explicitly provided for paid plans
   if (!finalExpiry) {
-    if (plan_type === "monthly") {
-      const d = new Date();
-      d.setDate(d.getDate() + 30);
-      finalExpiry = d.toISOString().slice(0, 10);
-    } else if (plan_type === "quarterly") {
-      const d = new Date();
-      d.setDate(d.getDate() + 90);
-      finalExpiry = d.toISOString().slice(0, 10);
-    } else if (plan_type === "yearly") {
+    if (planTypeToSave === "yearly") {
       const d = new Date();
       d.setDate(d.getDate() + 365);
+      finalExpiry = d.toISOString().slice(0, 10);
+    } else if (planTypeToSave === "3_year") {
+      const d = new Date();
+      d.setDate(d.getDate() + 1095);
       finalExpiry = d.toISOString().slice(0, 10);
     }
   }
 
   await execute(
     `UPDATE admins SET plan_type = ?, plan_start_date = ?, plan_expiry_date = ? WHERE id = ?`,
-    [plan_type, todayStr, finalExpiry, id]
+    [planTypeToSave, todayStr, finalExpiry, id]
   );
 
   const updated = await query(

@@ -179,36 +179,37 @@ export function ProductsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Products &amp; Stock</h1>
-          <p className="text-sm text-muted-foreground">Manage inventory, reorder alerts, and stock movement.</p>
+      {/* Header - 50/50 2 Columns on Mobile */}
+      <div className="flex items-start justify-between gap-3 sm:items-center">
+        {/* Left Column (50%) */}
+        <div className="flex flex-col min-w-0 flex-1">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Products &amp; Stock</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">Manage inventory, reorder alerts, and stock movement.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleImportFile}
-          />
-          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-            <Upload className="size-4" /> Import
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/api/products/export">
-              <Download className="size-4" /> Export
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
+
+        {/* Right Column (50%) */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[135px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
+          <Button size="sm" onClick={() => { setEditing(null); setFormOpen(true); }} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
             <Plus className="size-4" /> Add Product
           </Button>
+
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()} className="flex-1 sm:flex-initial h-8 px-2 text-[11px] font-medium justify-center gap-1" title="Import CSV">
+              <Upload className="size-3" /> Import
+            </Button>
+            <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-initial h-8 px-2 text-[11px] font-medium justify-center gap-1" title="Export CSV">
+              <Link href="/api/products/export">
+                <Download className="size-3" /> Export
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -233,48 +234,48 @@ export function ProductsClient({
         <TabsContent value="products" className="mt-4 flex flex-col gap-4">
           {/* Profit & Valuation Summary Cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="p-3.5">
+            <Card className="p-3.5 min-w-0">
               <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                <span>Stock Cost Value</span>
-                <DollarSign className="size-4 text-muted-foreground" />
+                <span className="truncate pr-1">Stock Cost Value</span>
+                <DollarSign className="size-4 shrink-0 text-muted-foreground" />
               </div>
-              <p className="text-lg font-bold font-mono text-foreground mt-1">
+              <p className="text-sm xs:text-base sm:text-lg font-bold font-mono text-foreground mt-1 truncate" title={`₹${profitSummary.total_cost_value.toLocaleString("en-IN")}`}>
                 ₹{profitSummary.total_cost_value.toLocaleString("en-IN")}
               </p>
-              <p className="text-[10px] text-muted-foreground">Total purchase value</p>
+              <p className="text-[10px] text-muted-foreground truncate">Total purchase value</p>
             </Card>
 
-            <Card className="p-3.5">
+            <Card className="p-3.5 min-w-0">
               <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                <span>Stock Selling Value</span>
-                <Receipt className="size-4 text-muted-foreground" />
+                <span className="truncate pr-1">Stock Selling Value</span>
+                <Receipt className="size-4 shrink-0 text-muted-foreground" />
               </div>
-              <p className="text-lg font-bold font-mono text-foreground mt-1">
+              <p className="text-sm xs:text-base sm:text-lg font-bold font-mono text-foreground mt-1 truncate" title={`₹${profitSummary.total_sell_value.toLocaleString("en-IN")}`}>
                 ₹{profitSummary.total_sell_value.toLocaleString("en-IN")}
               </p>
-              <p className="text-[10px] text-muted-foreground">Total selling value</p>
+              <p className="text-[10px] text-muted-foreground truncate">Total selling value</p>
             </Card>
 
-            <Card className="p-3.5 border-emerald-500/30 bg-emerald-500/5">
+            <Card className="p-3.5 border-emerald-500/30 bg-emerald-500/5 min-w-0">
               <div className="flex items-center justify-between text-xs font-medium text-emerald-800 dark:text-emerald-300">
-                <span>Potential Profit</span>
-                <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="truncate pr-1">Potential Profit</span>
+                <TrendingUp className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-lg font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1">
+              <p className="text-sm xs:text-base sm:text-lg font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1 truncate" title={`₹${profitSummary.potential_profit.toLocaleString("en-IN")}`}>
                 ₹{profitSummary.potential_profit.toLocaleString("en-IN")}
               </p>
-              <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80">If 100% stock is sold</p>
+              <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 truncate">If 100% stock is sold</p>
             </Card>
 
-            <Card className="p-3.5 border-blue-500/30 bg-blue-500/5">
+            <Card className="p-3.5 border-blue-500/30 bg-blue-500/5 min-w-0">
               <div className="flex items-center justify-between text-xs font-medium text-blue-800 dark:text-blue-300">
-                <span>Realized Profit</span>
-                <PiggyBank className="size-4 text-blue-600 dark:text-blue-400" />
+                <span className="truncate pr-1">Realized Profit</span>
+                <PiggyBank className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-lg font-bold font-mono text-blue-700 dark:text-blue-400 mt-1">
+              <p className="text-sm xs:text-base sm:text-lg font-bold font-mono text-blue-700 dark:text-blue-400 mt-1 truncate" title={`₹${profitSummary.realized_profit.toLocaleString("en-IN")}`}>
                 ₹{profitSummary.realized_profit.toLocaleString("en-IN")}
               </p>
-              <p className="text-[10px] text-blue-600/80 dark:text-blue-400/80">From Stock Out / Bills</p>
+              <p className="text-[10px] text-blue-600/80 dark:text-blue-400/80 truncate">From Stock Out / Bills</p>
             </Card>
           </div>
 
@@ -289,13 +290,15 @@ export function ProductsClient({
             />
           </div>
           <Tabs value={tab} onValueChange={changeTab}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <TabsList>
-                <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
-                <TabsTrigger value="in">In Stock ({counts.in})</TabsTrigger>
-                <TabsTrigger value="low">Low Stock ({counts.low})</TabsTrigger>
-                <TabsTrigger value="out">Out of Stock ({counts.out})</TabsTrigger>
-              </TabsList>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
+              <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
+                <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10">
+                  <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
+                  <TabsTrigger value="in" className="px-2.5 sm:px-3 text-xs sm:text-sm">In Stock ({counts.in})</TabsTrigger>
+                  <TabsTrigger value="low" className="px-2.5 sm:px-3 text-xs sm:text-sm">Low Stock ({counts.low})</TabsTrigger>
+                  <TabsTrigger value="out" className="px-2.5 sm:px-3 text-xs sm:text-sm">Out of Stock ({counts.out})</TabsTrigger>
+                </TabsList>
+              </div>
               <DateFilter value={dateFilter} onChange={changeDateFilter} />
             </div>
           </Tabs>

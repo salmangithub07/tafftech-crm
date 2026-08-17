@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Pencil, X, MessageSquareText, FileBarChart } from "lucide-react";
+import { Plus, Trash2, Pencil, X, MessageSquareText, FileBarChart, BarChart3, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,10 +133,11 @@ export function AnalyticsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track your team&apos;s social media performance.</p>
+      {/* Top Title Header - 2 Columns on Mobile */}
+      <div className="flex items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 pr-1">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Analytics</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">Track your team&apos;s social media performance.</p>
         </div>
         <Button
           size="sm"
@@ -145,39 +146,92 @@ export function AnalyticsClient({
             setFormOpen(true);
           }}
           disabled={platforms.length === 0}
+          className="shrink-0 font-semibold h-9 px-3 gap-1.5 shadow-sm"
         >
           <Plus className="size-4" /> Add Entry
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-xs text-muted-foreground">Entries</p>
-            <p className="text-2xl font-bold">{counts.entries}</p>
-          </CardContent>
+      {/* KPI Stat Cards - Matching Dashboard Cards UI */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
+        {/* Card 1: Entries */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3.5 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-2">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Entries
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {counts.entries}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                Total recorded
+              </p>
+            </div>
+            <div className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <BarChart3 className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardContent className="py-4">
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MessageSquareText className="size-3" /> Enquiries
-            </p>
-            <p className="text-2xl font-bold">{counts.enquiries}</p>
-          </CardContent>
+
+        {/* Card 2: Enquiries */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3.5 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-2">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Enquiries
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {counts.enquiries}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                Leads & inquiries
+              </p>
+            </div>
+            <div className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <MessageSquareText className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardContent className="py-4">
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <FileBarChart className="size-3" /> Posts
-            </p>
-            <p className="text-2xl font-bold">{counts.posts}</p>
-          </CardContent>
+
+        {/* Card 3: Posts */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3.5 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-2">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Posts
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {counts.posts}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                Total content
+              </p>
+            </div>
+            <div className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <FileBarChart className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-xs text-muted-foreground">Views</p>
-            <p className="text-2xl font-bold">{counts.views}</p>
-          </CardContent>
+
+        {/* Card 4: Views */}
+        <Card className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3.5 sm:p-4 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-2">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                Views
+              </p>
+              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                {counts.views}
+              </p>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                Total reach
+              </p>
+            </div>
+            <div className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <Eye className="size-4 sm:size-5" />
+            </div>
+          </div>
         </Card>
       </div>
 
