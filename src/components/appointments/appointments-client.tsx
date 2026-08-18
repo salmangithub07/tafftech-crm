@@ -57,8 +57,8 @@ const statusVariant: Record<AppointmentStatus, "warning" | "success" | "secondar
   cancelled: "secondary",
 };
 
-type FilterTab = "all" | "today" | "tomorrow" | "past" | "trash";
-type Counts = { all: number; today: number; tomorrow: number; past: number; trash: number };
+type FilterTab = "all" | "today" | "tomorrow" | "next_5_days" | "past" | "trash";
+type Counts = { all: number; today: number; tomorrow: number; next_5_days: number; past: number; trash: number };
 
 const PAGE_SIZE_KEY = "nova-crm:pageSize:appointments";
 
@@ -75,7 +75,7 @@ export function AppointmentsClient({
 
   const [appointments, setAppointments] = React.useState(initialAppointments);
   const [total, setTotal] = React.useState(0);
-  const [counts, setCounts] = React.useState<Counts>({ all: 0, today: 0, tomorrow: 0, past: 0, trash: 0 });
+  const [counts, setCounts] = React.useState<Counts>({ all: 0, today: 0, tomorrow: 0, next_5_days: 0, past: 0, trash: 0 });
   const [tab, setTab] = React.useState<FilterTab>("all");
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
@@ -337,10 +337,11 @@ export function AppointmentsClient({
             <TabsTrigger value="all" className="text-xs">All ({counts.all})</TabsTrigger>
             <TabsTrigger value="today" className="text-xs">Today ({counts.today})</TabsTrigger>
             <TabsTrigger value="tomorrow" className="text-xs">Tomorrow ({counts.tomorrow})</TabsTrigger>
+            <TabsTrigger value="next_5_days" className="text-xs">Next 5 Days ({counts.next_5_days})</TabsTrigger>
             <TabsTrigger value="past" className="text-xs">Past ({counts.past})</TabsTrigger>
             <TabsTrigger
               value="trash"
-              className="gap-1 text-xs col-span-2 sm:col-span-1 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+              className="gap-1 text-xs col-span-3 sm:col-span-1 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
             >
               <Trash2 className="size-3" /> Trash ({counts.trash})
             </TabsTrigger>
