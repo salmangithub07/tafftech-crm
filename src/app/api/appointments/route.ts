@@ -45,6 +45,8 @@ export async function GET(req: NextRequest) {
         where += " AND ap.appointment_date = CURRENT_DATE";
       } else if (filter === "tomorrow") {
         where += " AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date";
+      } else if (filter === "next_5_days") {
+        where += " AND ap.appointment_date >= CURRENT_DATE AND ap.appointment_date <= (CURRENT_DATE + INTERVAL '5 days')::date";
       }
     }
   }
@@ -79,6 +81,7 @@ export async function GET(req: NextRequest) {
          SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' THEN 1 ELSE 0 END) AS all_count,
          SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' AND ap.appointment_date = CURRENT_DATE THEN 1 ELSE 0 END) AS today_count,
          SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' AND ap.appointment_date = (CURRENT_DATE + INTERVAL '1 day')::date THEN 1 ELSE 0 END) AS tomorrow_count,
+         SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status = 'pending' AND ap.appointment_date >= CURRENT_DATE AND ap.appointment_date <= (CURRENT_DATE + INTERVAL '5 days')::date THEN 1 ELSE 0 END) AS next_5_days_count,
          SUM(CASE WHEN COALESCE(ap.is_trashed,0)=0 AND ap.status IN ('completed','cancelled') THEN 1 ELSE 0 END) AS past_count,
          SUM(CASE WHEN COALESCE(ap.is_trashed,0)=1 THEN 1 ELSE 0 END) AS trash_count
        FROM appointments ap ${baseWhere}`,
@@ -95,6 +98,7 @@ export async function GET(req: NextRequest) {
       all: counts?.all_count ?? 0,
       today: counts?.today_count ?? 0,
       tomorrow: counts?.tomorrow_count ?? 0,
+      next_5_days: counts?.next_5_days_count ?? 0,
       past: counts?.past_count ?? 0,
       trash: counts?.trash_count ?? 0,
     },
