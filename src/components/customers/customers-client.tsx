@@ -424,20 +424,22 @@ export function CustomersClient({
       </div>
 
       <Tabs value={tab} onValueChange={changeTab}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
-            <TabsTrigger value="lead" className="text-xs sm:text-sm">Lead ({counts.lead})</TabsTrigger>
-            <TabsTrigger value="progress" className="text-xs sm:text-sm">Progress ({counts.progress})</TabsTrigger>
-            <TabsTrigger value="active" className="text-xs sm:text-sm">Active ({counts.active})</TabsTrigger>
-            <TabsTrigger value="inactive" className="text-xs sm:text-sm">Inactive ({counts.inactive})</TabsTrigger>
-            <TabsTrigger
-              value="trash"
-              className="gap-1 text-xs sm:text-sm data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
-            >
-              <Trash2 className="size-3" /> Trash ({counts.trash})
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between w-full">
+          <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
+            <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10 p-1 gap-1">
+              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">All ({counts.all})</TabsTrigger>
+              <TabsTrigger value="lead" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Lead ({counts.lead})</TabsTrigger>
+              <TabsTrigger value="progress" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Progress ({counts.progress})</TabsTrigger>
+              <TabsTrigger value="active" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Active ({counts.active})</TabsTrigger>
+              <TabsTrigger value="inactive" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Inactive ({counts.inactive})</TabsTrigger>
+              <TabsTrigger
+                value="trash"
+                className="gap-1 px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+              >
+                <Trash2 className="size-3" /> Trash ({counts.trash})
+              </TabsTrigger>
+            </TabsList>
+          </div>
           <DateFilter value={dateFilter} onChange={changeDateFilter} />
         </div>
       </Tabs>

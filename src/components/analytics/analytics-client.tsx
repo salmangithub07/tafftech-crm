@@ -136,7 +136,7 @@ export function AnalyticsClient({
       {/* Top Title Header - 2 Columns on Mobile */}
       <div className="flex items-start sm:items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 pr-1">
-          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Analytics</h1>
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">SM Analytics</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">Track your team&apos;s social media performance.</p>
         </div>
         <Button

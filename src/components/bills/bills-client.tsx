@@ -234,12 +234,14 @@ export function BillsClient() {
         </div>
 
         <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }}>
-          <TabsList className="grid grid-cols-4 w-full sm:w-fit text-xs">
-            <TabsTrigger value="all">All Bills</TabsTrigger>
-            <TabsTrigger value="paid">Paid</TabsTrigger>
-            <TabsTrigger value="unpaid">Unpaid</TabsTrigger>
-            <TabsTrigger value="partial">Partial</TabsTrigger>
-          </TabsList>
+          <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
+            <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10 p-1 gap-1">
+              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All Bills</TabsTrigger>
+              <TabsTrigger value="paid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Paid</TabsTrigger>
+              <TabsTrigger value="unpaid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Unpaid</TabsTrigger>
+              <TabsTrigger value="partial" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Partial</TabsTrigger>
+            </TabsList>
+          </div>
         </Tabs>
       </div>
 

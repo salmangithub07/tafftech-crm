@@ -31,9 +31,9 @@ export const navItems: NavItem[] = [
   { title: "Quotations", href: "/quotations", icon: FileText, kind: "module", module: "quotations" },
   { title: "Products & Stock", href: "/products", icon: Package, kind: "module", module: "products" },
   { title: "Bills & Invoices", href: "/bills", icon: Receipt, kind: "module", module: "bills" },
-  { title: "Analytics", href: "/analytics", icon: BarChart3, kind: "module", module: "analytics" },
+  { title: "SM Analytics", href: "/analytics", icon: BarChart3, kind: "module", module: "analytics" },
   { title: "Balance Sheet", href: "/balance-sheet", icon: Wallet, kind: "fixed", roles: ["admin"] },
-  { title: "Team", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
+  { title: "Team(Users)", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
   { title: "Settings", href: "/settings", icon: Settings, kind: "fixed", roles: ["super_admin", "admin", "executive"] },
 ];
 
