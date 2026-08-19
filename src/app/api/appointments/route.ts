@@ -62,6 +62,10 @@ export async function GET(req: NextRequest) {
   const baseWhere = " WHERE ap.tenant_id = ?" + dateFilter.clause;
   const baseParams = [tenantId, ...dateFilter.params];
 
+  const orderBy = (filter === "past" || filter === "trash")
+    ? "ORDER BY ap.appointment_date DESC, ap.appointment_time DESC, ap.id DESC"
+    : "ORDER BY ap.appointment_date ASC, ap.appointment_time ASC, ap.id ASC";
+
   const [appointments, totalRow, counts] = await Promise.all([
     query(
       `SELECT ap.*, c.name AS customer_name, c.phone AS customer_phone, c.product AS customer_product,
@@ -69,7 +73,7 @@ export async function GET(req: NextRequest) {
        FROM appointments ap
        LEFT JOIN customers c ON c.id = ap.customer_id
        LEFT JOIN admins a ON a.id = ap.created_by
-       ${where} ORDER BY ap.appointment_date DESC, ap.appointment_time DESC, ap.id DESC LIMIT ? OFFSET ?`,
+       ${where} ${orderBy} LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     ),
     queryOne<{ c: number }>(
