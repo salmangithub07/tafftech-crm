@@ -332,20 +332,22 @@ export function AppointmentsClient({
 
       {/* Tabs + Date Filter */}
       <Tabs value={tab} onValueChange={changeTab}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <TabsList className="grid grid-cols-3 sm:flex w-full sm:w-fit h-auto p-1 gap-1">
-            <TabsTrigger value="all" className="text-xs">All ({counts.all})</TabsTrigger>
-            <TabsTrigger value="today" className="text-xs">Today ({counts.today})</TabsTrigger>
-            <TabsTrigger value="tomorrow" className="text-xs">Tomorrow ({counts.tomorrow})</TabsTrigger>
-            <TabsTrigger value="next_5_days" className="text-xs">Next 5 Days ({counts.next_5_days})</TabsTrigger>
-            <TabsTrigger value="past" className="text-xs">Past ({counts.past})</TabsTrigger>
-            <TabsTrigger
-              value="trash"
-              className="gap-1 text-xs col-span-3 sm:col-span-1 data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
-            >
-              <Trash2 className="size-3" /> Trash ({counts.trash})
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between w-full">
+          <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
+            <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10 p-1 gap-1">
+              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All ({counts.all})</TabsTrigger>
+              <TabsTrigger value="today" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Today ({counts.today})</TabsTrigger>
+              <TabsTrigger value="tomorrow" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Tomorrow ({counts.tomorrow})</TabsTrigger>
+              <TabsTrigger value="next_5_days" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Next 5 Days ({counts.next_5_days})</TabsTrigger>
+              <TabsTrigger value="past" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Past ({counts.past})</TabsTrigger>
+              <TabsTrigger
+                value="trash"
+                className="gap-1 px-2.5 sm:px-3 text-xs whitespace-nowrap data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
+              >
+                <Trash2 className="size-3" /> Trash ({counts.trash})
+              </TabsTrigger>
+            </TabsList>
+          </div>
           <DateFilter value={dateFilter} onChange={changeDateFilter} />
         </div>
       </Tabs>

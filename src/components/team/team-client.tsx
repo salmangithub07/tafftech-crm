@@ -117,7 +117,7 @@ export function TeamClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Team</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Team(Users)</h1>
             <Badge
               variant={isLimitReached ? "destructive" : "secondary"}
               className="text-xs font-medium"
