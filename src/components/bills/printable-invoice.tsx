@@ -225,7 +225,7 @@ export function PrintableInvoice({
 
         {/* Authorization & Signature Block */}
         <div className="pt-8 pb-4 flex flex-col items-end text-right">
-          <p className="font-extrabold text-xs uppercase">FOR TAFFTECH</p>
+          <p className="font-extrabold text-xs uppercase">FOR TAFF DESK</p>
           <div className="h-12"></div>
           <p className="font-bold text-xs uppercase border-t border-black pt-1 px-4">AUTHORISED SIGNATURE</p>
         </div>

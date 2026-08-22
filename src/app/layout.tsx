@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AccentColorProvider } from "@/components/accent-color-provider";
@@ -7,8 +8,20 @@ import { getSettings } from "@/lib/settings";
 import { getSession, tenantOf } from "@/lib/auth";
 import { hexToHslString, readableForeground } from "@/lib/colors";
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Tafftech CRM — Admin Dashboard",
+  title: "Taff Desk CRM — Admin Dashboard",
   description: "Manage customers and appointments from one clean dashboard.",
 };
 
@@ -30,7 +43,7 @@ export default async function RootLayout({
   const fg = readableForeground(settings.accent_color);
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
         {/* Suppress browser extension (Bitdefender anti-tracker) DOM attribute hydration error overlay */}
         <script
@@ -45,7 +58,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

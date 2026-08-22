@@ -50,7 +50,7 @@ export default function LoginPage() {
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <LayoutDashboard className="size-5" />
           </div>
-          <h1 className="text-xl font-semibold">Sign in to Tafftech CRM</h1>
+          <h1 className="text-xl font-semibold">Sign in to Taff Desk CRM</h1>
           <p className="text-sm text-muted-foreground">
             The admin dashboard to manage your customers and appointments.
           </p>
@@ -120,12 +120,13 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Signup Footer Link */}
-        <div className="mt-4 text-center text-xs text-muted-foreground">
-          Need help? Contact support or{" "}
-          <Link href="/register" className="font-bold text-primary hover:underline">
-            Register your business
-          </Link>
+        {/* Signup & Pricing Footer Links */}
+        <div className="mt-4 text-center text-xs text-muted-foreground space-y-1">
+          <div>
+            <Link href="/pricing" className="font-semibold text-primary hover:underline">
+              View Pricing & Features
+            </Link>
+          </div>
         </div>
       </div>
     </div>

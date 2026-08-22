@@ -922,7 +922,8 @@ function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
 function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSettings }) {
   const router = useRouter();
   const [yearlyPrice, setYearlyPrice] = React.useState(initialSettings.yearly_plan_price || "4999");
-  const [threeYearPrice, setThreeYearPrice] = React.useState(initialSettings.three_year_plan_price || "12999");
+  const [threeYearPrice, setThreeYearPrice] = React.useState(initialSettings.three_year_plan_price || "11999");
+  const [lifetimePrice, setLifetimePrice] = React.useState(initialSettings.lifetime_plan_price || "24999");
   const [bankUpi, setBankUpi] = React.useState(initialSettings.bank_upi_id || "");
   const [paymentQr, setPaymentQr] = React.useState(initialSettings.payment_qr_code || "");
 
@@ -954,6 +955,7 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
         body: JSON.stringify({
           yearly_plan_price: yearlyPrice,
           three_year_plan_price: threeYearPrice,
+          lifetime_plan_price: lifetimePrice,
           bank_upi_id: bankUpi,
           payment_qr_code: paymentQr,
           trial_max_executives: trialExecs,
@@ -1069,7 +1071,7 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="yearly_price">1-Year Subscription Price (₹) *</Label>
               <Input
@@ -1092,11 +1094,26 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
                 type="number"
                 value={threeYearPrice}
                 onChange={(e) => setThreeYearPrice(e.target.value)}
-                placeholder="12999"
+                placeholder="11999"
                 required
               />
               <span className="text-[11px] text-muted-foreground">
                 Price for 3 Years (1095 Days) access.
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="lifetime_price">Lifetime Access Price (₹) *</Label>
+              <Input
+                id="lifetime_price"
+                type="number"
+                value={lifetimePrice}
+                onChange={(e) => setLifetimePrice(e.target.value)}
+                placeholder="24999"
+                required
+              />
+              <span className="text-[11px] text-muted-foreground">
+                One-time price for Lifetime unlimited access.
               </span>
             </div>
           </div>
