@@ -23,6 +23,7 @@ export type AppSettings = {
   whatsapp_reminder_template: string;
   yearly_plan_price: string;
   three_year_plan_price: string;
+  lifetime_plan_price: string;
   payment_qr_code: string;
   trial_max_executives: string;
   trial_max_customers: string;
@@ -39,7 +40,7 @@ export type AppSettings = {
 };
 
 const DEFAULTS: AppSettings = {
-  site_name: "Tafftech CRM",
+  site_name: "Taff Desk CRM",
   company_phone: "+91 9876543210",
   privacy_policy: "We value your privacy. All customer data and transaction history are protected under our privacy guidelines.",
   accent_color: "#2563eb",
@@ -57,7 +58,8 @@ const DEFAULTS: AppSettings = {
   whatsapp_instance_id: "",
   whatsapp_reminder_template: "Namaste {customer_name}! 🔔\nRemind karne ke liye text hai ki aapka appointment aaj {appointment_date} ko {appointment_time} baje scheduled hai for {product_name}.\nThank you! — {company_name}",
   yearly_plan_price: "4999",
-  three_year_plan_price: "12999",
+  three_year_plan_price: "11999",
+  lifetime_plan_price: "24999",
   payment_qr_code: "",
   trial_max_executives: "2",
   trial_max_customers: "50",
@@ -129,6 +131,7 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       whatsapp_reminder_template: tenantMap.whatsapp_reminder_template ?? globalMap.whatsapp_reminder_template ?? DEFAULTS.whatsapp_reminder_template,
       yearly_plan_price: tenantMap.yearly_plan_price ?? globalMap.yearly_plan_price ?? DEFAULTS.yearly_plan_price,
       three_year_plan_price: tenantMap.three_year_plan_price ?? globalMap.three_year_plan_price ?? DEFAULTS.three_year_plan_price,
+      lifetime_plan_price: tenantMap.lifetime_plan_price ?? globalMap.lifetime_plan_price ?? DEFAULTS.lifetime_plan_price,
       payment_qr_code: tenantMap.payment_qr_code ?? globalMap.payment_qr_code ?? DEFAULTS.payment_qr_code,
       trial_max_executives: tenantMap.trial_max_executives ?? globalMap.trial_max_executives ?? DEFAULTS.trial_max_executives,
       trial_max_customers: tenantMap.trial_max_customers ?? globalMap.trial_max_customers ?? DEFAULTS.trial_max_customers,

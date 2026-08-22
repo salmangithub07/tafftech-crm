@@ -25,6 +25,7 @@ const settingsSchema = z.object({
   whatsapp_reminder_template: z.string().optional(),
   yearly_plan_price: z.string().optional(),
   three_year_plan_price: z.string().optional(),
+  lifetime_plan_price: z.string().optional(),
   payment_qr_code: z.string().optional(),
   trial_max_executives: z.string().optional(),
   trial_max_customers: z.string().optional(),

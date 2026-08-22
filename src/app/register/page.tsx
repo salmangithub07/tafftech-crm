@@ -46,7 +46,7 @@ export default function RegisterPage() {
         return;
       }
 
-      toast.success(data.message || "Registration successful! Welcome to Tafftech CRM.");
+      toast.success(data.message || "Registration successful! Welcome to Taff Desk CRM.");
       router.push(data.redirectUrl || "/dashboard");
       router.refresh();
     } catch {
@@ -70,7 +70,7 @@ export default function RegisterPage() {
             14-Day Free Trial · No Credit Card Required
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Start your Tafftech CRM Trial
+            Start your Taff Desk CRM Trial
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-xs">
             Manage your customers, appointments, billing, and stock in one place.

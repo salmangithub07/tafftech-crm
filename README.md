@@ -1,4 +1,4 @@
-# Tafftech CRM — Multi-tenant Admin Dashboard
+# Taff Desk CRM — Multi-tenant Admin Dashboard
 
 Next.js (App Router) + TypeScript + Tailwind CSS v4 + shadcn-style UI + MySQL. Built
 so you can sell it as a product: one deployment, one **Super Admin**, and as many

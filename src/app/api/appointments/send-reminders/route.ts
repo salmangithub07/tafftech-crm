@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       .replace(/\{appointment_date\}/g, ap.appointment_date)
       .replace(/\{appointment_time\}/g, ap.appointment_time ? ap.appointment_time.slice(0, 5) : "Today")
       .replace(/\{product_name\}/g, ap.title || ap.customer_product || "Appointment")
-      .replace(/\{company_name\}/g, settings.site_name || "Tafftech CRM");
+      .replace(/\{company_name\}/g, settings.site_name || "Taff Desk CRM");
 
     const cleanPhone = ap.customer_phone ? ap.customer_phone.replace(/[^0-9]/g, "") : "";
     const formattedPhone = cleanPhone

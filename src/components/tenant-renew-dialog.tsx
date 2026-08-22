@@ -107,7 +107,7 @@ export function TenantRenewDialog({
 
   // Dynamic UPI QR string based on selected plan price
   const qrImageSrc = paymentQrCode || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-    `upi://pay?pa=${upiId}&pn=TafftechCRM&am=${activePriceRaw}&cu=INR`
+    `upi://pay?pa=${upiId}&pn=TaffDeskCRM&am=${activePriceRaw}&cu=INR`
   )}`;
 
   return (
