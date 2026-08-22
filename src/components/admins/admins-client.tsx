@@ -289,7 +289,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 TOTAL REVENUE
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate" title={`₹${Number(analytics.total_revenue || 0).toLocaleString("en-IN")}`}>
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate" title={`₹${Number(analytics.total_revenue || 0).toLocaleString("en-IN")}`}>
                 ₹{Number(analytics.total_revenue || 0).toLocaleString("en-IN")}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -309,7 +309,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 ACTIVE TENANTS
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate">
                 {admins.filter((a) => a.status === "active").length}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -329,7 +329,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 PENDING APPROVALS
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate">
                 {analytics.pending_count || 0}
               </p>
               <p className={`text-[10px] sm:text-[11px] font-medium truncate ${
@@ -353,7 +353,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 EXPIRING (7 DAYS)
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate">
                 {expiringSoonAdmins.length}
               </p>
               <p className={`text-[10px] sm:text-[11px] font-medium truncate ${
@@ -464,7 +464,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 </Badge>
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-foreground tracking-tight">
                   ₹{Number(analytics.this_month_revenue || 0).toLocaleString("en-IN")}
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -481,7 +481,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 </Badge>
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">
                   ₹{Number(analytics.pending_revenue || 0).toLocaleString("en-IN")}
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -498,7 +498,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 </Badge>
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-foreground tracking-tight">
                   {analytics.approved_count || 0} / {admins.length} Tenants
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -1213,7 +1213,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 <HeartPulse className="size-4 text-emerald-500" />
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
                   {admins.filter((a) => (a.health_score || 0) >= 75).length} Tenants
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -1228,7 +1228,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 <Zap className="size-4 text-amber-500" />
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">
                   {admins.filter((a) => (a.health_score || 0) >= 40 && (a.health_score || 0) < 75).length} Tenants
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -1243,7 +1243,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 <AlertTriangle className="size-4 text-destructive" />
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-destructive tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-destructive tracking-tight">
                   {admins.filter((a) => (a.health_score || 0) < 40).length} Tenants
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">
@@ -1258,7 +1258,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 <HardDrive className="size-4 text-primary" />
               </div>
               <div className="mt-2 sm:mt-3">
-                <span className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
+                <span className="font-heading text-lg sm:text-2xl font-bold text-foreground tracking-tight">
                   {formatKbSize(admins.reduce((sum, a) => sum + (a.est_db_size_kb || 16), 0))}
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-muted-foreground block mt-0.5 sm:mt-1 truncate">

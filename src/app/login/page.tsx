@@ -3,11 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, LayoutDashboard, Eye, EyeOff } from "lucide-react";
+import { Loader2, LayoutDashboard, Eye, EyeOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -17,6 +18,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+
+  function handleFillDemo() {
+    setEmail("demo@crm.com");
+    setPassword("demo123");
+    toast.success("Demo credentials filled! Click Sign in to continue.");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,6 +116,37 @@ export default function LoginPage() {
                 {loading && <Loader2 className="size-4 animate-spin" />}
                 Sign in
               </Button>
+
+              {/* 🔑 Demo Credentials Card */}
+              <div className="mt-1.5 p-3 rounded-xl border border-primary/30 bg-primary/5 flex flex-col gap-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-primary" /> Try Live Demo Account
+                  </span>
+                  <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                    1-Click Auto Fill
+                  </Badge>
+                </div>
+                <div className="space-y-1 bg-card/80 p-2.5 rounded-lg border border-border/50 font-mono text-[11px]">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Username:</span>
+                    <strong className="text-foreground select-all font-semibold">demo@crm.com</strong>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Password:</span>
+                    <strong className="text-foreground select-all font-semibold">demo123</strong>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFillDemo}
+                  className="h-8 text-xs font-bold gap-1.5 border-primary/40 text-primary hover:bg-primary/10 w-full"
+                >
+                  <Sparkles className="size-3.5" /> Auto-fill Demo Credentials
+                </Button>
+              </div>
 
               <div className="text-center pt-2 text-xs text-muted-foreground border-t border-border/40 mt-2">
                 Don&apos;t have a tenant account?{" "}

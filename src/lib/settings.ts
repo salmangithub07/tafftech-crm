@@ -37,6 +37,8 @@ export type AppSettings = {
   broadcast_announcement_message: string;
   broadcast_announcement_type: string;
   broadcast_announcement_target_plan: string;
+  meta_title: string;
+  meta_description: string;
 };
 
 const DEFAULTS: AppSettings = {
@@ -73,6 +75,8 @@ const DEFAULTS: AppSettings = {
   broadcast_announcement_message: "",
   broadcast_announcement_type: "info",
   broadcast_announcement_target_plan: "all",
+  meta_title: "Taff Desk CRM — Modern All-In-One CRM Software for Growing Businesses",
+  meta_description: "Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions from one unified dashboard.",
 };
 
 /**
@@ -145,6 +149,8 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       broadcast_announcement_message: tenantMap.broadcast_announcement_message ?? globalMap.broadcast_announcement_message ?? DEFAULTS.broadcast_announcement_message,
       broadcast_announcement_type: tenantMap.broadcast_announcement_type ?? globalMap.broadcast_announcement_type ?? DEFAULTS.broadcast_announcement_type,
       broadcast_announcement_target_plan: tenantMap.broadcast_announcement_target_plan ?? globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
+      meta_title: tenantMap.meta_title ?? globalMap.meta_title ?? DEFAULTS.meta_title,
+      meta_description: tenantMap.meta_description ?? globalMap.meta_description ?? DEFAULTS.meta_description,
     };
   } catch {
     return DEFAULTS;

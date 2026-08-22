@@ -6,6 +6,8 @@ export async function GET() {
     const s = await getSettings(0);
     return NextResponse.json({
       site_name: s.site_name,
+      meta_title: s.meta_title,
+      meta_description: s.meta_description,
       yearly_plan_price: s.yearly_plan_price || "4999",
       three_year_plan_price: s.three_year_plan_price || "11999",
       lifetime_plan_price: s.lifetime_plan_price || "24999",

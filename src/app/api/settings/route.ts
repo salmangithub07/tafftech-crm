@@ -39,6 +39,8 @@ const settingsSchema = z.object({
   broadcast_announcement_message: z.string().optional(),
   broadcast_announcement_type: z.string().optional(),
   broadcast_announcement_target_plan: z.string().optional(),
+  meta_title: z.string().optional(),
+  meta_description: z.string().optional(),
 });
 
 export async function GET() {
