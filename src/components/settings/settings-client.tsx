@@ -943,6 +943,10 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
   const [announcementType, setAnnouncementType] = React.useState(initialSettings.broadcast_announcement_type || "info");
   const [announcementTarget, setAnnouncementTarget] = React.useState(initialSettings.broadcast_announcement_target_plan || "all");
 
+  // Meta SEO settings state
+  const [metaTitle, setMetaTitle] = React.useState(initialSettings.meta_title || "");
+  const [metaDescription, setMetaDescription] = React.useState(initialSettings.meta_description || "");
+
   const [saving, setSaving] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
@@ -970,10 +974,12 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
           broadcast_announcement_message: announcementMessage,
           broadcast_announcement_type: announcementType,
           broadcast_announcement_target_plan: announcementTarget,
+          meta_title: metaTitle,
+          meta_description: metaDescription,
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Subscription pricing, limits & system announcements saved!");
+      toast.success("Subscription pricing, limits, SEO metadata & announcements saved!");
       router.refresh();
     } catch {
       toast.error("Could not save subscription settings.");
@@ -984,6 +990,46 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+      {/* Global SEO & Meta Metadata Settings Card */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="size-5 text-primary" /> SEO Metadata &amp; Search Engine Settings
+          </CardTitle>
+          <CardDescription>
+            Manage the global website Meta Title and Meta Description displayed on Google search results, social sharing, and browser tabs.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="meta_title">Website Meta Title (Browser Tab &amp; Search Header)</Label>
+            <Input
+              id="meta_title"
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              placeholder="e.g. Taff Desk CRM — Modern All-In-One CRM Software"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Recommended length: 50-60 characters. Appears as the primary title tag in HTML headers.
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="meta_description">Website Meta Description (Search Engine Snippet)</Label>
+            <Textarea
+              id="meta_description"
+              rows={3}
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
+              placeholder="e.g. Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions."
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Recommended length: 150-160 characters. Displayed under search titles on Google and social media share previews.
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Broadcast System Announcement Card */}
       <Card className="border-purple-500/30 bg-purple-500/5">
         <CardHeader>

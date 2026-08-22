@@ -348,7 +348,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
             <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 sm:p-4 text-emerald-900 dark:text-emerald-200">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Total Assets</span>
-              <span className="font-mono text-base sm:text-lg font-extrabold">{money(summary.totals.totalAssets)}</span>
+              <span className="font-heading text-base sm:text-lg font-bold">{money(summary.totals.totalAssets)}</span>
             </div>
           </CardContent>
         </Card>
@@ -401,7 +401,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
             <div className="flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 sm:p-4 text-rose-900 dark:text-rose-200">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Total Liabilities</span>
-              <span className="font-mono text-base sm:text-lg font-extrabold">{money(summary.totals.totalLiabilities)}</span>
+              <span className="font-heading text-base sm:text-lg font-bold">{money(summary.totals.totalLiabilities)}</span>
             </div>
           </CardContent>
         </Card>

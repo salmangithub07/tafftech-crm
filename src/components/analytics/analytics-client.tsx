@@ -161,7 +161,7 @@ export function AnalyticsClient({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Entries
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
                 {counts.entries}
               </p>
               <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -181,11 +181,11 @@ export function AnalyticsClient({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Enquiries
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
                 {counts.enquiries}
               </p>
               <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
-                Leads & inquiries
+                Leads &amp; inquiries
               </p>
             </div>
             <div className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-all duration-300 shadow-xs">
@@ -201,7 +201,7 @@ export function AnalyticsClient({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Posts
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
                 {counts.posts}
               </p>
               <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -221,7 +221,7 @@ export function AnalyticsClient({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Views
               </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
                 {counts.views}
               </p>
               <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">

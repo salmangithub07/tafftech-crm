@@ -159,7 +159,7 @@ export function BillsClient() {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Total Invoiced
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate" title={money(stats.totalInvoiced)}>
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate" title={money(stats.totalInvoiced)}>
                 {money(stats.totalInvoiced)}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -179,7 +179,7 @@ export function BillsClient() {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Total Collected
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 truncate" title={money(stats.totalCollected)}>
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 truncate" title={money(stats.totalCollected)}>
                 {money(stats.totalCollected)}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
@@ -199,7 +199,7 @@ export function BillsClient() {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
                 Outstanding / Pending
               </p>
-              <p className="font-mono text-base xs:text-lg sm:text-2xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 truncate" title={money(stats.totalPending)}>
+              <p className="font-heading text-base xs:text-lg sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 truncate" title={money(stats.totalPending)}>
                 {money(stats.totalPending)}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-amber-600/80 dark:text-amber-400/80 truncate">

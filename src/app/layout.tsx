@@ -20,10 +20,15 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Taff Desk CRM — Admin Dashboard",
-  description: "Manage customers and appointments from one clean dashboard.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getSession();
+  const tenantId = session ? tenantOf(session) ?? 0 : 0;
+  const settings = await getSettings(tenantId);
+  return {
+    title: settings.meta_title || `${settings.site_name || "Taff Desk CRM"} — Admin Dashboard`,
+    description: settings.meta_description || "Manage customer leads, appointments, and billing from one clean dashboard.",
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
