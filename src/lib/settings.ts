@@ -88,8 +88,148 @@ const DEFAULTS: AppSettings = {
   broadcast_announcement_target_plan: "all",
   meta_title: "Taff Desk CRM — Modern All-In-One CRM Software for Growing Businesses",
   meta_description: "Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions from one unified dashboard.",
-  seo_keywords: "crm, saas crm, lead management, whatsapp crm, invoice software, quotation software, appointment scheduling",
-  schema_json_ld: "",
+  seo_keywords: "crm, saas crm, best crm software in india, whatsapp crm, whatsapp reminder crm, gst billing software, gst invoice generator, quotation maker software, proforma invoice software, lead management software, appointment scheduling crm, crm for small business, b2b crm software, crm with ledger, crm lifetime deal",
+  schema_json_ld: JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://www.taffdesk.com/#software",
+        "name": "Taff Desk CRM",
+        "alternateName": "TaffTech CRM",
+        "operatingSystem": "All (Web-based SaaS, Windows, macOS, iOS, Android)",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "CRM & GST Billing Software",
+        "softwareVersion": "2.0.0",
+        "description": "All-in-one CRM & GST Billing Software for growing businesses. Manage customer leads, appointments, 1-click WhatsApp reminders, quotation generator, inventory, and team permissions.",
+        "url": "https://www.taffdesk.com",
+        "featureList": [
+          "Lead & Customer Management",
+          "1-Click Automated WhatsApp Reminders",
+          "GST Invoice & Quotation Generator",
+          "Appointment Scheduling & Tracking",
+          "Role-Based Access Control (RBAC)",
+          "Financial Ledger & Income/Expense Tracking",
+          "Multi-Tenant Business Architecture"
+        ],
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "1-Year License",
+            "price": "4999",
+            "priceCurrency": "INR",
+            "availability": "https://schema.org/InStock",
+            "validFrom": "2026-01-01",
+            "priceValidUntil": "2030-12-31",
+            "url": "https://www.taffdesk.com"
+          },
+          {
+            "@type": "Offer",
+            "name": "3-Year License",
+            "price": "11999",
+            "priceCurrency": "INR",
+            "availability": "https://schema.org/InStock",
+            "validFrom": "2026-01-01",
+            "priceValidUntil": "2030-12-31",
+            "url": "https://www.taffdesk.com"
+          },
+          {
+            "@type": "Offer",
+            "name": "Lifetime Access",
+            "price": "24999",
+            "priceCurrency": "INR",
+            "availability": "https://schema.org/InStock",
+            "validFrom": "2026-01-01",
+            "priceValidUntil": "2030-12-31",
+            "url": "https://www.taffdesk.com"
+          }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "ratingCount": "128",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "author": {
+          "@type": "Organization",
+          "@id": "https://www.taffdesk.com/#organization"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://www.taffdesk.com/#organization",
+        "name": "TaffTech Industrial Solutions",
+        "legalName": "TaffTech Solutions",
+        "url": "https://www.taffdesk.com",
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+91-9607086390",
+            "contactType": "customer service",
+            "areaServed": "IN",
+            "availableLanguage": ["English", "Hindi"]
+          }
+        ],
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Plot No 4, Nizamuddin Colony",
+          "addressLocality": "Nagpur",
+          "addressRegion": "Maharashtra",
+          "postalCode": "440001",
+          "addressCountry": "IN"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.taffdesk.com/#website",
+        "url": "https://www.taffdesk.com",
+        "name": "Taff Desk CRM",
+        "description": "All-In-One CRM & GST Billing Software for Businesses",
+        "publisher": {
+          "@id": "https://www.taffdesk.com/#organization"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://www.taffdesk.com/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Taff Desk CRM?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Taff Desk CRM is an all-in-one customer relationship management and GST billing software designed for growing businesses. It helps manage leads, send automated WhatsApp reminders, generate official GST invoices & quotations, track appointments, and manage team permissions."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Taff Desk CRM support GST Invoice and Quotation generation?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, Taff Desk CRM includes built-in 1-click Proforma Invoice / Quotation and GST Tax Invoice generation with custom company logo, GSTIN, bank details, and downloadable PDF / print formats."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does 1-click WhatsApp Integration work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Taff Desk CRM allows you to instantly send appointment reminders, billing details, and customer updates directly to your customer's WhatsApp with one click."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is there a free trial available for Taff Desk CRM?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! You can register for a 14-day free trial with full access to all features, including lead management, GST invoicing, and team executive management."
+            }
+          }
+        ]
+      }
+    ]
+  }, null, 2),
   custom_head_code: "",
   custom_body_code: "",
   gstin: "",
