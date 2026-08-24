@@ -70,12 +70,13 @@ const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary" 
   active: "success",
   lead: "warning",
   progress: "info",
-  inactive: "secondary",
+  order_soon: "outline",
+  completed: "secondary",
 };
 
 const PAGE_SIZE_KEY = "nova-crm:pageSize:customers";
 
-type Counts = { all: number; lead: number; progress: number; active: number; inactive: number; trash: number };
+type Counts = { all: number; lead: number; progress: number; active: number; order_soon: number; completed: number; trash: number };
 
 export function CustomersClient({
   initialCustomers,
@@ -89,11 +90,11 @@ export function CustomersClient({
   const router = useRouter();
   const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
   const [total, setTotal] = React.useState(0);
-  const [counts, setCounts] = React.useState<Counts>({ all: 0, lead: 0, progress: 0, active: 0, inactive: 0, trash: 0 });
+  const [counts, setCounts] = React.useState<Counts>({ all: 0, lead: 0, progress: 0, active: 0, order_soon: 0, completed: 0, trash: 0 });
   const [loading, setLoading] = React.useState(false);
 
   const [search, setSearch] = React.useState("");
-  const [tab, setTab] = React.useState<"all" | "lead" | "progress" | "active" | "inactive" | "trash">("all");
+  const [tab, setTab] = React.useState<"all" | "lead" | "progress" | "active" | "order_soon" | "completed" | "trash">("all");
   const [dateFilter, setDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
@@ -431,7 +432,8 @@ export function CustomersClient({
               <TabsTrigger value="lead" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Lead ({counts.lead})</TabsTrigger>
               <TabsTrigger value="progress" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Progress ({counts.progress})</TabsTrigger>
               <TabsTrigger value="active" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Active ({counts.active})</TabsTrigger>
-              <TabsTrigger value="inactive" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Inactive ({counts.inactive})</TabsTrigger>
+              <TabsTrigger value="order_soon" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Order Soon ({counts.order_soon})</TabsTrigger>
+              <TabsTrigger value="completed" className="px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap">Final ({counts.completed})</TabsTrigger>
               <TabsTrigger
                 value="trash"
                 className="gap-1 px-2.5 sm:px-3 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600"
@@ -450,7 +452,7 @@ export function CustomersClient({
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name, phone, or product..."
+            placeholder="Search by name, phone, product, or added by..."
             className="pl-9"
           />
         </div>
@@ -571,17 +573,25 @@ export function CustomersClient({
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        <button
-                          onClick={() => setProfileCustomerId(c.id)}
-                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
-                        >
-                          {c.name}
-                        </button>
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            onClick={() => setProfileCustomerId(c.id)}
+                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                          >
+                            {c.name}
+                          </button>
+                          {c.appointment_date && (
+                            <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                              <Calendar className="size-3 shrink-0" />
+                              {formatDate(c.appointment_date)}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         <div className="flex flex-col gap-0.5 text-xs">
                           {c.email && <span className="font-mono text-[11px] text-muted-foreground">{c.email}</span>}
-                          {c.phone && <span className="font-semibold text-foreground">{c.phone}</span>}
+                          {c.phone && <span className="font-medium text-primary flex items-center gap-1"><Phone className="size-3 text-primary shrink-0" />{c.phone}</span>}
                           {!c.email && !c.phone && <span>—</span>}
                         </div>
                       </TableCell>
@@ -595,8 +605,8 @@ export function CustomersClient({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant[c.status]} className="capitalize">
-                          {c.status}
+                        <Badge variant={statusVariant[c.status] || "secondary"} className="capitalize">
+                          {c.status === "order_soon" ? "Order Soon" : c.status === "completed" || (c.status as string) === "inactive" ? "Final" : c.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -618,8 +628,7 @@ export function CustomersClient({
                       <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-xs font-medium">
-                          <Calendar className="size-3.5 text-muted-foreground shrink-0" />
-                          <span>{formatDate(c.created_at)}</span>
+                          {formatDate(c.created_at)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -695,6 +704,12 @@ export function CustomersClient({
                         >
                           {c.name}
                         </button>
+                        {c.appointment_date && (
+                          <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-0.5">
+                            <Calendar className="size-3 shrink-0" />
+                            {formatDate(c.appointment_date)}
+                          </span>
+                        )}
                         {c.product && (
                           <span className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
                             <Package className="size-3 shrink-0" />
@@ -746,8 +761,8 @@ export function CustomersClient({
                           </span>
                         )}
                         {c.phone && (
-                          <span className="flex items-center gap-1.5">
-                            <Phone className="size-3 shrink-0" />
+                          <span className="flex items-center gap-1.5 text-primary font-medium">
+                            <Phone className="size-3 shrink-0 text-primary" />
                             <span>{c.phone}</span>
                           </span>
                         )}

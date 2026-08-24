@@ -12,6 +12,9 @@ const stockSchema = z.object({
   creditor_account_id: z.number().optional().nullable(),
 });
 
+import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
+import { queryOne } from "@/lib/db";
+
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,19 +22,62 @@ export async function GET(req: NextRequest) {
   const tenantId = tenantOf(session)!;
 
   const productId = req.nextUrl.searchParams.get("product_id");
-  let sql = `SELECT s.*, p.name AS product_name, a.name AS created_by_name
-             FROM stock_transactions s
-             LEFT JOIN products p ON p.id = s.product_id
-             LEFT JOIN admins a ON a.id = s.created_by
-             WHERE s.tenant_id = ?`;
+  const searchQ = req.nextUrl.searchParams.get("search")?.trim();
+  const isPaginated = req.nextUrl.searchParams.has("page");
+  const { page, limit, offset } = paginationParams(req, 10);
+
+  let where = " WHERE s.tenant_id = ?";
   const params: unknown[] = [tenantId];
+
   if (productId) {
-    sql += " AND s.product_id = ?";
+    where += " AND s.product_id = ?";
     params.push(productId);
   }
-  sql += " ORDER BY s.created_at DESC LIMIT 200";
 
-  const transactions = await query(sql, params);
+  if (searchQ) {
+    where += " AND (p.name ILIKE ? OR s.note ILIKE ? OR a.name ILIKE ?)";
+    const like = `%${searchQ}%`;
+    params.push(like, like, like);
+  }
+
+  if (isPaginated) {
+    const [transactions, totalRow] = await Promise.all([
+      query(
+        `SELECT s.*, p.name AS product_name, a.name AS created_by_name
+         FROM stock_transactions s
+         LEFT JOIN products p ON p.id = s.product_id
+         LEFT JOIN admins a ON a.id = s.created_by
+         ${where}
+         ORDER BY s.created_at DESC LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
+      ),
+      queryOne<{ c: number }>(
+        `SELECT COUNT(*) as c
+         FROM stock_transactions s
+         LEFT JOIN products p ON p.id = s.product_id
+         LEFT JOIN admins a ON a.id = s.created_by
+         ${where}`,
+        params
+      ),
+    ]);
+
+    return NextResponse.json({
+      data: transactions,
+      total: Number(totalRow?.c || 0),
+      page,
+      limit,
+    });
+  }
+
+  const transactions = await query(
+    `SELECT s.*, p.name AS product_name, a.name AS created_by_name
+     FROM stock_transactions s
+     LEFT JOIN products p ON p.id = s.product_id
+     LEFT JOIN admins a ON a.id = s.created_by
+     ${where}
+     ORDER BY s.created_at DESC LIMIT 200`,
+    params
+  );
   return NextResponse.json(transactions);
 }
 

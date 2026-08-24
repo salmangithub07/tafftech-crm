@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
-import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download, Search, TrendingUp, DollarSign, PiggyBank, Receipt } from "lucide-react";
+import { AlertTriangle, Plus, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, Upload, Download, Search, TrendingUp, DollarSign, PiggyBank, Receipt, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,9 @@ import { StockDialog } from "@/components/products/stock-dialog";
 import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { ProductDeleteDialog } from "@/components/products/product-delete-dialog";
 import { StockOutReasonDialog } from "@/components/products/stock-out-reason-dialog";
-import type { Product, StockTransaction } from "@/lib/types";
+import { CategoryManagerDialog } from "@/components/products/category-manager-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Product, StockTransaction, ProductCategory } from "@/lib/types";
 
 type Counts = { all: number; in: number; low: number; out: number };
 const PAGE_SIZE_KEY = "nova-crm:pageSize:products";
@@ -47,6 +49,9 @@ export function ProductsClient({
   const router = useRouter();
   const [products, setProducts] = React.useState(initialProducts);
   const [transactions, setTransactions] = React.useState(initialTransactions);
+  const [categories, setCategories] = React.useState<ProductCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
+  const [categoryDialogOpen, setCategoryDialogOpen] = React.useState(false);
   const [total, setTotal] = React.useState(0);
   const [counts, setCounts] = React.useState<Counts>({ all: 0, in: 0, low: 0, out: 0 });
   const [tab, setTab] = React.useState<"all" | "in" | "low" | "out">("all");
@@ -61,6 +66,9 @@ export function ProductsClient({
   });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
+  const [reportPage, setReportPage] = React.useState(1);
+  const [reportPageSize, setReportPageSize] = React.useState(10);
+  const [reportTotal, setReportTotal] = React.useState(0);
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Product | null>(null);
   const [deleting, setDeleting] = React.useState<Product | null>(null);
@@ -76,15 +84,39 @@ export function ProductsClient({
     if (saved) setPageSize(Number(saved));
   }, []);
 
+  const fetchCategories = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/product-categories");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) setCategories(json.data);
+      }
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const fetchProducts = React.useCallback(async () => {
     const params = new URLSearchParams({
       page: String(page),
       limit: String(pageSize),
       ...(tab !== "all" ? { stock: tab } : {}),
+      ...(selectedCategory !== "all" ? { category_id: selectedCategory } : {}),
       ...(search ? { search } : {}),
       ...dateFilterParams(dateFilter),
     });
-    const [pRes, sRes] = await Promise.all([fetch(`/api/products?${params}`), fetch("/api/stock")]);
+    const stockParams = new URLSearchParams({
+      page: String(reportPage),
+      limit: String(reportPageSize),
+      ...(search ? { search } : {}),
+    });
+
+    const [pRes, sRes] = await Promise.all([
+      fetch(`/api/products?${params}`),
+      fetch(`/api/stock?${stockParams}`),
+    ]);
     if (pRes.ok) {
       const json = await pRes.json();
       setProducts(json.data);
@@ -92,8 +124,17 @@ export function ProductsClient({
       setCounts(json.counts);
       if (json.profit_summary) setProfitSummary(json.profit_summary);
     }
-    if (sRes.ok) setTransactions(await sRes.json());
-  }, [tab, page, pageSize, search, dateFilter]);
+    if (sRes.ok) {
+      const json = await sRes.json();
+      if (json.data && Array.isArray(json.data)) {
+        setTransactions(json.data);
+        setReportTotal(json.total || 0);
+      } else if (Array.isArray(json)) {
+        setTransactions(json);
+        setReportTotal(json.length);
+      }
+    }
+  }, [tab, selectedCategory, page, pageSize, reportPage, reportPageSize, search, dateFilter]);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- refetches whenever any filter/pagination input changes
@@ -105,9 +146,15 @@ export function ProductsClient({
     const t = setTimeout(() => {
       setSearch(searchInput);
       setPage(1);
+      setReportPage(1);
     }, 300);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  function changeReportPageSize(size: number) {
+    setReportPageSize(size);
+    setReportPage(1);
+  }
 
   function changeTab(next: string) {
     setTab(next as "all" | "in" | "low" | "out");
@@ -187,29 +234,46 @@ export function ProductsClient({
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">Manage inventory, reorder alerts, and stock movement.</p>
         </div>
 
-        {/* Right Column (50%) */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[135px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
-          <Button size="sm" onClick={() => { setEditing(null); setFormOpen(true); }} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
-            <Plus className="size-4" /> Add Product
+        {/* Right Column: Actions */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          {/* Mobile: compact icon-only buttons */}
+          <Button variant="outline" size="icon" className="size-8 sm:hidden" onClick={() => importInputRef.current?.click()} title="Import CSV">
+            <Upload className="size-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="size-8 sm:hidden" asChild title="Export CSV">
+            <Link href="/api/products/export">
+              <Download className="size-4" />
+            </Link>
+          </Button>
+          <Button variant="outline" size="icon" className="size-8 sm:hidden border-primary/30 text-primary hover:bg-primary/10" onClick={() => setCategoryDialogOpen(true)} title="Add Category">
+            <Tag className="size-4" />
+          </Button>
+          <Button size="icon" className="size-8 sm:hidden shadow-xs" onClick={() => { setEditing(null); setFormOpen(true); }} title="Add Product">
+            <Plus className="size-4" />
           </Button>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={handleImportFile}
-            />
-            <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()} className="flex-1 sm:flex-initial h-8 px-2 text-[11px] font-medium justify-center gap-1" title="Import CSV">
-              <Upload className="size-3" /> Import
-            </Button>
-            <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-initial h-8 px-2 text-[11px] font-medium justify-center gap-1" title="Export CSV">
-              <Link href="/api/products/export">
-                <Download className="size-3" /> Export
-              </Link>
-            </Button>
-          </div>
+          {/* Desktop: full text buttons */}
+          <Button size="sm" onClick={() => { setEditing(null); setFormOpen(true); }} className="hidden sm:flex h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
+            <Plus className="size-4" /> Add Product
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setCategoryDialogOpen(true)} className="hidden sm:flex h-9 px-3 text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+            <Tag className="size-3.5" /> + Category
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()} className="hidden sm:flex h-9 px-2.5 text-[11px] font-medium gap-1" title="Import CSV">
+            <Upload className="size-3.5" /> Import
+          </Button>
+          <Button variant="outline" size="sm" asChild className="hidden sm:flex h-9 px-2.5 text-[11px] font-medium gap-1" title="Export CSV">
+            <Link href="/api/products/export">
+              <Download className="size-3.5" /> Export
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -226,12 +290,7 @@ export function ProductsClient({
       )}
 
       <Tabs defaultValue="products">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="report">Stock Report</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="products" className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {/* Profit & Valuation Summary Cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Card className="p-3.5 min-w-0">
@@ -279,16 +338,49 @@ export function ProductsClient({
             </Card>
           </div>
 
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search products by name..."
-              className="pl-9"
-            />
+          {/* Search Box with TabsList on Left & Category Filter on Right */}
+          <div className="flex flex-col md:flex-row gap-2.5 items-stretch md:items-center">
+            <TabsList className="h-9 shrink-0 self-start md:self-auto">
+              <TabsTrigger value="products" className="text-xs px-3">Products</TabsTrigger>
+              <TabsTrigger value="report" className="text-xs px-3">Stock Report</TabsTrigger>
+            </TabsList>
+
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search products by name..."
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap hidden sm:inline">Category:</span>
+              <Select
+                value={selectedCategory}
+                onValueChange={(val) => {
+                  setSelectedCategory(val);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-9 w-full sm:w-48 text-xs font-medium bg-background text-foreground shadow-xs">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent align="end" className="text-xs">
+                  <SelectItem value="all">All Categories ({categories.length})</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+        </div>
+
+        <TabsContent value="products" className="mt-4 flex flex-col gap-4">
+
           <Tabs value={tab} onValueChange={changeTab}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
               <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
@@ -317,6 +409,7 @@ export function ProductsClient({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
+                      <TableHead>Category</TableHead>
                       <TableHead>Unit</TableHead>
                       <TableHead>Cost Price</TableHead>
                       <TableHead>Selling Price</TableHead>
@@ -353,6 +446,15 @@ export function ProductsClient({
                               )}
                             </div>
                           </TableCell>
+                          <TableCell>
+                            {p.category_name || p.category ? (
+                              <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-medium px-2 py-0.5">
+                                {p.category_name || p.category}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-muted-foreground">
                             <Badge variant="outline" className="font-normal text-xs">{unitStr}</Badge>
                           </TableCell>
@@ -379,7 +481,7 @@ export function ProductsClient({
                                 Low: {currentStock} {unitStr}
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">{currentStock} {unitStr}</Badge>
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-medium">{currentStock} {unitStr}</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -455,6 +557,11 @@ export function ProductsClient({
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-medium text-foreground">{p.name}</p>
+                              {(p.category_name || p.category) && (
+                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-medium px-1.5 py-0">
+                                  {p.category_name || p.category}
+                                </Badge>
+                              )}
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0">{unitStr}</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
@@ -514,7 +621,7 @@ export function ProductsClient({
                                 Low: {currentStock} {unitStr}
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">{currentStock} {unitStr} in stock</Badge>
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-medium">{currentStock} {unitStr} in stock</Badge>
                             )}
                           </div>
                         </div>
@@ -608,6 +715,13 @@ export function ProductsClient({
                     })}
                   </TableBody>
                 </Table>
+                <PaginationBar
+                  page={reportPage}
+                  pageSize={reportPageSize}
+                  total={reportTotal}
+                  onPageChange={setReportPage}
+                  onPageSizeChange={changeReportPageSize}
+                />
               </Card>
 
               {/* Mobile Cards */}
@@ -658,6 +772,13 @@ export function ProductsClient({
                     </Card>
                   );
                 })}
+                <PaginationBar
+                  page={reportPage}
+                  pageSize={reportPageSize}
+                  total={reportTotal}
+                  onPageChange={setReportPage}
+                  onPageSizeChange={changeReportPageSize}
+                />
               </div>
             </>
           )}
@@ -710,6 +831,16 @@ export function ProductsClient({
         onOpenChange={(open) => !open && setDeleting(null)}
         product={deleting}
         onConfirm={(reason, creditorAccountId) => handleDelete(deleting!, reason, creditorAccountId)}
+      />
+
+      <CategoryManagerDialog
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+        categories={categories}
+        onCategoriesChanged={() => {
+          fetchCategories();
+          refresh();
+        }}
       />
     </div>
   );

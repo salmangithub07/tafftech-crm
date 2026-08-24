@@ -158,11 +158,13 @@ export function CustomerProfileDialog({
                             ? "info"
                             : c.status === "lead"
                             ? "warning"
+                            : c.status === "order_soon"
+                            ? "outline"
                             : "secondary"
                         }
                         className="capitalize text-xs"
                       >
-                        {c.status}
+                        {c.status === "order_soon" ? "Order Soon" : c.status === "completed" || (c.status as string) === "inactive" ? "Final" : c.status}
                       </Badge>
                     )}
                     {c?.visited === 1 ? (

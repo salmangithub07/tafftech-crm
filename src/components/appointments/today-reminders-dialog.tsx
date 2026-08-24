@@ -164,8 +164,8 @@ export function TodayRemindersDialog({
                       </p>
                       <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                         {r.customer_phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="size-3" /> {r.customer_phone}
+                          <span className="flex items-center gap-1 text-primary font-semibold">
+                            <Phone className="size-3 text-primary shrink-0" /> {r.customer_phone}
                           </span>
                         )}
                         <span className="flex items-center gap-1 font-mono text-emerald-700 dark:text-emerald-300">

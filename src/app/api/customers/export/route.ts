@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     where += " AND COALESCE(c.is_trashed, 0) = 1";
   } else {
     where += " AND COALESCE(c.is_trashed, 0) = 0";
-    if (status && ["lead", "progress", "active", "inactive"].includes(status)) {
+    if (status && ["lead", "progress", "active", "completed", "order_soon"].includes(status)) {
       where += " AND c.status = ?";
       params.push(status);
     }

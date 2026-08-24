@@ -51,6 +51,10 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     await execute(`
+      UPDATE customers SET status = 'completed' WHERE status = 'inactive';
+    `).catch(() => {});
+
+    await execute(`
       ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_trashed SMALLINT DEFAULT 0;
     `).catch(() => {});
 
@@ -64,6 +68,23 @@ export async function ensureActivityTables() {
 
     await execute(`
       ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price NUMERIC(12, 2) DEFAULT 0;
+    `).catch(() => {});
+
+    await execute(`
+      CREATE TABLE IF NOT EXISTS product_categories (
+        id          SERIAL PRIMARY KEY,
+        tenant_id   INTEGER NOT NULL,
+        name        VARCHAR(100) NOT NULL,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id INTEGER;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100);
     `).catch(() => {});
 
     await execute(`

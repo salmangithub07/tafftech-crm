@@ -52,9 +52,9 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
-    where += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR ap.title ILIKE ?)";
+    where += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR ap.title ILIKE ? OR a.name ILIKE ?)";
     const like = `%${search}%`;
-    params.push(like, like, like, like);
+    params.push(like, like, like, like, like);
   }
   where += dateFilter.clause;
   params.push(...dateFilter.params);
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       [...params, limit, offset]
     ),
     queryOne<{ c: number }>(
-      `SELECT COUNT(*) as c FROM appointments ap LEFT JOIN customers c ON c.id = ap.customer_id ${where}`,
+      `SELECT COUNT(*) as c FROM appointments ap LEFT JOIN customers c ON c.id = ap.customer_id LEFT JOIN admins a ON a.id = ap.created_by ${where}`,
       params
     ),
     queryOne<Record<string, number>>(
