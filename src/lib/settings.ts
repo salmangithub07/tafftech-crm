@@ -39,6 +39,10 @@ export type AppSettings = {
   broadcast_announcement_target_plan: string;
   meta_title: string;
   meta_description: string;
+  seo_keywords: string;
+  schema_json_ld: string;
+  custom_head_code: string;
+  custom_body_code: string;
   gstin: string;
   pan_no: string;
   business_logo: string;
@@ -84,6 +88,10 @@ const DEFAULTS: AppSettings = {
   broadcast_announcement_target_plan: "all",
   meta_title: "Taff Desk CRM — Modern All-In-One CRM Software for Growing Businesses",
   meta_description: "Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions from one unified dashboard.",
+  seo_keywords: "crm, saas crm, lead management, whatsapp crm, invoice software, quotation software, appointment scheduling",
+  schema_json_ld: "",
+  custom_head_code: "",
+  custom_body_code: "",
   gstin: "",
   pan_no: "",
   business_logo: "",
@@ -165,6 +173,10 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       broadcast_announcement_target_plan: tenantMap.broadcast_announcement_target_plan ?? globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
       meta_title: tenantMap.meta_title ?? globalMap.meta_title ?? DEFAULTS.meta_title,
       meta_description: tenantMap.meta_description ?? globalMap.meta_description ?? DEFAULTS.meta_description,
+      seo_keywords: tenantMap.seo_keywords ?? globalMap.seo_keywords ?? DEFAULTS.seo_keywords,
+      schema_json_ld: tenantMap.schema_json_ld ?? globalMap.schema_json_ld ?? DEFAULTS.schema_json_ld,
+      custom_head_code: tenantMap.custom_head_code ?? globalMap.custom_head_code ?? DEFAULTS.custom_head_code,
+      custom_body_code: tenantMap.custom_body_code ?? globalMap.custom_body_code ?? DEFAULTS.custom_body_code,
       gstin: tenantMap.gstin ?? globalMap.gstin ?? DEFAULTS.gstin,
       pan_no: tenantMap.pan_no ?? globalMap.pan_no ?? DEFAULTS.pan_no,
       business_logo: tenantMap.business_logo ?? globalMap.business_logo ?? DEFAULTS.business_logo,

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
   Check,
@@ -20,6 +20,7 @@ import {
   IndianRupee,
   Eye,
   EyeOff,
+  Code2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -69,15 +70,31 @@ export function SettingsClient({
   subscriptionInfo?: SubscriptionInfo | null;
   superAdminPhone?: string | null;
 }) {
-  const canEditAppearance = session.role === "super_admin" || session.role === "admin";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams ? searchParams.get("tab") : null;
+  const [activeTab, setActiveTab] = React.useState(tabParam || "profile");
 
-  const [defaultTab] = React.useState(() => {
-    if (typeof window === "undefined") return "profile";
-    return new URLSearchParams(window.location.search).get("tab") || "profile";
-  });
+  React.useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("profile");
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+    params.set("tab", val);
+    router.push(`/settings?${params.toString()}`, { scroll: false });
+  };
+
+  const canEditAppearance = session.role === "super_admin" || session.role === "admin";
+  const canEditInvoice = session.role === "admin";
 
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
+    <Tabs value={activeTab || "profile"} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid grid-cols-2 w-full h-auto p-1 gap-1 sm:flex sm:w-fit sm:h-9">
         <TabsTrigger value="profile" className="gap-1.5 text-xs py-1.5 sm:py-1">
           <User className="size-3.5 shrink-0" />
@@ -90,7 +107,7 @@ export function SettingsClient({
             <span className="sm:hidden">Theme</span>
           </TabsTrigger>
         )}
-        {canEditAppearance && (
+        {canEditInvoice && (
           <TabsTrigger value="invoice" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <FileText className="size-3.5 shrink-0" />
             <span className="hidden sm:inline">Invoice &amp; Bank</span>
@@ -105,10 +122,17 @@ export function SettingsClient({
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
-          <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1 col-span-2 sm:col-span-1">
+          <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <IndianRupee className="size-3.5 shrink-0" />
             <span className="hidden sm:inline">Subscription Pricing &amp; QR</span>
             <span className="sm:hidden">Pricing &amp; QR</span>
+          </TabsTrigger>
+        )}
+        {session.role === "super_admin" && (
+          <TabsTrigger value="seo" className="gap-1.5 text-xs py-1.5 sm:py-1">
+            <Code2 className="size-3.5 shrink-0 text-indigo-500" />
+            <span className="hidden sm:inline">SEO &amp; HTML Scripts</span>
+            <span className="sm:hidden">SEO &amp; Scripts</span>
           </TabsTrigger>
         )}
       </TabsList>
@@ -126,7 +150,7 @@ export function SettingsClient({
           <AppearanceTab initialSiteName={initialSettings.site_name} />
         </TabsContent>
       )}
-      {canEditAppearance && (
+      {canEditInvoice && (
         <TabsContent value="invoice" className="mt-6">
           <InvoiceTab initialSettings={initialSettings} />
         </TabsContent>
@@ -139,6 +163,11 @@ export function SettingsClient({
       {session.role === "super_admin" && (
         <TabsContent value="subscription" className="mt-6">
           <SubscriptionSettingsTab initialSettings={initialSettings} />
+        </TabsContent>
+      )}
+      {session.role === "super_admin" && (
+        <TabsContent value="seo" className="mt-6">
+          <SeoHtmlScriptsTab initialSettings={initialSettings} />
         </TabsContent>
       )}
     </Tabs>
@@ -1047,10 +1076,6 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
   const [announcementType, setAnnouncementType] = React.useState(initialSettings.broadcast_announcement_type || "info");
   const [announcementTarget, setAnnouncementTarget] = React.useState(initialSettings.broadcast_announcement_target_plan || "all");
 
-  // Meta SEO settings state
-  const [metaTitle, setMetaTitle] = React.useState(initialSettings.meta_title || "");
-  const [metaDescription, setMetaDescription] = React.useState(initialSettings.meta_description || "");
-
   const [saving, setSaving] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
@@ -1078,12 +1103,10 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
           broadcast_announcement_message: announcementMessage,
           broadcast_announcement_type: announcementType,
           broadcast_announcement_target_plan: announcementTarget,
-          meta_title: metaTitle,
-          meta_description: metaDescription,
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Subscription pricing, limits, SEO metadata & announcements saved!");
+      toast.success("Subscription pricing, limits & announcements saved!");
       router.refresh();
     } catch {
       toast.error("Could not save subscription settings.");
@@ -1094,46 +1117,6 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
-      {/* Global SEO & Meta Metadata Settings Card */}
-      <Card className="border-primary/30 bg-primary/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-5 text-primary" /> SEO Metadata &amp; Search Engine Settings
-          </CardTitle>
-          <CardDescription>
-            Manage the global website Meta Title and Meta Description displayed on Google search results, social sharing, and browser tabs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="meta_title">Website Meta Title (Browser Tab &amp; Search Header)</Label>
-            <Input
-              id="meta_title"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder="e.g. Taff Desk CRM — Modern All-In-One CRM Software"
-            />
-            <span className="text-[11px] text-muted-foreground">
-              Recommended length: 50-60 characters. Appears as the primary title tag in HTML headers.
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="meta_description">Website Meta Description (Search Engine Snippet)</Label>
-            <Textarea
-              id="meta_description"
-              rows={3}
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="e.g. Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions."
-            />
-            <span className="text-[11px] text-muted-foreground">
-              Recommended length: 150-160 characters. Displayed under search titles on Google and social media share previews.
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Broadcast System Announcement Card */}
       <Card className="border-purple-500/30 bg-purple-500/5">
         <CardHeader>
@@ -1436,6 +1419,191 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
         <CardFooter className="border-t">
           <Button type="submit" disabled={saving} className="ml-auto">
             {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save All Settings &amp; Broadcasts
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
+  );
+}
+
+/* ---------------------------- SEO & HTML Scripts tab ---------------------------- */
+
+function SeoHtmlScriptsTab({ initialSettings }: { initialSettings: AppSettings }) {
+  const [saving, setSaving] = React.useState(false);
+  const [metaTitle, setMetaTitle] = React.useState(initialSettings.meta_title || "");
+  const [metaDescription, setMetaDescription] = React.useState(initialSettings.meta_description || "");
+  const [seoKeywords, setSeoKeywords] = React.useState(initialSettings.seo_keywords || "");
+  const [schemaJsonLd, setSchemaJsonLd] = React.useState(initialSettings.schema_json_ld || "");
+  const [customHeadCode, setCustomHeadCode] = React.useState(initialSettings.custom_head_code || "");
+  const [customBodyCode, setCustomBodyCode] = React.useState(initialSettings.custom_body_code || "");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meta_title: metaTitle,
+          meta_description: metaDescription,
+          seo_keywords: seoKeywords,
+          schema_json_ld: schemaJsonLd,
+          custom_head_code: customHeadCode,
+          custom_body_code: customBodyCode,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save SEO settings");
+      toast.success("SEO & Custom HTML/Script settings updated successfully!");
+    } catch {
+      toast.error("Failed to update SEO & HTML settings.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleLoadSampleSchema() {
+    const sampleSchema = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": initialSettings.site_name || "Taff Desk CRM",
+          "operatingSystem": "All",
+          "applicationCategory": "BusinessApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "4999",
+            "priceCurrency": "INR"
+          },
+          "description": metaDescription || "All-In-One CRM Software for Lead Management & GST Billing."
+        },
+        {
+          "@type": "Organization",
+          "name": initialSettings.site_name || "Taff Desk CRM",
+          "url": typeof window !== "undefined" ? window.location.origin : "",
+          "logo": initialSettings.business_logo || ""
+        }
+      ]
+    };
+    setSchemaJsonLd(JSON.stringify(sampleSchema, null, 2));
+    toast.info("Sample Schema.org JSON-LD loaded!");
+  }
+
+  function handleLoadSampleGTM() {
+    const sampleHeadSnippet = `<!-- Google Tag Manager / Analytics Snippet -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-MEASUREMENT_ID"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n  gtag('config', 'G-MEASUREMENT_ID');\n</script>`;
+    setCustomHeadCode((prev) => (prev ? prev + "\n\n" + sampleHeadSnippet : sampleHeadSnippet));
+    toast.info("Sample Analytics tag appended to Head scripts!");
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+            <Code2 className="size-5 text-indigo-500" /> SEO &amp; HTML Script Injector
+          </CardTitle>
+          <CardDescription>
+            Configure meta tags, Schema.org JSON-LD structured data, Google Tag Manager/Analytics, and custom HTML scripts for maximum SEO performance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* SEO Meta Information */}
+          <div className="space-y-4 rounded-xl border p-4 bg-muted/20">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">1. SEO &amp; Search Engine Meta Information</h3>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="meta_title">Meta Title Tag</Label>
+                <Input
+                  id="meta_title"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder="Taff Desk CRM — Modern All-In-One CRM & Billing Software"
+                />
+                <p className="text-[11px] text-muted-foreground">Appears in Google search results and browser tab header.</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="meta_description">Meta Description</Label>
+                <Textarea
+                  id="meta_description"
+                  rows={2}
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Manage customer leads, appointments, WhatsApp reminders, and GST billing..."
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="seo_keywords">Meta Keywords (Comma separated)</Label>
+                <Input
+                  id="seo_keywords"
+                  value={seoKeywords}
+                  onChange={(e) => setSeoKeywords(e.target.value)}
+                  placeholder="crm, saas crm, lead management, whatsapp crm, invoice software"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Schema.org Structured Data Editor */}
+          <div className="space-y-3 rounded-xl border p-4 bg-muted/20">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">2. Schema.org JSON-LD Structured Data</h3>
+                <p className="text-xs text-muted-foreground">Helps Google understand your business, pricing, and rich snippets.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={handleLoadSampleSchema} className="h-7 text-xs gap-1">
+                <Sparkles className="size-3.5 text-indigo-500" /> Insert Sample Schema
+              </Button>
+            </div>
+            <Textarea
+              rows={8}
+              value={schemaJsonLd}
+              onChange={(e) => setSchemaJsonLd(e.target.value)}
+              placeholder={`{\n  "@context": "https://schema.org",\n  "@type": "SoftwareApplication",\n  "name": "Taff Desk CRM"\n}`}
+              className="font-mono text-xs bg-slate-950 text-emerald-400 dark:bg-slate-900 border-slate-800 p-3 leading-relaxed rounded-md min-h-[160px]"
+            />
+          </div>
+
+          {/* Custom Head HTML / Scripts */}
+          <div className="space-y-3 rounded-xl border p-4 bg-muted/20">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">3. Custom Head HTML &amp; Scripts (`&lt;head&gt;`)</h3>
+                <p className="text-xs text-muted-foreground">Inject Google Tag Manager, Analytics pixels, Meta Domain verification, or custom CSS/scripts into the page header.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={handleLoadSampleGTM} className="h-7 text-xs gap-1">
+                <Code2 className="size-3.5 text-indigo-500" /> Insert Sample Analytics
+              </Button>
+            </div>
+            <Textarea
+              rows={6}
+              value={customHeadCode}
+              onChange={(e) => setCustomHeadCode(e.target.value)}
+              placeholder={`<!-- Paste Google Analytics, GTM, or meta verification tags here -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"></script>`}
+              className="font-mono text-xs bg-slate-950 text-indigo-300 dark:bg-slate-900 border-slate-800 p-3 leading-relaxed rounded-md min-h-[140px]"
+            />
+          </div>
+
+          {/* Custom Body / Footer HTML / Scripts */}
+          <div className="space-y-3 rounded-xl border p-4 bg-muted/20">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">4. Custom Footer &amp; Body HTML (`&lt;body&gt;`)</h3>
+              <p className="text-xs text-muted-foreground">Inject live chat widgets (Tawk.to, Crisp, Intercom), conversion tracking scripts, or footer badges before closing `&lt;/body&gt;`.</p>
+            </div>
+            <Textarea
+              rows={6}
+              value={customBodyCode}
+              onChange={(e) => setCustomBodyCode(e.target.value)}
+              placeholder={`<!-- Paste live chat widget or footer tracking scripts here -->\n<script>\n  // Live chat initialization code...\n</script>`}
+              className="font-mono text-xs bg-slate-950 text-amber-300 dark:bg-slate-900 border-slate-800 p-3 leading-relaxed rounded-md min-h-[140px]"
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="border-t">
+          <Button type="submit" disabled={saving} className="ml-auto">
+            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save SEO &amp; HTML Scripts
           </Button>
         </CardFooter>
       </Card>

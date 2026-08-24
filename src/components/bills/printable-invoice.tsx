@@ -61,7 +61,8 @@ export function PrintableInvoice({
   settings?: AppSettings;
   documentType?: "TAX INVOICE" | "PROFORMA INVOICE";
 }) {
-  const companyName = siteName || settings?.site_name || "CRM Enterprise";
+  const rawCompanyName = siteName || settings?.site_name || "Taff Tech";
+  const companyName = rawCompanyName.replace(/\bCRM\b/gi, "").replace(/\s+/g, " ").trim() || "Taff Tech";
   const docDate = (bill as any).bill_date || (bill as any).quotation_date || (bill as any).created_at || new Date().toISOString();
   const formattedDate = new Date(docDate).toLocaleDateString("en-IN", {
     day: "numeric",
