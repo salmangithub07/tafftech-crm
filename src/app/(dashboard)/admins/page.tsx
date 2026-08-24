@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { query } from "@/lib/db";
 import { ensureActivityTables } from "@/lib/activity";
 import { AdminsClient } from "@/components/admins/admins-client";
@@ -27,6 +28,10 @@ export default async function AdminsPage() {
     );
   }
 
-  return <AdminsClient initialAdmins={admins} />;
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading dashboard...</div>}>
+      <AdminsClient initialAdmins={admins} />
+    </Suspense>
+  );
 }
 

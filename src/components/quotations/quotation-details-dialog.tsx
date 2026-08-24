@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Printer, Receipt } from "lucide-react";
+import { Printer, Receipt, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,13 @@ export function QuotationDetailsDialog({
   onOpenChange,
   quotation,
   onGenerateBill,
+  onEdit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   quotation: Quotation | null;
   onGenerateBill?: (quotation: Quotation) => void;
+  onEdit?: (quotation: Quotation) => void;
 }) {
   const [siteName, setSiteName] = React.useState<string>("");
   const [settingsData, setSettingsData] = React.useState<any>(null);
@@ -147,6 +149,19 @@ export function QuotationDetailsDialog({
           </DialogTitle>
 
           <div className="flex flex-wrap items-center gap-2">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onEdit(quotation);
+                }}
+                className="gap-1.5"
+              >
+                <Pencil className="size-4 text-primary" /> Edit Quotation
+              </Button>
+            )}
             {onGenerateBill && (
               <Button
                 variant="outline"

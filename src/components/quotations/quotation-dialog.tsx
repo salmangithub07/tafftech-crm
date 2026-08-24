@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import type { Customer, Product, Appointment } from "@/lib/types";
+import type { Customer, Product, Appointment, Quotation } from "@/lib/types";
 
 const itemSchema = z.object({
   product_id: z.number().nullable().optional(),
@@ -54,12 +54,14 @@ export function QuotationDialog({
   onOpenChange,
   appointment,
   initialCustomer,
+  quotationToEdit,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointment?: Appointment | null;
   initialCustomer?: Customer | null;
+  quotationToEdit?: Quotation | null;
   onSaved?: () => void;
 }) {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
@@ -134,35 +136,73 @@ export function QuotationDialog({
           setCustomers(custData);
           setProducts(prodData);
 
-          const targetCust = initialCustomer || (appointment ? custData.find((c) => c.id === appointment.customer_id) : null);
-          const initialProdName = appointment?.title || appointment?.customer_product || "";
-          const foundProd = prodData.find((p) => p.name.toLowerCase() === initialProdName.toLowerCase());
+          if (quotationToEdit) {
+            const formattedItems = Array.isArray(quotationToEdit.items) && quotationToEdit.items.length > 0
+              ? quotationToEdit.items.map((item: any) => ({
+                  product_id: item.product_id ? Number(item.product_id) : null,
+                  product_name: item.product_name || "",
+                  hsn_code: item.hsn_code || "",
+                  quantity: Number(item.quantity) || 1,
+                  unit_price: Number(item.unit_price) || 0,
+                }))
+              : [
+                  {
+                    product_id: null,
+                    product_name: "",
+                    hsn_code: "",
+                    quantity: 1,
+                    unit_price: 0,
+                  },
+                ];
 
-          reset({
-            appointment_id: appointment?.id ?? null,
-            customer_id: targetCust?.id ?? appointment?.customer_id ?? null,
-            customer_name: targetCust?.name ?? appointment?.customer_name ?? "",
-            customer_phone: targetCust?.phone ?? appointment?.customer_phone ?? "",
-            customer_address: targetCust?.address ?? "",
-            quotation_date: new Date().toISOString().slice(0, 10),
-            items: [
-              {
-                product_id: foundProd?.id ?? null,
-                product_name: foundProd?.name ?? initialProdName ?? "",
-                hsn_code: foundProd?.hsn_code ?? foundProd?.sku ?? "",
-                quantity: 1,
-                unit_price: Number(foundProd?.price ?? 0),
-              },
-            ],
-            tax_amount: 0,
-            discount_amount: 0,
-            notes: appointment?.remarks ?? "",
-            book_to: "",
-            transport: "",
-            gr_no: "",
-            vehicle_no: "",
-            dispute_note: "",
-          });
+            reset({
+              appointment_id: quotationToEdit.appointment_id ?? null,
+              customer_id: quotationToEdit.customer_id ?? null,
+              customer_name: quotationToEdit.customer_name ?? "",
+              customer_phone: quotationToEdit.customer_phone ?? "",
+              customer_address: quotationToEdit.customer_address ?? "",
+              quotation_date: quotationToEdit.quotation_date ? String(quotationToEdit.quotation_date).slice(0, 10) : new Date().toISOString().slice(0, 10),
+              items: formattedItems,
+              tax_amount: Number(quotationToEdit.tax_amount) || 0,
+              discount_amount: Number(quotationToEdit.discount_amount) || 0,
+              notes: quotationToEdit.notes ?? "",
+              book_to: quotationToEdit.book_to ?? "",
+              transport: quotationToEdit.transport ?? "",
+              gr_no: quotationToEdit.gr_no ?? "",
+              vehicle_no: quotationToEdit.vehicle_no ?? "",
+              dispute_note: quotationToEdit.dispute_note ?? "",
+            });
+          } else {
+            const targetCust = initialCustomer || (appointment ? custData.find((c) => c.id === appointment.customer_id) : null);
+            const initialProdName = appointment?.title || appointment?.customer_product || "";
+            const foundProd = prodData.find((p) => p.name.toLowerCase() === initialProdName.toLowerCase());
+
+            reset({
+              appointment_id: appointment?.id ?? null,
+              customer_id: targetCust?.id ?? appointment?.customer_id ?? null,
+              customer_name: targetCust?.name ?? appointment?.customer_name ?? "",
+              customer_phone: targetCust?.phone ?? appointment?.customer_phone ?? "",
+              customer_address: targetCust?.address ?? "",
+              quotation_date: new Date().toISOString().slice(0, 10),
+              items: [
+                {
+                  product_id: foundProd?.id ?? null,
+                  product_name: foundProd?.name ?? initialProdName ?? "",
+                  hsn_code: foundProd?.hsn_code ?? foundProd?.sku ?? "",
+                  quantity: 1,
+                  unit_price: Number(foundProd?.price ?? 0),
+                },
+              ],
+              tax_amount: 0,
+              discount_amount: 0,
+              notes: appointment?.remarks ?? "",
+              book_to: "",
+              transport: "",
+              gr_no: "",
+              vehicle_no: "",
+              dispute_note: "",
+            });
+          }
         })
         .catch(() => {
           setCustomers([]);
@@ -170,7 +210,7 @@ export function QuotationDialog({
         })
         .finally(() => setLoadingOptions(false));
     }
-  }, [open, appointment, initialCustomer, reset]);
+  }, [open, appointment, initialCustomer, quotationToEdit, reset]);
 
   function handleSelectCustomer(val: string | null) {
     if (!val) {
@@ -201,13 +241,21 @@ export function QuotationDialog({
 
   async function onSubmit(values: FormValues) {
     try {
-      const res = await fetch("/api/quotations", {
-        method: "POST",
+      const isEditing = !!quotationToEdit;
+      const url = isEditing ? `/api/quotations/${quotationToEdit.id}` : "/api/quotations";
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          quotation_status: "pending",
-        }),
+        body: JSON.stringify(
+          isEditing
+            ? values
+            : {
+                ...values,
+                quotation_status: "pending",
+              }
+        ),
       });
 
       const text = await res.text();
@@ -215,12 +263,12 @@ export function QuotationDialog({
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error(text || "Failed to create quotation due to server response.");
+        throw new Error(text || `Failed to ${isEditing ? "update" : "create"} quotation.`);
       }
 
-      if (!res.ok) throw new Error(data.error || "Failed to create quotation");
+      if (!res.ok) throw new Error(data.error || `Failed to ${isEditing ? "update" : "create"} quotation`);
 
-      toast.success("Quotation generated successfully!");
+      toast.success(`Quotation ${isEditing ? "updated" : "generated"} successfully!`);
       onOpenChange(false);
       if (onSaved) onSaved();
     } catch (err) {
@@ -246,10 +294,16 @@ export function QuotationDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-semibold text-lg text-foreground">
             <FileText className="size-5 text-primary" />
-            Generate Quotation / Proforma Invoice
+            {quotationToEdit
+              ? `Edit Quotation #${quotationToEdit.quotation_number || quotationToEdit.id}`
+              : "Generate Quotation / Proforma Invoice"}
           </DialogTitle>
           <DialogDescription>
-            {appointment ? `Quotation for ${appointment.customer_name}` : "Create an official quotation with line items and transport details."}
+            {quotationToEdit
+              ? `Updating quotation details for ${quotationToEdit.customer_name}`
+              : appointment
+              ? `Quotation for ${appointment.customer_name}`
+              : "Create an official quotation with line items and transport details."}
           </DialogDescription>
         </DialogHeader>
 
@@ -467,7 +521,7 @@ export function QuotationDialog({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
-              Save Quotation
+              {quotationToEdit ? "Update Quotation" : "Save Quotation"}
             </Button>
           </DialogFooter>
         </form>

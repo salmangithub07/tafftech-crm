@@ -13,6 +13,7 @@ import {
   FileText,
   Receipt,
   RotateCcw,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -83,8 +84,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
   const [deleting, setDeleting] = React.useState<Quotation | null>(null);
   const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
 
-  // Creation and Details dialog states
+  // Creation, Editing, and Details dialog states
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [quotationToEdit, setQuotationToEdit] = React.useState<Quotation | null>(null);
   const [selectedQuotation, setSelectedQuotation] = React.useState<Quotation | null>(null);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [loadingDetails, setLoadingDetails] = React.useState(false);
@@ -258,6 +260,17 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
   function handleGenerateBill(q: Quotation) {
     setBillGeneratingQuotation(q);
     setGenerateBillOpen(true);
+  }
+
+  async function handleEditQuotation(q: Quotation) {
+    try {
+      const res = await fetch(`/api/quotations/${q.id}`);
+      if (!res.ok) throw new Error("Failed to load quotation details.");
+      const full = await res.json();
+      setQuotationToEdit(full);
+    } catch {
+      toast.error("Could not load quotation for editing.");
+    }
   }
 
   async function updateStatus(q: Quotation, status: QuotationStatus) {
@@ -527,6 +540,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
+                                  <Pencil className="size-4 text-primary" /> Edit Quotation
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleGenerateBill(q)}>
                                   <Receipt className="size-4 text-primary" /> Generate Bill
                                 </DropdownMenuItem>
@@ -627,6 +643,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
+                                  <Pencil className="size-4 text-primary" /> Edit Quotation
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleGenerateBill(q)}>
                                   <Receipt className="size-4 text-primary" /> Generate Bill
                                 </DropdownMenuItem>
@@ -692,10 +711,16 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
         </>
       )}
 
-      {/* Creation Modal */}
+      {/* Creation & Edit Modal */}
       <QuotationDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={createOpen || !!quotationToEdit}
+        onOpenChange={(op) => {
+          if (!op) {
+            setCreateOpen(false);
+            setQuotationToEdit(null);
+          }
+        }}
+        quotationToEdit={quotationToEdit}
         onSaved={refresh}
       />
 
@@ -705,6 +730,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
         onOpenChange={setDetailsOpen}
         quotation={selectedQuotation}
         onGenerateBill={handleGenerateBill}
+        onEdit={handleEditQuotation}
       />
 
       {/* Generate Bill Modal prefilled from Quotation */}

@@ -10,6 +10,9 @@ import {
   FileText,
   Wallet,
   Receipt,
+  HeartPulse,
+  IndianRupee,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 import { canAccess, type SessionPayload, type PermissionModule } from "@/lib/types";
@@ -25,7 +28,11 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, kind: "fixed", roles: ["admin", "executive"] },
-  { title: "Admins", href: "/admins", icon: ShieldCheck, kind: "fixed", roles: ["super_admin"] },
+  { title: "SaaS Revenue Dashboard", href: "/admins?tab=dashboard", icon: BarChart3, kind: "fixed", roles: ["super_admin"] },
+  { title: "Tenants & Admins", href: "/admins?tab=admins", icon: ShieldCheck, kind: "fixed", roles: ["super_admin"] },
+  { title: "Tenant Health & Usage", href: "/admins?tab=health", icon: HeartPulse, kind: "fixed", roles: ["super_admin"] },
+  { title: "Payment History", href: "/admins?tab=payments", icon: IndianRupee, kind: "fixed", roles: ["super_admin"] },
+  { title: "Upcoming Expiries", href: "/admins?tab=expiring", icon: Clock, kind: "fixed", roles: ["super_admin"] },
   { title: "Customers", href: "/customers", icon: Users, kind: "module", module: "customers" },
   { title: "Appointments", href: "/appointments", icon: CalendarClock, kind: "module", module: "appointments" },
   { title: "Quotations", href: "/quotations", icon: FileText, kind: "module", module: "quotations" },
