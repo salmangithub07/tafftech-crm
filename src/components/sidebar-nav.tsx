@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
 import { navForSession } from "@/components/nav-items";
 import type { SessionPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function SidebarNav({
+function SidebarNavContent({
   siteName,
   session,
   collapsed = false,
@@ -20,6 +20,8 @@ export function SidebarNav({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams ? searchParams.get("tab") || "dashboard" : "dashboard";
   const items = navForSession(session);
 
   return (
@@ -37,8 +39,15 @@ export function SidebarNav({
 
       <nav className={cn("flex-1 space-y-1.5 overflow-y-auto py-4", collapsed ? "px-2" : "px-3")}>
         {items.map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          let active = false;
+          if (item.href.includes("?tab=")) {
+            const targetTab = item.href.split("?tab=")[1];
+            active = pathname === "/admins" && currentTab === targetTab;
+          } else if (item.href === "/admins") {
+            active = pathname === "/admins" && currentTab === "dashboard";
+          } else {
+            active = pathname === item.href || pathname.startsWith(item.href + "/");
+          }
           const Icon = item.icon;
           return (
             <Link
@@ -72,5 +81,18 @@ export function SidebarNav({
         </div>
       )}
     </div>
+  );
+}
+
+export function SidebarNav(props: {
+  siteName: string;
+  session: SessionPayload;
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <React.Suspense fallback={<div className="p-4 text-xs text-muted-foreground">Loading navigation...</div>}>
+      <SidebarNavContent {...props} />
+    </React.Suspense>
   );
 }

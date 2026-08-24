@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   MoreHorizontal,
@@ -112,6 +112,23 @@ function formatKbSize(kb?: number) {
 
 export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams ? searchParams.get("tab") : null;
+  const [activeTab, setActiveTab] = React.useState(tabParam || "dashboard");
+
+  React.useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+    params.set("tab", val);
+    router.push(`/admins?${params.toString()}`, { scroll: false });
+  };
+
   const [admins, setAdmins] = React.useState(initialAdmins);
   const [formOpen, setFormOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState<Admin | null>(null);
@@ -417,7 +434,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
       )}
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-2 xs:grid-cols-3 sm:flex w-full sm:w-fit h-auto p-1 gap-1">
           <TabsTrigger value="dashboard" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <BarChart3 className="size-3.5 shrink-0" />
