@@ -214,35 +214,39 @@ export function BillsClient() {
       </div>
 
       {/* Filters Toolbar */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 items-center gap-2 max-w-md">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search Bill #, Customer, Phone..."
-                className="pl-9 h-9 text-xs"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+          {/* 1. Status Tabs */}
+          <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }} className="shrink-0">
+            <div className="overflow-x-auto scrollbar-none py-0.5">
+              <TabsList className="w-max sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
+                <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All Bills</TabsTrigger>
+                <TabsTrigger value="paid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Paid</TabsTrigger>
+                <TabsTrigger value="unpaid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Unpaid</TabsTrigger>
+                <TabsTrigger value="partial" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Partial</TabsTrigger>
+              </TabsList>
             </div>
+          </Tabs>
+
+          {/* 2. Searchbar */}
+          <div className="relative flex-1 max-w-xs lg:max-w-md min-w-[200px]">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search Bill #, Customer, Phone..."
+              className="pl-9 h-9 text-xs"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
           </div>
-          <DateFilter value={dateFilter} onChange={(df) => { setDateFilter(df); setPage(1); }} />
         </div>
 
-        <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }}>
-          <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
-            <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10 p-1 gap-1">
-              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All Bills</TabsTrigger>
-              <TabsTrigger value="paid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Paid</TabsTrigger>
-              <TabsTrigger value="unpaid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Unpaid</TabsTrigger>
-              <TabsTrigger value="partial" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Partial</TabsTrigger>
-            </TabsList>
-          </div>
-        </Tabs>
+        {/* 3. Date Filter */}
+        <div className="shrink-0">
+          <DateFilter value={dateFilter} onChange={(df) => { setDateFilter(df); setPage(1); }} />
+        </div>
       </div>
 
       {/* Bills Table */}
@@ -274,7 +278,7 @@ export function BillsClient() {
                   <TableRow key={b.id}>
                     <TableCell className="font-mono font-medium text-primary">
                       <button
-                        className="hover:underline focus:outline-none text-left"
+                        className="hover:underline focus:outline-none text-left cursor-pointer"
                         onClick={() => setViewingBill(b)}
                       >
                         {b.bill_number}
@@ -285,7 +289,7 @@ export function BillsClient() {
                       <div className="flex flex-col">
                         <button
                           onClick={() => setProfileCustomerId(b.customer_id ?? null)}
-                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                          className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer"
                         >
                           {b.customer_name}
                         </button>
@@ -354,12 +358,17 @@ export function BillsClient() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <button
-                        className="font-mono text-sm font-bold text-primary hover:underline"
+                        className="font-mono text-sm font-bold text-primary hover:underline cursor-pointer"
                         onClick={() => setViewingBill(b)}
                       >
                         {b.bill_number}
                       </button>
-                      <p className="font-medium text-sm text-foreground mt-0.5">{b.customer_name}</p>
+                      <button
+                        onClick={() => setProfileCustomerId(b.customer_id ?? null)}
+                        className="font-medium text-sm text-foreground hover:text-primary hover:underline transition-colors mt-0.5 text-left cursor-pointer block"
+                      >
+                        {b.customer_name}
+                      </button>
                       {b.customer_phone && (
                         <p className="text-xs text-muted-foreground">{b.customer_phone}</p>
                       )}

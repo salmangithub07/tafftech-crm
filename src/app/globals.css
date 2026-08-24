@@ -168,7 +168,7 @@ h1, h2, h3, .font-heading {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   html {
     scroll-behavior: smooth;
@@ -176,6 +176,17 @@ h1, h2, h3, .font-heading {
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+  }
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible,
+  button:focus,
+  button:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
   }
 }
 

@@ -41,6 +41,13 @@ const settingsSchema = z.object({
   broadcast_announcement_target_plan: z.string().optional(),
   meta_title: z.string().optional(),
   meta_description: z.string().optional(),
+  gstin: z.string().optional(),
+  pan_no: z.string().optional(),
+  business_logo: z.string().optional(),
+  business_tagline: z.string().optional(),
+  business_address: z.string().optional(),
+  bank_branch: z.string().optional(),
+  dispute_note: z.string().optional(),
 });
 
 export async function GET() {

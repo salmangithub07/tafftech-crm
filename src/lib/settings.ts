@@ -39,26 +39,33 @@ export type AppSettings = {
   broadcast_announcement_target_plan: string;
   meta_title: string;
   meta_description: string;
+  gstin: string;
+  pan_no: string;
+  business_logo: string;
+  business_tagline: string;
+  business_address: string;
+  bank_branch: string;
+  dispute_note: string;
 };
 
 const DEFAULTS: AppSettings = {
   site_name: "Taff Desk CRM",
-  company_phone: "+91 9876543210",
+  company_phone: "",
   privacy_policy: "We value your privacy. All customer data and transaction history are protected under our privacy guidelines.",
   accent_color: "#2563eb",
   radius: "0.65",
   invoice_template: "modern",
-  invoice_terms: "1. Goods once sold will not be taken back.\n2. Payment due within 15 days of invoice date.\n3. Subject to local jurisdiction.",
-  bank_name: "HDFC Bank",
-  bank_account_no: "50200012345678",
-  bank_ifsc: "HDFC0001234",
-  bank_upi_id: "merchant@upi",
-  bank_details: "Bank: HDFC Bank\nA/C No: 50200012345678\nIFSC Code: HDFC0001234\nUPI ID: merchant@upi",
+  invoice_terms: "",
+  bank_name: "",
+  bank_account_no: "",
+  bank_ifsc: "",
+  bank_upi_id: "",
+  bank_details: "",
   whatsapp_api_provider: "none",
   whatsapp_phone: "",
   whatsapp_api_key: "",
   whatsapp_instance_id: "",
-  whatsapp_reminder_template: "Namaste {customer_name}! 🔔\nRemind karne ke liye text hai ki aapka appointment aaj {appointment_date} ko {appointment_time} baje scheduled hai for {product_name}.\nThank you! — {company_name}",
+  whatsapp_reminder_template: "Hello {customer_name}, your appointment is scheduled for {appointment_date} at {appointment_time}. Please contact us if you need to reschedule.",
   yearly_plan_price: "4999",
   three_year_plan_price: "11999",
   lifetime_plan_price: "24999",
@@ -77,6 +84,13 @@ const DEFAULTS: AppSettings = {
   broadcast_announcement_target_plan: "all",
   meta_title: "Taff Desk CRM — Modern All-In-One CRM Software for Growing Businesses",
   meta_description: "Manage customer leads, appointments, 1-click WhatsApp reminders, GST billing, inventory, and team permissions from one unified dashboard.",
+  gstin: "",
+  pan_no: "",
+  business_logo: "",
+  business_tagline: "",
+  business_address: "",
+  bank_branch: "",
+  dispute_note: "",
 };
 
 /**
@@ -151,6 +165,13 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       broadcast_announcement_target_plan: tenantMap.broadcast_announcement_target_plan ?? globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
       meta_title: tenantMap.meta_title ?? globalMap.meta_title ?? DEFAULTS.meta_title,
       meta_description: tenantMap.meta_description ?? globalMap.meta_description ?? DEFAULTS.meta_description,
+      gstin: tenantMap.gstin ?? globalMap.gstin ?? DEFAULTS.gstin,
+      pan_no: tenantMap.pan_no ?? globalMap.pan_no ?? DEFAULTS.pan_no,
+      business_logo: tenantMap.business_logo ?? globalMap.business_logo ?? DEFAULTS.business_logo,
+      business_tagline: tenantMap.business_tagline ?? globalMap.business_tagline ?? DEFAULTS.business_tagline,
+      business_address: tenantMap.business_address ?? globalMap.business_address ?? DEFAULTS.business_address,
+      bank_branch: tenantMap.bank_branch ?? globalMap.bank_branch ?? DEFAULTS.bank_branch,
+      dispute_note: tenantMap.dispute_note ?? globalMap.dispute_note ?? DEFAULTS.dispute_note,
     };
   } catch {
     return DEFAULTS;

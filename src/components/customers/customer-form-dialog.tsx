@@ -32,7 +32,6 @@ import type { Customer, Product } from "@/lib/types";
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   product: z.string().optional().or(z.literal("")),
-  email: z.string().email("Enter a valid email").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   status: z.enum(["lead", "progress", "active", "completed", "order_soon"]),
   visited: z.boolean(),
@@ -45,7 +44,6 @@ type FormValues = z.infer<typeof formSchema>;
 const emptyValues: FormValues = {
   name: "",
   product: "",
-  email: "",
   phone: "",
   status: "lead",
   visited: false,
@@ -139,7 +137,6 @@ export function CustomerFormDialog({
           reset({
             name: customer?.name ?? "",
             product: customer?.product ?? "",
-            email: customer?.email ?? "",
             phone: customer?.phone ?? "",
             status: customer?.status ?? "lead",
             visited: !!customer?.visited,
@@ -264,13 +261,7 @@ export function CustomerFormDialog({
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} placeholder="name@company.com" />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="phone">Phone</Label>
               <Input id="phone" {...register("phone")} placeholder="+91 90000 00000" />
             </div>

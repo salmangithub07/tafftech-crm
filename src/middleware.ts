@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE, type Role, type PermissionModule } from "@/lib/auth";
 
-const PUBLIC_PATHS = ["/login", "/register", "/pricing", "/api/public"];
+const PUBLIC_PATHS = ["/", "/login", "/register", "/api/public"];
 
 /** Route prefix -> roles allowed to view it, no matter what. */
 const ROLE_ONLY_RULES: { prefix: string; roles: Role[] }[] = [

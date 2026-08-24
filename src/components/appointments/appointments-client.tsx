@@ -434,7 +434,7 @@ export function AppointmentsClient({
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <button onClick={() => setProfileCustomerId(a.customer_id)} className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors">
+                          <button onClick={() => setProfileCustomerId(a.customer_id)} className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer">
                             {a.customer_name ?? "—"}
                           </button>
                           {a.customer_phone && (
@@ -491,7 +491,7 @@ export function AppointmentsClient({
                     <div className="flex items-center gap-2.5">
                       <Checkbox checked={isSelected} onCheckedChange={() => toggleSelectOne(a.id)} className="mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <button onClick={() => setProfileCustomerId(a.customer_id)} className="block w-full text-left text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors leading-snug">
+                        <button onClick={() => setProfileCustomerId(a.customer_id)} className="block w-full text-left text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors leading-snug cursor-pointer">
                           {a.customer_name ?? "—"}
                         </button>
                         <span className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
