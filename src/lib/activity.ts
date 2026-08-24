@@ -101,6 +101,78 @@ export async function ensureActivityTables() {
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
     `).catch(() => {});
 
+    // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE)
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS gr_no VARCHAR(100);`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS vehicle_no VARCHAR(100);`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS dispute_note TEXT;`).catch(() => {});
+    await execute(`ALTER TABLE bill_items ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(100);`).catch(() => {});
+    await execute(`ALTER TABLE products ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(100);`).catch(() => {});
+
+    // Additional Quotation fields & quotation_items table
+    await execute(`
+      CREATE TABLE IF NOT EXISTS quotations (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER NOT NULL,
+        appointment_id INTEGER NULL,
+        customer_id INTEGER NULL,
+        customer_name VARCHAR(255),
+        customer_phone VARCHAR(50),
+        customer_address TEXT,
+        quotation_number VARCHAR(50),
+        quotation_date DATE DEFAULT CURRENT_DATE,
+        quotation_amount DECIMAL(12,2) DEFAULT 0,
+        subtotal DECIMAL(12,2) DEFAULT 0,
+        tax_percent DECIMAL(5,2) DEFAULT 0,
+        tax_amount DECIMAL(12,2) DEFAULT 0,
+        discount_amount DECIMAL(12,2) DEFAULT 0,
+        total_amount DECIMAL(12,2) DEFAULT 0,
+        quotation_status VARCHAR(50) DEFAULT 'pending',
+        notes TEXT,
+        book_to VARCHAR(255),
+        transport VARCHAR(255),
+        gr_no VARCHAR(100),
+        vehicle_no VARCHAR(100),
+        dispute_note TEXT,
+        created_by INTEGER,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(() => {});
+
+    await execute(`ALTER TABLE quotations ALTER COLUMN appointment_id DROP NOT NULL;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ALTER COLUMN customer_id DROP NOT NULL;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS quotation_number VARCHAR(50);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_address TEXT;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS gr_no VARCHAR(100);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS vehicle_no VARCHAR(100);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS dispute_note TEXT;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS subtotal DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tax_percent DECIMAL(5,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS total_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS is_trashed INT DEFAULT 0;`).catch(() => {});
+
+    await execute(`
+      CREATE TABLE IF NOT EXISTS quotation_items (
+        id BIGSERIAL PRIMARY KEY,
+        tenant_id INTEGER NOT NULL,
+        quotation_id INTEGER NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+        product_id INTEGER NULL REFERENCES products(id) ON DELETE SET NULL,
+        product_name VARCHAR(255) NOT NULL,
+        hsn_code VARCHAR(100),
+        quantity INTEGER NOT NULL DEFAULT 1,
+        unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        total_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(() => {});
+
     // Subscription plan columns
     await execute(`
       ALTER TABLE admins ADD COLUMN IF NOT EXISTS plan_type VARCHAR(50) DEFAULT 'trial';

@@ -576,13 +576,13 @@ export function CustomersClient({
                         <div className="flex flex-col gap-0.5">
                           <button
                             onClick={() => setProfileCustomerId(c.id)}
-                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer"
                           >
                             {c.name}
                           </button>
                           {c.appointment_date && (
-                            <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
-                              <Calendar className="size-3 shrink-0" />
+                            <span className="flex items-center gap-1 text-[11px] text-primary font-medium">
+                              <Calendar className="size-3 shrink-0 text-primary" />
                               {formatDate(c.appointment_date)}
                             </span>
                           )}
@@ -590,9 +590,11 @@ export function CustomersClient({
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         <div className="flex flex-col gap-0.5 text-xs">
-                          {c.email && <span className="font-mono text-[11px] text-muted-foreground">{c.email}</span>}
-                          {c.phone && <span className="font-medium text-primary flex items-center gap-1"><Phone className="size-3 text-primary shrink-0" />{c.phone}</span>}
-                          {!c.email && !c.phone && <span>—</span>}
+                          {c.phone ? (
+                            <span className="font-medium text-primary flex items-center gap-1"><Phone className="size-3 text-primary shrink-0" />{c.phone}</span>
+                          ) : (
+                            <span>—</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -700,13 +702,13 @@ export function CustomersClient({
                       <div className="min-w-0 flex-1">
                         <button
                           onClick={() => setProfileCustomerId(c.id)}
-                          className="block w-full text-left text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors leading-snug"
+                          className="block w-full text-left text-sm font-semibold text-foreground hover:text-primary hover:underline transition-colors leading-snug cursor-pointer"
                         >
                           {c.name}
                         </button>
                         {c.appointment_date && (
-                          <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-0.5">
-                            <Calendar className="size-3 shrink-0" />
+                          <span className="flex items-center gap-1 text-[11px] text-primary font-medium mt-0.5">
+                            <Calendar className="size-3 shrink-0 text-primary" />
                             {formatDate(c.appointment_date)}
                           </span>
                         )}
@@ -752,14 +754,8 @@ export function CustomersClient({
                     </div>
 
                     {/* Row 2: contact info (only if present) — indented to align with name */}
-                    {(c.email || c.phone || c.created_by_name) && (
+                    {(c.phone || c.created_by_name) && (
                       <div className="ml-[26px] mt-2 flex flex-col gap-0.5 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
-                        {c.email && (
-                          <span className="flex items-center gap-1.5">
-                            <Mail className="size-3 shrink-0" />
-                            <span className="truncate">{c.email}</span>
-                          </span>
-                        )}
                         {c.phone && (
                           <span className="flex items-center gap-1.5 text-primary font-medium">
                             <Phone className="size-3 shrink-0 text-primary" />

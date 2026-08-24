@@ -186,13 +186,8 @@ export function CustomerProfileDialog({
 
                   <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 flex-wrap">
                     {c?.phone && (
-                      <a href={`tel:${c.phone}`} className="flex items-center gap-1 hover:text-primary transition-colors">
+                      <a href={`tel:${c.phone}`} className="flex items-center gap-1 hover:text-primary transition-colors font-medium text-primary">
                         <Phone className="size-3" /> {c.phone}
-                      </a>
-                    )}
-                    {c?.email && (
-                      <a href={`mailto:${c.email}`} className="flex items-center gap-1 hover:text-primary transition-colors">
-                        <Mail className="size-3" /> {c.email}
                       </a>
                     )}
                     {c?.address && (

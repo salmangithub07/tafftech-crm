@@ -43,19 +43,44 @@ export type Appointment = {
 
 export type QuotationStatus = "pending" | "accepted" | "rejected";
 
+export type QuotationItem = {
+  id?: number;
+  quotation_id?: number;
+  product_id?: number | null;
+  product_name: string;
+  hsn_code?: string | null;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+};
+
 export type Quotation = {
   id: number;
   tenant_id: number;
-  appointment_id: number;
-  customer_id: number;
+  quotation_number?: string | null;
+  appointment_id?: number | null;
+  customer_id?: number | null;
   customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
   quotation_date: string;
   quotation_amount: number;
+  subtotal?: number;
+  tax_percent?: number;
+  tax_amount?: number;
+  discount_amount?: number;
+  total_amount?: number;
   quotation_status: QuotationStatus;
-  notes: string | null;
-  created_by: number | null;
+  notes?: string | null;
+  book_to?: string | null;
+  transport?: string | null;
+  gr_no?: string | null;
+  vehicle_no?: string | null;
+  dispute_note?: string | null;
+  created_by?: number | null;
   created_by_name?: string | null;
   created_at: string;
+  items?: QuotationItem[];
 };
 
 export type ProductCategory = {
@@ -70,6 +95,7 @@ export type Product = {
   tenant_id: number;
   name: string;
   sku?: string | null;
+  hsn_code?: string | null;
   unit?: string | null;
   price: number;
   cost_price?: number | null;
@@ -146,6 +172,7 @@ export type BillItem = {
   bill_id?: number;
   product_id?: number | null;
   product_name: string;
+  hsn_code?: string | null;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -169,6 +196,11 @@ export type Bill = {
   payment_status: BillPaymentStatus;
   payment_method: BillPaymentMethod;
   notes?: string | null;
+  book_to?: string | null;
+  transport?: string | null;
+  gr_no?: string | null;
+  vehicle_no?: string | null;
+  dispute_note?: string | null;
   created_by?: number | null;
   created_by_name?: string | null;
   created_at: string;

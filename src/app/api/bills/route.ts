@@ -7,6 +7,7 @@ import { z } from "zod";
 const billItemSchema = z.object({
   product_id: z.number().optional().nullable(),
   product_name: z.string().min(1, "Product name required"),
+  hsn_code: z.string().optional().or(z.literal("")).default(""),
   quantity: z.coerce.number().int().positive("Quantity must be positive"),
   unit_price: z.coerce.number().min(0, "Unit price must be >= 0"),
   total_price: z.coerce.number().optional(),
@@ -26,6 +27,11 @@ const createBillSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]).default("paid"),
   payment_method: z.enum(["cash", "bank", "credit", "other"]).default("cash"),
   notes: z.string().optional().or(z.literal("")).default(""),
+  book_to: z.string().optional().or(z.literal("")).default(""),
+  transport: z.string().optional().or(z.literal("")).default(""),
+  gr_no: z.string().optional().or(z.literal("")).default(""),
+  vehicle_no: z.string().optional().or(z.literal("")).default(""),
+  dispute_note: z.string().optional().or(z.literal("")).default(""),
   // Optional integration flags
   account_id: z.number().optional().nullable(), // Balance Sheet ledger account to record payment
   record_stock_out: z.boolean().optional().default(true), // Auto reduce stock for items (defaults to true)
@@ -224,8 +230,8 @@ export async function POST(req: NextRequest) {
     `INSERT INTO bills (
       tenant_id, bill_number, customer_id, customer_name, customer_phone, customer_email, customer_address,
       bill_date, subtotal, tax_amount, discount_amount, total_amount, paid_amount, payment_status, payment_method,
-      notes, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      notes, book_to, transport, gr_no, vehicle_no, dispute_note, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       tenantId,
       billNumber,
@@ -243,6 +249,11 @@ export async function POST(req: NextRequest) {
       computedStatus,
       d.payment_method,
       d.notes,
+      d.book_to,
+      d.transport,
+      d.gr_no,
+      d.vehicle_no,
+      d.dispute_note,
       session.id,
     ]
   );
@@ -252,9 +263,9 @@ export async function POST(req: NextRequest) {
   for (const item of d.items) {
     const itemTotal = item.quantity * item.unit_price;
     await execute(
-      `INSERT INTO bill_items (bill_id, product_id, product_name, quantity, unit_price, total_price)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [billId, item.product_id || null, item.product_name, item.quantity, item.unit_price, itemTotal]
+      `INSERT INTO bill_items (bill_id, product_id, product_name, hsn_code, quantity, unit_price, total_price)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [billId, item.product_id || null, item.product_name, item.hsn_code || null, item.quantity, item.unit_price, itemTotal]
     );
 
     // If record_stock_out is true and product_id is valid, record stock out transaction

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Printer, LayoutTemplate } from "lucide-react";
+import { Printer, Receipt } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,46 +10,42 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
-import type { Bill } from "@/lib/types";
-import type { InvoiceTemplateType } from "@/lib/settings";
+import type { Quotation } from "@/lib/types";
 
-export function BillDetailsDialog({
+export function QuotationDetailsDialog({
   open,
   onOpenChange,
-  bill,
+  quotation,
+  onGenerateBill,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill: Bill | null;
+  quotation: Quotation | null;
+  onGenerateBill?: (quotation: Quotation) => void;
 }) {
   const [siteName, setSiteName] = React.useState<string>("");
-  const [template, setTemplate] = React.useState<InvoiceTemplateType>("modern");
-  const [terms, setTerms] = React.useState<string>("");
-  const [bankDetails, setBankDetails] = React.useState<string>("");
   const [settingsData, setSettingsData] = React.useState<any>(null);
 
-  // Fetch CRM settings & invoice defaults — isolated per tenant
   React.useEffect(() => {
-    if (!open || !bill) return;
+    if (!open || !quotation) return;
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
         if (data) setSettingsData(data);
         if (data?.site_name) setSiteName(data.site_name);
-        if (data?.invoice_template) setTemplate(data.invoice_template);
-        if (data?.invoice_terms) setTerms(data.invoice_terms);
-        if (data?.bank_details) setBankDetails(data.bank_details);
       })
       .catch(() => {});
-  }, [open, bill]);
+  }, [open, quotation]);
 
-  if (!bill) return null;
+  if (!quotation) return null;
+
+  const docNumber = quotation.quotation_number || `QT-${quotation.id}`;
 
   function handlePrint() {
     const printElement = document.getElementById("bill-print-root");
-    const pdfFileName = bill
-      ? `${bill.customer_name ? bill.customer_name.trim() + " - " : ""}${bill.bill_number}`
-      : "Invoice";
+    const pdfFileName = quotation
+      ? `${quotation.customer_name ? quotation.customer_name.trim() + " - " : ""}${docNumber}`
+      : "Quotation";
 
     const originalTitle = document.title;
     document.title = pdfFileName;
@@ -144,13 +140,26 @@ export function BillDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        {/* Header — hidden on print via .no-print */}
+        {/* Header */}
         <DialogHeader className="flex flex-col gap-3 border-b px-6 py-4 space-y-0 sm:flex-row sm:items-center sm:justify-between no-print">
           <DialogTitle className="text-lg font-semibold">
-            Bill Details - {bill.bill_number}
+            Quotation Details - {docNumber}
           </DialogTitle>
 
           <div className="flex flex-wrap items-center gap-2">
+            {onGenerateBill && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onGenerateBill(quotation);
+                }}
+                className="gap-1.5"
+              >
+                <Receipt className="size-4 text-primary" /> Generate Bill
+              </Button>
+            )}
             <Button variant="default" size="sm" onClick={handlePrint} className="gap-1.5">
               <Printer className="size-4 no-print" /> Print / Save PDF
             </Button>
@@ -158,15 +167,15 @@ export function BillDetailsDialog({
         </DialogHeader>
 
         {/* Invoice content */}
-        <div className="p-6">
-          <PrintableInvoice
-            bill={bill}
-            siteName={siteName}
-            template={template}
-            customTerms={terms}
-            bankDetails={bankDetails}
-            settings={settingsData}
-          />
+        <div className="p-4 sm:p-6 bg-slate-100 dark:bg-slate-900 overflow-x-auto flex justify-center">
+          <div className="max-w-[850px] w-full bg-white text-black shadow-lg rounded-sm overflow-hidden">
+            <PrintableInvoice
+              bill={quotation}
+              siteName={siteName}
+              settings={settingsData}
+              documentType="PROFORMA INVOICE"
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

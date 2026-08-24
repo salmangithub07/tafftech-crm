@@ -26,11 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import type { Customer, Product, LedgerAccount } from "@/lib/types";
+import type { Customer, Product, LedgerAccount, Quotation } from "@/lib/types";
 
 const itemSchema = z.object({
   product_id: z.number().optional().nullable(),
   product_name: z.string().min(1, "Product name required"),
+  hsn_code: z.string().optional(),
   quantity: z.number().int().positive("Qty > 0"),
   unit_price: z.number().min(0, "Price >= 0"),
 });
@@ -49,6 +50,11 @@ const formSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]),
   payment_method: z.enum(["cash", "bank", "credit", "other"]),
   notes: z.string().optional(),
+  book_to: z.string().optional(),
+  transport: z.string().optional(),
+  gr_no: z.string().optional(),
+  vehicle_no: z.string().optional(),
+  dispute_note: z.string().optional(),
   account_id: z.number().nullable().optional(),
   record_stock_out: z.boolean(),
 });
@@ -60,6 +66,7 @@ export function GenerateBillDialog({
   onOpenChange,
   initialProduct,
   initialQuantity = 1,
+  initialQuotation,
   skipStockDeduction = false,
   onSaved,
   onCloseUnsaved,
@@ -68,6 +75,7 @@ export function GenerateBillDialog({
   onOpenChange: (open: boolean) => void;
   initialProduct?: Product | null;
   initialQuantity?: number;
+  initialQuotation?: Quotation | null;
   skipStockDeduction?: boolean;
   onSaved?: () => void;
   onCloseUnsaved?: () => void;
@@ -131,45 +139,110 @@ export function GenerateBillDialog({
     if (open) {
       submittedRef.current = false;
       setLoadingOptions(true);
-      Promise.all([
-        fetch("/api/customers?limit=500").then((r) => r.ok ? r.json() : { data: [] }),
-        fetch("/api/products?limit=500").then((r) => r.ok ? r.json() : { data: [] }),
-        fetch("/api/balance-sheet/summary").then((r) => r.ok ? r.json() : null),
-      ]).then(([cRes, pRes, bsRes]) => {
-        setCustomers(cRes.data || []);
-        setProducts(pRes.data || []);
-        if (bsRes) {
-          const accounts = [...(bsRes.cash || []), ...(bsRes.bank || []), ...(bsRes.debtors || [])];
-          setLedgerAccounts(accounts);
-        }
-      }).finally(() => setLoadingOptions(false));
 
-      reset({
-        customer_id: null,
-        customer_name: "",
-        customer_phone: "",
-        customer_email: "",
-        customer_address: "",
-        bill_date: new Date().toISOString().slice(0, 10),
-        items: [
-          {
-            product_id: initialProduct?.id ?? null,
-            product_name: initialProduct?.name ?? "",
-            quantity: initialQuantity,
-            unit_price: Number(initialProduct?.price ?? 0),
-          },
-        ],
-        tax_amount: 0,
-        discount_amount: 0,
-        paid_amount: grandTotal,
-        payment_status: "paid",
-        payment_method: "cash",
-        notes: initialProduct ? `Generated on stock removal for ${initialProduct.name}` : "",
-        account_id: null,
-        record_stock_out: !skipStockDeduction,
-      });
+      const loadQuotation = initialQuotation
+        ? (initialQuotation.items && initialQuotation.items.length > 0
+            ? Promise.resolve(initialQuotation)
+            : fetch(`/api/quotations/${initialQuotation.id}`).then((r) => (r.ok ? r.json() : initialQuotation)))
+        : Promise.resolve(null);
+
+      Promise.all([
+        fetch("/api/customers?limit=500").then((r) => (r.ok ? r.json() : { data: [] })),
+        fetch("/api/products?limit=500").then((r) => (r.ok ? r.json() : { data: [] })),
+        fetch("/api/balance-sheet/summary").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/settings").then((r) => (r.ok ? r.json() : null)),
+        loadQuotation,
+      ])
+        .then(([cRes, pRes, bsRes, sRes, qData]) => {
+          setCustomers(cRes.data || []);
+          setProducts(pRes.data || []);
+          if (bsRes) {
+            const accounts = [...(bsRes.cash || []), ...(bsRes.bank || []), ...(bsRes.debtors || [])];
+            setLedgerAccounts(accounts);
+          }
+
+          if (qData) {
+            const qItems = (qData.items && qData.items.length > 0)
+              ? qData.items.map((i: any) => ({
+                  product_id: i.product_id ?? null,
+                  product_name: i.product_name ?? "",
+                  hsn_code: i.hsn_code ?? "",
+                  quantity: Number(i.quantity) || 1,
+                  unit_price: Number(i.unit_price) || 0,
+                }))
+              : [
+                  {
+                    product_id: null,
+                    product_name: "Quotation Item",
+                    hsn_code: "",
+                    quantity: 1,
+                    unit_price: Number(qData.total_amount || qData.quotation_amount || 0),
+                  },
+                ];
+
+            const qSubtotal = qItems.reduce((sum: number, item: any) => sum + item.quantity * item.unit_price, 0);
+            const qTax = Number(qData.tax_amount) || 0;
+            const qDisc = Number(qData.discount_amount) || 0;
+            const qTotal = Math.max(0, qSubtotal + qTax - qDisc);
+
+            reset({
+              customer_id: qData.customer_id ?? null,
+              customer_name: qData.customer_name ?? "",
+              customer_phone: qData.customer_phone ?? "",
+              customer_email: "",
+              customer_address: qData.customer_address ?? "",
+              bill_date: new Date().toISOString().slice(0, 10),
+              items: qItems,
+              tax_amount: qTax,
+              discount_amount: qDisc,
+              paid_amount: qTotal,
+              payment_status: "paid",
+              payment_method: "cash",
+              notes: qData.notes || (qData.quotation_number ? `Generated from Quotation ${qData.quotation_number}` : ""),
+              book_to: qData.book_to || "",
+              transport: qData.transport || "",
+              gr_no: qData.gr_no || "",
+              vehicle_no: qData.vehicle_no || "",
+              dispute_note: qData.dispute_note || sRes?.dispute_note || "",
+              account_id: null,
+              record_stock_out: !skipStockDeduction,
+            });
+          } else {
+            reset({
+              customer_id: null,
+              customer_name: "",
+              customer_phone: "",
+              customer_email: "",
+              customer_address: "",
+              bill_date: new Date().toISOString().slice(0, 10),
+              items: [
+                {
+                  product_id: initialProduct?.id ?? null,
+                  product_name: initialProduct?.name ?? "",
+                  hsn_code: initialProduct?.hsn_code ?? initialProduct?.sku ?? "",
+                  quantity: initialQuantity,
+                  unit_price: Number(initialProduct?.price ?? 0),
+                },
+              ],
+              tax_amount: 0,
+              discount_amount: 0,
+              paid_amount: 0,
+              payment_status: "paid",
+              payment_method: "cash",
+              notes: initialProduct ? `Generated on stock removal for ${initialProduct.name}` : "",
+              book_to: "",
+              transport: "",
+              gr_no: "",
+              vehicle_no: "",
+              dispute_note: sRes?.dispute_note || "",
+              account_id: null,
+              record_stock_out: !skipStockDeduction,
+            });
+          }
+        })
+        .finally(() => setLoadingOptions(false));
     }
-  }, [open, reset, initialProduct, initialQuantity, skipStockDeduction]);
+  }, [open, reset, initialProduct, initialQuantity, initialQuotation, skipStockDeduction]);
 
   // Keep paid amount synced when grandTotal changes if status is "paid"
   React.useEffect(() => {
@@ -210,6 +283,9 @@ export function GenerateBillDialog({
     if (found) {
       setValue(`items.${index}.product_id`, found.id);
       setValue(`items.${index}.product_name`, found.name);
+      if (found.hsn_code || found.sku) {
+        setValue(`items.${index}.hsn_code`, found.hsn_code || found.sku || "");
+      }
       setValue(`items.${index}.unit_price`, Number(found.price));
     }
   }
@@ -235,6 +311,15 @@ export function GenerateBillDialog({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate bill");
+
+      if (initialQuotation?.id) {
+        await fetch(`/api/quotations/${initialQuotation.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quotation_status: "accepted" }),
+        }).catch(() => {});
+      }
+
       toast.success(`Bill #${data.bill_number} generated successfully!`);
       submittedRef.current = true;
       onOpenChange(false);
@@ -268,7 +353,7 @@ export function GenerateBillDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-semibold text-lg text-foreground">
             <Receipt className="size-5 text-primary" /> Generate Bill / Invoice
           </DialogTitle>
           <DialogDescription>
@@ -279,7 +364,7 @@ export function GenerateBillDialog({
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 py-2">
           {/* Customer Selection */}
           <div className="rounded-lg border p-4 bg-muted/20 flex flex-col gap-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Customer Info</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground" style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>Customer Info</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="existing_customer">Select Existing Customer</Label>
@@ -307,21 +392,36 @@ export function GenerateBillDialog({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="customer_email">Email</Label>
-                <Input id="customer_email" type="email" {...register("customer_email")} placeholder="customer@example.com" />
+                <Label htmlFor="customer_address">Billing Address</Label>
+                <Input id="customer_address" {...register("customer_address")} placeholder="City, State, Pin Code..." />
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="customer_address">Billing Address</Label>
-              <Input id="customer_address" {...register("customer_address")} placeholder="City, State, Pin Code..." />
+            {/* Transport & Shipping Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/40">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="book_to" className="text-xs font-medium">Book To</Label>
+                <Input id="book_to" {...register("book_to")} placeholder="e.g. GUWAHATI CITY (GWTCTY-6818)" className="h-8 text-xs" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="transport" className="text-xs font-medium">Transport</Label>
+                <Input id="transport" {...register("transport")} placeholder="e.g. VRL GUWAHATI CITY" className="h-8 text-xs" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="gr_no" className="text-xs font-medium">GR. No.</Label>
+                <Input id="gr_no" {...register("gr_no")} placeholder="e.g. INV-2026-0030" className="h-8 text-xs font-mono" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="vehicle_no" className="text-xs font-medium">Vehicle No.</Label>
+                <Input id="vehicle_no" {...register("vehicle_no")} placeholder="e.g. MH31-1234" className="h-8 text-xs font-mono" />
+              </div>
             </div>
           </div>
 
           {/* Date & Line Items */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Product Items</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground" style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>Product Items</h3>
               <div className="flex items-center gap-2">
                 <Label htmlFor="bill_date" className="text-xs">Bill Date:</Label>
                 <Input id="bill_date" type="date" className="w-36 h-8 text-xs" {...register("bill_date")} />
@@ -337,7 +437,7 @@ export function GenerateBillDialog({
 
                 return (
                   <div key={field.id} className="grid grid-cols-12 gap-2 items-end rounded-md border p-3 bg-card">
-                    <div className="col-span-12 sm:col-span-5 flex flex-col gap-1">
+                    <div className="col-span-12 sm:col-span-4 flex flex-col gap-1">
                       <Label className="text-[11px]">Product Item *</Label>
                       <div className="flex gap-2">
                         <SearchableSelect
@@ -354,7 +454,16 @@ export function GenerateBillDialog({
                       <Input className="h-9 text-xs mt-1" {...register(`items.${index}.product_name`)} placeholder="Item name" />
                     </div>
 
-                    <div className="col-span-4 sm:col-span-2 flex flex-col gap-1">
+                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
+                      <Label className="text-[11px]">HSN Code</Label>
+                      <Input
+                        className="h-9 text-xs font-mono uppercase"
+                        {...register(`items.${index}.hsn_code`)}
+                        placeholder="87341000"
+                      />
+                    </div>
+
+                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
                       <Label className="text-[11px]">Qty</Label>
                       <Input
                         type="number"
@@ -364,7 +473,7 @@ export function GenerateBillDialog({
                       />
                     </div>
 
-                    <div className="col-span-4 sm:col-span-3 flex flex-col gap-1">
+                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
                       <Label className="text-[11px]">Unit Price (₹)</Label>
                       <Input
                         type="number"
@@ -375,7 +484,7 @@ export function GenerateBillDialog({
                       />
                     </div>
 
-                    <div className="col-span-4 sm:col-span-2 flex items-center justify-between gap-1 pb-1">
+                    <div className="col-span-6 sm:col-span-2 flex items-center justify-between gap-1 pb-1">
                       <div className="text-right">
                         <p className="text-[10px] text-muted-foreground">Total</p>
                         <p className="font-mono text-xs font-semibold">₹{rowTotal.toLocaleString("en-IN")}</p>
@@ -402,7 +511,7 @@ export function GenerateBillDialog({
               variant="outline"
               size="sm"
               className="w-fit gap-1 text-xs"
-              onClick={() => append({ product_id: null, product_name: "", quantity: 1, unit_price: 0 })}
+              onClick={() => append({ product_id: null, product_name: "", hsn_code: "", quantity: 1, unit_price: 0 })}
             >
               <Plus className="size-3.5" /> Add Product Line
             </Button>
@@ -411,7 +520,7 @@ export function GenerateBillDialog({
           {/* Payment & Totals */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 border-t pt-4">
             <div className="flex flex-col gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Payment Details</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground" style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>Payment Details</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <Label className="text-xs">Payment Status</Label>
@@ -471,6 +580,11 @@ export function GenerateBillDialog({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="notes" className="text-xs">Notes / Terms</Label>
                 <Textarea id="notes" className="text-xs" {...register("notes")} placeholder="Thank you for your business..." />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="dispute_note" className="text-xs font-medium">Attachment / Jurisdiction Note</Label>
+                <Input id="dispute_note" className="text-xs" {...register("dispute_note")} placeholder="ALL DISPUTES SUBJECT TO NAGPUR JURISDICTION" />
               </div>
             </div>
 

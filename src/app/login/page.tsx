@@ -161,7 +161,7 @@ export default function LoginPage() {
         {/* Signup & Pricing Footer Links */}
         <div className="mt-4 text-center text-xs text-muted-foreground space-y-1">
           <div>
-            <Link href="/pricing" className="font-semibold text-primary hover:underline">
+            <Link href="/" className="font-semibold text-primary hover:underline">
               View Pricing & Features
             </Link>
           </div>

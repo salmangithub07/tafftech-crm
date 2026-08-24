@@ -541,12 +541,39 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
   const router = useRouter();
   const [template, setTemplate] = React.useState<InvoiceTemplateType>(initialSettings.invoice_template || "modern");
   const [terms, setTerms] = React.useState(initialSettings.invoice_terms || "");
+  const [gstin, setGstin] = React.useState(initialSettings.gstin || "");
+  const [panNo, setPanNo] = React.useState(initialSettings.pan_no || "");
+  const [companyPhone, setCompanyPhone] = React.useState(initialSettings.company_phone || "");
+  const [logo, setLogo] = React.useState(initialSettings.business_logo || "");
+  const [tagline, setTagline] = React.useState(initialSettings.business_tagline || "");
+  const [address, setAddress] = React.useState(initialSettings.business_address || "");
   const [bankName, setBankName] = React.useState(initialSettings.bank_name || "");
+  const [bankBranch, setBankBranch] = React.useState(initialSettings.bank_branch || "");
   const [bankAcc, setBankAcc] = React.useState(initialSettings.bank_account_no || "");
   const [bankIfsc, setBankIfsc] = React.useState(initialSettings.bank_ifsc || "");
   const [bankUpi, setBankUpi] = React.useState(initialSettings.bank_upi_id || "");
+  const [disputeNote, setDisputeNote] = React.useState(initialSettings.dispute_note || "");
   const [privacyPolicy, setPrivacyPolicy] = React.useState(initialSettings.privacy_policy || "");
   const [saving, setSaving] = React.useState(false);
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 200 * 1024) {
+      toast.error("Logo image size must be under 200KB. Please select a smaller file.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setLogo(reader.result);
+        toast.success("Business Logo loaded successfully!");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -558,15 +585,23 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
         body: JSON.stringify({
           invoice_template: template,
           invoice_terms: terms,
+          gstin,
+          pan_no: panNo,
+          company_phone: companyPhone,
+          business_logo: logo,
+          business_tagline: tagline,
+          business_address: address,
           bank_name: bankName,
+          bank_branch: bankBranch,
           bank_account_no: bankAcc,
           bank_ifsc: bankIfsc,
           bank_upi_id: bankUpi,
+          dispute_note: disputeNote,
           privacy_policy: privacyPolicy,
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Tenant Bank Details, T&C & Privacy Policy saved successfully!");
+      toast.success("Tenant Invoice & Branding Settings saved successfully!");
       router.refresh();
     } catch {
       toast.error("Could not save invoice settings.");
@@ -575,77 +610,118 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
     }
   }
 
-  const templatesList = [
-    {
-      id: "modern",
-      name: "Modern Template",
-      desc: "Clean layout with accent color title, rounded cards & right-aligned totals box.",
-      badge: "Popular",
-    },
-    {
-      id: "classic",
-      name: "Classic Corporate",
-      desc: "Formal navy/black top banner, crisp double borders & traditional serif fonts.",
-      badge: "Formal",
-    },
-    {
-      id: "minimal",
-      name: "Minimalist Elegant",
-      desc: "Monochrome elegance, thin dividers & generous clean whitespace.",
-      badge: "Clean",
-    },
-    {
-      id: "compact",
-      name: "Compact / Receipt",
-      desc: "Space-saving single-page layout optimized for thermal / small print jobs.",
-      badge: "POS / Print",
-    },
-  ] as const;
-
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" /> Invoice Template Layout
+            <Building className="size-4 text-primary" /> Business Branding &amp; Invoice Header Details
           </CardTitle>
           <CardDescription>
-            Select your preferred default printable invoice design template.
+            Tenant-specific GSTIN, PAN, Phone, Logo, Tagline, and Address printed dynamically on every invoice.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {templatesList.map((tpl) => (
-              <div
-                key={tpl.id}
-                onClick={() => setTemplate(tpl.id as InvoiceTemplateType)}
-                className={cn(
-                  "cursor-pointer rounded-lg border p-4 transition-all hover:border-primary/50 relative flex flex-col justify-between gap-3",
-                  template === tpl.id
-                    ? "border-2 border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
-                    : "bg-card hover:bg-accent/40"
-                )}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm text-foreground">{tpl.name}</p>
-                    <Badge variant="outline" className="text-[10px]">
-                      {tpl.badge}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{tpl.desc}</p>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                  {template === tpl.id ? (
-                    <>
-                      <Check className="size-4" /> Selected Default
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground hover:text-foreground">Click to select</span>
-                  )}
-                </div>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="gstin">GSTIN Number</Label>
+              <Input
+                id="gstin"
+                value={gstin}
+                onChange={(e) => setGstin(e.target.value)}
+                placeholder="27CENPA9070D1ZI"
+                className="font-mono uppercase"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="panNo">PAN Number</Label>
+              <Input
+                id="panNo"
+                value={panNo}
+                onChange={(e) => setPanNo(e.target.value)}
+                placeholder="CENPA9070D"
+                className="font-mono uppercase"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="companyPhone">Business Phone(s)</Label>
+              <Input
+                id="companyPhone"
+                value={companyPhone}
+                onChange={(e) => setCompanyPhone(e.target.value)}
+                placeholder="9607086390 / 8788099744"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="logoUpload">Business Logo (Max 200KB)</Label>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="gap-1.5"
+                >
+                  <FileText className="size-4" /> Upload Logo
+                </Button>
+                {logo ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLogo("")}
+                    className="text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    Remove Logo
+                  </Button>
+                ) : null}
               </div>
-            ))}
+              <p className="text-[11px] text-muted-foreground">
+                If no logo is uploaded, your Business Name will be displayed as bold header text on invoices.
+              </p>
+            </div>
+
+            {logo ? (
+              <div className="p-3 border rounded-lg bg-muted/20 flex flex-col items-center justify-center">
+                <span className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase">Logo Preview</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt="Business Logo Preview" className="max-h-12 w-auto object-contain" />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5 pt-2">
+            <Label htmlFor="tagline">Business Tagline (Banner Bar)</Label>
+            <Input
+              id="tagline"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="INDUSTRIAL SOLUTIONS"
+              className="font-semibold uppercase"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="address">Business Address (Printed on Invoice Header)</Label>
+            <Textarea
+              id="address"
+              rows={3}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="PLOT NO 4, NIZAMUDDIN COLONY, NAGPUR&#10;NAGPUR , MAHARASHTRA , INDIA – 440001"
+              className="text-xs"
+            />
           </div>
         </CardContent>
       </Card>
@@ -656,7 +732,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
             <Building className="size-4 text-primary" /> Bank Account &amp; Payment Details (Tenant-Wise)
           </CardTitle>
           <CardDescription>
-            Individual structured fields for your tenant bank account, IFSC code, and UPI ID printed on every invoice.
+            Individual structured fields for your tenant bank account, branch, IFSC code, and UPI ID printed on every invoice.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -667,30 +743,40 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
                 id="bankName"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                placeholder="Axis Bank / HDFC Bank"
+                placeholder="ICICI BANK"
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="bankBranch">Branch Address</Label>
+              <Input
+                id="bankBranch"
+                value={bankBranch}
+                onChange={(e) => setBankBranch(e.target.value)}
+                placeholder="Rani Khothi, Police Lane,GN Road-441002 Maharashtra"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="bankAcc">Account Number (A/C No)</Label>
               <Input
                 id="bankAcc"
                 value={bankAcc}
                 onChange={(e) => setBankAcc(e.target.value)}
-                placeholder="50200000000000"
+                placeholder="146205002969"
                 className="font-mono"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="bankIfsc">IFSC Code</Label>
+              <Label htmlFor="bankIfsc">RTGS/NEFT IFSC Code</Label>
               <Input
                 id="bankIfsc"
                 value={bankIfsc}
                 onChange={(e) => setBankIfsc(e.target.value)}
-                placeholder="ICIC0001234"
+                placeholder="ICIC0001462"
                 className="font-mono uppercase"
               />
             </div>
@@ -712,26 +798,44 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="size-4 text-primary" /> Terms &amp; Conditions (T&amp;C)
+            <FileText className="size-4 text-primary" /> Attachment &amp; Legal Jurisdiction Note
           </CardTitle>
           <CardDescription>
-            Specify your standard business terms, return policies, and legal jurisdiction printed on invoices.
+            Standard dispute jurisdiction note printed at the very bottom attachment line of every invoice.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="terms">Standard Terms &amp; Conditions</Label>
+            <Label htmlFor="disputeNote">Default Attachment / Jurisdiction Note</Label>
+            <Input
+              id="disputeNote"
+              value={disputeNote}
+              onChange={(e) => setDisputeNote(e.target.value)}
+              placeholder="ALL DISPUTES SUBJECT TO NAGPUR JURISDICTION"
+              className="text-xs uppercase"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="terms">Standard Terms &amp; Conditions (Optional)</Label>
             <Textarea
               id="terms"
               rows={3}
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
-              placeholder="1. Goods once sold will not be taken back.&#10;2. Interest @18% p.a. will be charged if payment is delayed.&#10;3. Subject to local jurisdiction."
+              placeholder="1. Goods once sold will not be taken back.&#10;2. Interest @18% p.a. will be charged if payment is delayed."
               className="text-xs"
             />
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={saving} className="gap-2">
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+          Save Invoice &amp; Branding Settings
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>
