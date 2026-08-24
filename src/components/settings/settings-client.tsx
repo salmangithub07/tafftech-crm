@@ -1468,26 +1468,117 @@ function SeoHtmlScriptsTab({ initialSettings }: { initialSettings: AppSettings }
       "@graph": [
         {
           "@type": "SoftwareApplication",
+          "@id": `${typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com"}/#software`,
           "name": initialSettings.site_name || "Taff Desk CRM",
-          "operatingSystem": "All",
+          "alternateName": "TaffTech CRM",
+          "operatingSystem": "All (Web-based SaaS, Windows, macOS, iOS, Android)",
           "applicationCategory": "BusinessApplication",
-          "offers": {
-            "@type": "Offer",
-            "price": "4999",
-            "priceCurrency": "INR"
+          "applicationSubCategory": "CRM & GST Billing Software",
+          "softwareVersion": "2.0.0",
+          "description": metaDescription || "All-in-one CRM & GST Billing Software for growing businesses. Manage customer leads, appointments, 1-click WhatsApp reminders, quotation generator, inventory, and team permissions.",
+          "url": typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com",
+          "featureList": [
+            "Lead & Customer Management",
+            "1-Click Automated WhatsApp Reminders",
+            "GST Invoice & Quotation Generator",
+            "Appointment Scheduling & Tracking",
+            "Role-Based Access Control (RBAC)",
+            "Financial Ledger & Income/Expense Tracking",
+            "Multi-Tenant Business Architecture"
+          ],
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "1-Year License",
+              "price": "4999",
+              "priceCurrency": "INR",
+              "availability": "https://schema.org/InStock"
+            },
+            {
+              "@type": "Offer",
+              "name": "3-Year License",
+              "price": "11999",
+              "priceCurrency": "INR",
+              "availability": "https://schema.org/InStock"
+            },
+            {
+              "@type": "Offer",
+              "name": "Lifetime Access",
+              "price": "24999",
+              "priceCurrency": "INR",
+              "availability": "https://schema.org/InStock"
+            }
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "128",
+            "bestRating": "5",
+            "worstRating": "1"
           },
-          "description": metaDescription || "All-In-One CRM Software for Lead Management & GST Billing."
+          "author": {
+            "@type": "Organization",
+            "@id": `${typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com"}/#organization`
+          }
         },
         {
           "@type": "Organization",
+          "@id": `${typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com"}/#organization`,
+          "name": "TaffTech Industrial Solutions",
+          "legalName": "TaffTech Solutions",
+          "url": typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com",
+          "logo": initialSettings.business_logo || undefined,
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "telephone": "+91-9607086390",
+              "contactType": "customer service",
+              "areaServed": "IN",
+              "availableLanguage": ["English", "Hindi"]
+            }
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com"}/#website`,
+          "url": typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com",
           "name": initialSettings.site_name || "Taff Desk CRM",
-          "url": typeof window !== "undefined" ? window.location.origin : "",
-          "logo": initialSettings.business_logo || ""
+          "description": metaDescription || "All-In-One CRM & GST Billing Software"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": `${typeof window !== "undefined" ? window.location.origin : "https://www.taffdesk.com"}/#faq`,
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Taff Desk CRM?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Taff Desk CRM is an all-in-one customer relationship management and GST billing software designed for growing businesses. It helps manage leads, send automated WhatsApp reminders, generate official GST invoices & quotations, track appointments, and manage team permissions."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Taff Desk CRM support GST Invoice and Quotation generation?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, Taff Desk CRM includes built-in 1-click Proforma Invoice / Quotation and GST Tax Invoice generation with custom company logo, GSTIN, bank details, and downloadable PDF / print formats."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does 1-click WhatsApp Integration work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Taff Desk CRM allows you to instantly send appointment reminders, billing details, and customer updates directly to your customer's WhatsApp with one click."
+              }
+            }
+          ]
         }
       ]
     };
     setSchemaJsonLd(JSON.stringify(sampleSchema, null, 2));
-    toast.info("Sample Schema.org JSON-LD loaded!");
+    toast.info("Sample Google SEO Schema.org JSON-LD loaded!");
   }
 
   function handleLoadSampleGTM() {
@@ -1536,12 +1627,15 @@ function SeoHtmlScriptsTab({ initialSettings }: { initialSettings: AppSettings }
 
               <div className="space-y-1">
                 <Label htmlFor="seo_keywords">Meta Keywords (Comma separated)</Label>
-                <Input
+                <Textarea
                   id="seo_keywords"
+                  rows={3}
                   value={seoKeywords}
                   onChange={(e) => setSeoKeywords(e.target.value)}
-                  placeholder="crm, saas crm, lead management, whatsapp crm, invoice software"
+                  placeholder="crm, saas crm, lead management, whatsapp crm, invoice software, quotation software, appointment scheduling"
+                  className="font-sans text-xs leading-relaxed"
                 />
+                <p className="text-[11px] text-muted-foreground">List all primary, long-tail, and industry keywords separated by commas.</p>
               </div>
             </div>
           </div>
