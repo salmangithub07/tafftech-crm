@@ -24,9 +24,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const session = await getSession();
   const tenantId = session ? tenantOf(session) ?? 0 : 0;
   const settings = await getSettings(tenantId);
+  const keywordsList = settings.seo_keywords
+    ? settings.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
+    : undefined;
+
   return {
     title: settings.meta_title || `${settings.site_name || "Taff Desk CRM"} — Admin Dashboard`,
     description: settings.meta_description || "Manage customer leads, appointments, and billing from one clean dashboard.",
+    keywords: keywordsList,
   };
 }
 
@@ -62,8 +67,31 @@ export default async function RootLayout({
             __html: `:root{--primary:${hsl};--primary-foreground:${fg};--ring:${hsl};--sidebar-primary:${hsl};--sidebar-primary-foreground:${fg};--sidebar-ring:${hsl};--chart-1:${hsl};}`,
           }}
         />
+
+        {/* Custom Schema.org JSON-LD Structured Data */}
+        {settings.schema_json_ld && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: settings.schema_json_ld }}
+          />
+        )}
+
+        {/* Custom Head Scripts & HTML injected by Super Admin */}
+        {settings.custom_head_code && (
+          <div
+            style={{ display: "none" }}
+            dangerouslySetInnerHTML={{ __html: settings.custom_head_code }}
+          />
+        )}
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
+        {/* Custom Body Scripts & HTML injected by Super Admin */}
+        {settings.custom_body_code && (
+          <div
+            style={{ display: "none" }}
+            dangerouslySetInnerHTML={{ __html: settings.custom_body_code }}
+          />
+        )}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

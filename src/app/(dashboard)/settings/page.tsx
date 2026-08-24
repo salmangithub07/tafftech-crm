@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getSession, tenantOf } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { SettingsClient } from "@/components/settings/settings-client";
@@ -36,12 +37,14 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <SettingsClient
-        session={session!}
-        initialSettings={settings}
-        subscriptionInfo={subInfo}
-        superAdminPhone={superAdminPhone}
-      />
+      <Suspense fallback={<div className="p-4 text-xs text-muted-foreground">Loading settings...</div>}>
+        <SettingsClient
+          session={session!}
+          initialSettings={settings}
+          subscriptionInfo={subInfo}
+          superAdminPhone={superAdminPhone}
+        />
+      </Suspense>
     </div>
   );
 }

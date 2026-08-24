@@ -435,38 +435,6 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-2 xs:grid-cols-3 sm:flex w-full sm:w-fit h-auto p-1 gap-1">
-          <TabsTrigger value="dashboard" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <BarChart3 className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">SaaS Revenue Dashboard</span>
-            <span className="sm:hidden">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="admins" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <Users className="size-3.5 shrink-0 sm:hidden" />
-            <span className="hidden sm:inline">Tenants &amp; Admins ({admins.length})</span>
-            <span className="sm:hidden">Tenants ({admins.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="health" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <HeartPulse className="size-3.5 shrink-0 text-emerald-500" />
-            <span className="hidden sm:inline">Tenant Health &amp; Usage</span>
-            <span className="sm:hidden">Health</span>
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="relative gap-1.5 text-xs py-1.5 sm:py-1">
-            <IndianRupee className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">Payment History &amp; Records</span>
-            <span className="sm:hidden">Payments</span>
-            {analytics.pending_count > 0 && (
-              <span className="ml-1 rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-bold text-white">
-                {analytics.pending_count}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="expiring" className="gap-1.5 text-xs py-1.5 sm:py-1 col-span-2 xs:col-span-1 sm:col-span-1">
-            <Clock className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">Upcoming Expiries (7d) ({expiringSoonAdmins.length})</span>
-            <span className="sm:hidden">Expiries ({expiringSoonAdmins.length})</span>
-          </TabsTrigger>
-        </TabsList>
 
         {/* Tab 0: SaaS Revenue Dashboard */}
         <TabsContent value="dashboard" className="mt-4 space-y-6">
