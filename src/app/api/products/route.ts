@@ -13,6 +13,8 @@ const productSchema = z.object({
   min_stock_level: z.coerce.number().int().min(0).default(5),
   quantity: z.coerce.number().int().min(0).default(0),
   supplier_id: z.coerce.number().int().positive().optional().nullable(),
+  category_id: z.coerce.number().int().positive().optional().nullable(),
+  category: z.string().optional().or(z.literal("")).default(""),
 });
 
 export async function GET(req: NextRequest) {
@@ -24,6 +26,7 @@ export async function GET(req: NextRequest) {
   await ensureActivityTables();
 
   const stockFilter = req.nextUrl.searchParams.get("stock"); // all | in | low | out
+  const categoryId = req.nextUrl.searchParams.get("category_id") || req.nextUrl.searchParams.get("category");
   const period = req.nextUrl.searchParams.get("period");
   const date = req.nextUrl.searchParams.get("date");
   const searchQ = req.nextUrl.searchParams.get("search")?.trim() || "";
@@ -31,12 +34,26 @@ export async function GET(req: NextRequest) {
 
   const dateFilter = buildDateFilter("p.created_at", period, date);
 
+  let categoryClause = "";
+  const categoryParams: unknown[] = [];
+  if (categoryId && categoryId !== "all") {
+    const isNum = !isNaN(Number(categoryId));
+    if (isNum) {
+      categoryClause = " AND p.category_id = ?";
+      categoryParams.push(Number(categoryId));
+    } else {
+      categoryClause = " AND (pc.name ILIKE ? OR p.category ILIKE ?)";
+      categoryParams.push(`%${categoryId}%`, `%${categoryId}%`);
+    }
+  }
+
   const base = `
     FROM products p
     LEFT JOIN stock_transactions s ON s.product_id = p.id
-    WHERE p.tenant_id = ?${dateFilter.clause}${searchQ ? " AND p.name ILIKE ?" : ""}
+    LEFT JOIN product_categories pc ON pc.id = p.category_id
+    WHERE p.tenant_id = ?${dateFilter.clause}${searchQ ? " AND p.name ILIKE ?" : ""}${categoryClause}
     GROUP BY p.id`;
-  const baseParams = [tenantId, ...dateFilter.params, ...(searchQ ? [`%${searchQ}%`] : [])];
+  const baseParams = [tenantId, ...dateFilter.params, ...(searchQ ? [`%${searchQ}%`] : []), ...categoryParams];
 
   const productsWithStock = await query<{ id: number; stock: number; min_stock_level: number }>(
     `SELECT p.id,
@@ -72,13 +89,15 @@ export async function GET(req: NextRequest) {
     ? await query(
         `SELECT p.*,
            l.name AS supplier_name,
+           pc.name AS category_name,
            COALESCE(p.min_stock_level, 5) AS min_stock_level,
            COALESCE(SUM(CASE WHEN s.type='in' THEN s.quantity WHEN s.type='out' THEN -s.quantity ELSE 0 END), 0) AS stock
          FROM products p
          LEFT JOIN stock_transactions s ON s.product_id = p.id
          LEFT JOIN ledger_accounts l ON l.id = p.supplier_id AND l.tenant_id = p.tenant_id
+         LEFT JOIN product_categories pc ON pc.id = p.category_id
          WHERE p.id IN (${pageIds.map(() => "?").join(",")})
-         GROUP BY p.id, l.name
+         GROUP BY p.id, l.name, pc.name
          ORDER BY p.created_at DESC`,
         pageIds
       )
@@ -152,8 +171,8 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
   const result = await execute(
-    "INSERT INTO products (tenant_id, name, unit, price, cost_price, min_stock_level, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [tenantId, d.name, d.unit || "Pcs", d.price, d.cost_price || 0, d.min_stock_level, d.supplier_id || null]
+    "INSERT INTO products (tenant_id, name, unit, price, cost_price, min_stock_level, supplier_id, category_id, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [tenantId, d.name, d.unit || "Pcs", d.price, d.cost_price || 0, d.min_stock_level, d.supplier_id || null, d.category_id || null, d.category || null]
   );
   const productId = result.insertId;
   const prodName = d.name;
@@ -191,6 +210,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const product = await query("SELECT p.*, l.name AS supplier_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id WHERE p.id = ?", [productId]);
+  const product = await query(
+    "SELECT p.*, l.name AS supplier_name, pc.name AS category_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id LEFT JOIN product_categories pc ON pc.id = p.category_id WHERE p.id = ?",
+    [productId]
+  );
   return NextResponse.json(product[0], { status: 201 });
 }

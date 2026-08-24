@@ -34,7 +34,7 @@ const formSchema = z.object({
   product: z.string().optional().or(z.literal("")),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
-  status: z.enum(["lead", "progress", "active", "inactive"]),
+  status: z.enum(["lead", "progress", "active", "completed", "order_soon"]),
   visited: z.boolean(),
   address: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
@@ -288,7 +288,8 @@ export function CustomerFormDialog({
                   <SelectItem value="lead">Lead</SelectItem>
                   <SelectItem value="progress">Progress</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="order_soon">Order Soon</SelectItem>
+                  <SelectItem value="completed">Final</SelectItem>
                 </SelectContent>
               </Select>
             </div>

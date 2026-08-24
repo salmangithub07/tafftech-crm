@@ -10,6 +10,8 @@ const productSchema = z.object({
   cost_price: z.coerce.number().min(0).default(0),
   min_stock_level: z.coerce.number().int().min(0).default(5),
   supplier_id: z.coerce.number().int().positive().optional().nullable(),
+  category_id: z.coerce.number().int().positive().optional().nullable(),
+  category: z.string().optional().or(z.literal("")).default(""),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -33,18 +35,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!existing.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const d = parsed.data;
-  await execute("UPDATE products SET name=?, unit=?, price=?, cost_price=?, min_stock_level=?, supplier_id=? WHERE id=? AND tenant_id=?", [
+  await execute("UPDATE products SET name=?, unit=?, price=?, cost_price=?, min_stock_level=?, supplier_id=?, category_id=?, category=? WHERE id=? AND tenant_id=?", [
     d.name,
     d.unit || "Pcs",
     d.price,
     d.cost_price || 0,
     d.min_stock_level,
     d.supplier_id || null,
+    d.category_id || null,
+    d.category || null,
     id,
     tenantId,
   ]);
   const product = await query(
-    "SELECT p.*, l.name AS supplier_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id WHERE p.id = ? AND p.tenant_id = ?",
+    "SELECT p.*, l.name AS supplier_name, pc.name AS category_name FROM products p LEFT JOIN ledger_accounts l ON l.id = p.supplier_id LEFT JOIN product_categories pc ON pc.id = p.category_id WHERE p.id = ? AND p.tenant_id = ?",
     [id, tenantId]
   );
   return NextResponse.json(product[0]);

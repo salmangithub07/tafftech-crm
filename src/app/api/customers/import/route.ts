@@ -63,8 +63,13 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const d = parsed.data;
-    const statusVal = ["lead", "progress", "active", "inactive"].includes(String(d.status).toLowerCase())
-      ? String(d.status).toLowerCase()
+    const rawStatus = String(d.status || "").toLowerCase().trim();
+    let normStatus = rawStatus;
+    if (rawStatus === "inactive" || rawStatus === "complete") normStatus = "completed";
+    if (rawStatus === "order soon" || rawStatus === "order_soon") normStatus = "order_soon";
+
+    const statusVal = ["lead", "progress", "active", "completed", "order_soon"].includes(normStatus)
+      ? normStatus
       : "lead";
     const visitedVal = d.visited === true || d.visited === 1 || d.visited === "1" || String(d.visited).toLowerCase() === "true" ? 1 : 0;
 

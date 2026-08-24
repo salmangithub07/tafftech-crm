@@ -12,7 +12,7 @@ const customerSchema = z.object({
   phone: z.string().optional().or(z.literal("")).default(""),
   address: z.string().optional().or(z.literal("")).default(""),
   notes: z.string().optional().or(z.literal("")).default(""),
-  status: z.enum(["lead", "progress", "active", "inactive"]).default("lead"),
+  status: z.enum(["lead", "progress", "active", "completed", "order_soon"]).default("lead"),
   visited: z.boolean().default(false),
   created_by: z.coerce.number().int().positive().optional().nullable(),
 });
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json().catch(() => null);
     const status = body?.status as CustomerStatus;
 
-    if (!["lead", "progress", "active", "inactive"].includes(status)) {
+    if (!["lead", "progress", "active", "completed", "order_soon"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 

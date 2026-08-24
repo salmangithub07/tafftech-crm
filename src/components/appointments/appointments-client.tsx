@@ -356,7 +356,7 @@ export function AppointmentsClient({
       <div className="flex flex-col gap-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search by name, phone, or product..." className="pl-9" />
+          <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search by name, phone, product, or added by..." className="pl-9" />
         </div>
 
         {(selectedIds.length > 0 || (isTrashTab && counts.trash > 0)) && (
@@ -438,8 +438,8 @@ export function AppointmentsClient({
                             {a.customer_name ?? "—"}
                           </button>
                           {a.customer_phone && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Phone className="size-3" /> {a.customer_phone}
+                            <span className="flex items-center gap-1 text-xs text-primary font-medium">
+                              <Phone className="size-3 text-primary shrink-0" /> {a.customer_phone}
                             </span>
                           )}
                         </div>
@@ -523,7 +523,7 @@ export function AppointmentsClient({
                       <div className="ml-[26px] mt-2 flex flex-col gap-0.5 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
                         {(a.title || a.customer_product) && <span className="truncate">{a.title || a.customer_product}</span>}
                         {a.customer_phone && (
-                          <span className="flex items-center gap-1.5"><Phone className="size-3 shrink-0" />{a.customer_phone}</span>
+                          <span className="flex items-center gap-1.5 text-primary font-medium"><Phone className="size-3 shrink-0 text-primary" />{a.customer_phone}</span>
                         )}
                         {a.remarks && <span className="truncate italic">{a.remarks}</span>}
                         {a.created_by_name && <span className="truncate">Added by: {a.created_by_name}</span>}

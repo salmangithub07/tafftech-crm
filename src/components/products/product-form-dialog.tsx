@@ -17,7 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { LedgerAccount, Product } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { LedgerAccount, Product, ProductCategory } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -43,6 +44,9 @@ export function ProductFormDialog({
   const isEdit = !!product;
   const [creditors, setCreditors] = React.useState<LedgerAccount[]>([]);
   const [supplierId, setSupplierId] = React.useState<string>("");
+  const [categories, setCategories] = React.useState<ProductCategory[]>([]);
+  const [categoryId, setCategoryId] = React.useState<string>("");
+  const [customCategory, setCustomCategory] = React.useState<string>("");
 
   const {
     register,
@@ -78,12 +82,23 @@ export function ProductFormDialog({
           : { name: "", unit: "Pcs", price: 0, cost_price: 0, min_stock_level: 5, quantity: 0 }
       );
       setSupplierId(product?.supplier_id ? String(product.supplier_id) : "");
+      setCategoryId(product?.category_id ? String(product.category_id) : "");
+      setCustomCategory(product?.category ?? "");
 
       fetch("/api/ledger-accounts")
         .then((r) => r.json())
         .then((data: unknown) => {
           if (Array.isArray(data)) {
             setCreditors((data as LedgerAccount[]).filter((a) => a.type === "creditor"));
+          }
+        })
+        .catch(() => {});
+
+      fetch("/api/product-categories")
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.data && Array.isArray(json.data)) {
+            setCategories(json.data);
           }
         })
         .catch(() => {});
@@ -96,6 +111,8 @@ export function ProductFormDialog({
         ...values,
         cost_price: Number(values.cost_price) || 0,
         supplier_id: supplierId ? Number(supplierId) : null,
+        category_id: categoryId ? Number(categoryId) : null,
+        category: customCategory || null,
       };
       const res = await fetch(isEdit ? `/api/products/${product!.id}` : "/api/products", {
         method: isEdit ? "PUT" : "POST",
@@ -160,40 +177,92 @@ export function ProductFormDialog({
               />
               <span className="text-[11px] text-muted-foreground">Alert when stock ≤ this</span>
             </div>
-            {!isEdit && (
+
+            {!isEdit ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="quantity">Initial Quantity</Label>
                 <Input id="quantity" type="number" min={0} {...register("quantity", { valueAsNumber: true })} placeholder="0" />
               </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="category">Product Category</Label>
+                <Select
+                  value={categoryId || "none"}
+                  onValueChange={(val) => {
+                    const nextVal = val === "none" ? "" : val;
+                    setCategoryId(nextVal);
+                    const selectedCat = categories.find((c) => String(c.id) === nextVal);
+                    if (selectedCat) setCustomCategory(selectedCat.name);
+                    else setCustomCategory("");
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full text-xs font-medium bg-background text-foreground shadow-xs">
+                    <SelectValue placeholder="Uncategorized / None" />
+                  </SelectTrigger>
+                  <SelectContent align="start" className="text-xs">
+                    <SelectItem value="none">Uncategorized / None</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={String(cat.id)}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
+
+          {/* Product Category Selection (for Add New Product: placed above Supplier) */}
+          {!isEdit && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="category">Product Category</Label>
+              <Select
+                value={categoryId || "none"}
+                onValueChange={(val) => {
+                  const nextVal = val === "none" ? "" : val;
+                  setCategoryId(nextVal);
+                  const selectedCat = categories.find((c) => String(c.id) === nextVal);
+                  if (selectedCat) setCustomCategory(selectedCat.name);
+                  else setCustomCategory("");
+                }}
+              >
+                <SelectTrigger className="h-9 w-full text-xs font-medium bg-background text-foreground shadow-xs">
+                  <SelectValue placeholder="Uncategorized / None" />
+                </SelectTrigger>
+                <SelectContent align="start" className="text-xs">
+                  <SelectItem value="none">Uncategorized / None</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Supplier / Creditor Selection */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="supplier">Supplier / Creditor (Balance Sheet)</Label>
-            <select
-              id="supplier"
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100 px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+            <Select
+              value={supplierId || "none"}
+              onValueChange={(val) => setSupplierId(val === "none" ? "" : val)}
             >
-              <option value="" className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">
-                None / Direct Purchase
-              </option>
-              {creditors.map((c) => (
-                <option key={c.id} value={c.id} className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9 w-full text-xs font-medium bg-background text-foreground shadow-xs">
+                <SelectValue placeholder="None / Direct Purchase" />
+              </SelectTrigger>
+              <SelectContent align="start" className="text-xs">
+                <SelectItem value="none">None / Direct Purchase</SelectItem>
+                {creditors.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {!isEdit && supplierId && watchQty > 0 && (
               <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                 ₹{supplierCost.toLocaleString("en-IN")} will be logged to this Supplier in Balance Sheet Creditors.
-              </p>
-            )}
-            {creditors.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                No creditor accounts found. Add suppliers in Balance Sheet to link purchases.
               </p>
             )}
           </div>

@@ -14,7 +14,7 @@ const customerSchema = z.object({
   phone: z.string().optional().or(z.literal("")).default(""),
   address: z.string().optional().or(z.literal("")).default(""),
   notes: z.string().optional().or(z.literal("")).default(""),
-  status: z.enum(["lead", "progress", "active", "inactive"]).default("lead"),
+  status: z.enum(["lead", "progress", "active", "completed", "order_soon"]).default("lead"),
   visited: z.boolean().default(false),
   created_by: z.coerce.number().int().positive().optional().nullable(),
 });
@@ -48,9 +48,9 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
-    statusWhere += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR c.email ILIKE ?)";
+    statusWhere += " AND (c.name ILIKE ? OR c.phone ILIKE ? OR c.product ILIKE ? OR c.email ILIKE ? OR a.name ILIKE ?)";
     const like = `%${search}%`;
-    statusParams.push(like, like, like, like);
+    statusParams.push(like, like, like, like, like);
   }
   statusWhere += dateFilter.clause;
   statusParams.push(...dateFilter.params);
@@ -58,19 +58,21 @@ export async function GET(req: NextRequest) {
   const [customers, totalRow, counts] = await Promise.all([
     query(
       `SELECT c.*, a.name AS created_by_name,
-         (SELECT COUNT(*) FROM appointments ap WHERE ap.customer_id = c.id) AS appointment_count
+         (SELECT COUNT(*) FROM appointments ap WHERE ap.customer_id = c.id AND COALESCE(ap.is_trashed, 0) = 0) AS appointment_count,
+         (SELECT ap.appointment_date FROM appointments ap WHERE ap.customer_id = c.id AND COALESCE(ap.is_trashed, 0) = 0 ORDER BY ap.appointment_date DESC LIMIT 1) AS appointment_date
        FROM customers c LEFT JOIN admins a ON a.id = c.created_by
        ${statusWhere} ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
       [...statusParams, limit, offset]
     ),
-    queryOne<{ c: number }>(`SELECT COUNT(*) as c FROM customers c ${statusWhere}`, statusParams),
-    queryOne<{ all_count: number; lead_count: number; progress_count: number; active_count: number; inactive_count: number; trash_count: number }>(
+    queryOne<{ c: number }>(`SELECT COUNT(*) as c FROM customers c LEFT JOIN admins a ON a.id = c.created_by ${statusWhere}`, statusParams),
+    queryOne<{ all_count: number; lead_count: number; progress_count: number; active_count: number; completed_count: number; order_soon_count: number; trash_count: number }>(
       `SELECT
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 THEN 1 ELSE 0 END) AS all_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='lead' THEN 1 ELSE 0 END) AS lead_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='progress' THEN 1 ELSE 0 END) AS progress_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='active' THEN 1 ELSE 0 END) AS active_count,
-         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='inactive' THEN 1 ELSE 0 END) AS inactive_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND (c.status='completed' OR c.status='inactive') THEN 1 ELSE 0 END) AS completed_count,
+         SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 0 AND c.status='order_soon' THEN 1 ELSE 0 END) AS order_soon_count,
          SUM(CASE WHEN COALESCE(c.is_trashed, 0) = 1 THEN 1 ELSE 0 END) AS trash_count
        FROM customers c WHERE c.tenant_id = ?${dateFilter.clause}`,
       [tenantId, ...dateFilter.params]
@@ -87,7 +89,8 @@ export async function GET(req: NextRequest) {
       lead: counts?.lead_count ?? 0,
       progress: counts?.progress_count ?? 0,
       active: counts?.active_count ?? 0,
-      inactive: counts?.inactive_count ?? 0,
+      completed: counts?.completed_count ?? 0,
+      order_soon: counts?.order_soon_count ?? 0,
       trash: counts?.trash_count ?? 0,
     },
   });

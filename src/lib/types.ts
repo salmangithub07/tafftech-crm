@@ -1,4 +1,4 @@
-export type CustomerStatus = "lead" | "progress" | "active" | "inactive";
+export type CustomerStatus = "lead" | "progress" | "active" | "completed" | "order_soon";
 
 export type Customer = {
   id: number;
@@ -15,6 +15,7 @@ export type Customer = {
   created_by: number | null;
   created_by_name?: string | null;
   appointment_count?: number;
+  appointment_date?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -57,6 +58,13 @@ export type Quotation = {
   created_at: string;
 };
 
+export type ProductCategory = {
+  id: number;
+  tenant_id: number;
+  name: string;
+  created_at?: string;
+};
+
 export type Product = {
   id: number;
   tenant_id: number;
@@ -68,6 +76,9 @@ export type Product = {
   min_stock_level?: number;
   supplier_id?: number | null;
   supplier_name?: string | null;
+  category_id?: number | null;
+  category?: string | null;
+  category_name?: string | null;
   stock?: number;
   created_at: string;
 };
