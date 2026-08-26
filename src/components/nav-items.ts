@@ -13,6 +13,7 @@ import {
   HeartPulse,
   IndianRupee,
   Clock,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { canAccess, type SessionPayload, type PermissionModule } from "@/lib/types";
@@ -42,6 +43,7 @@ export const navItems: NavItem[] = [
   { title: "Balance Sheet", href: "/balance-sheet", icon: Wallet, kind: "fixed", roles: ["admin"] },
   { title: "Team(Users)", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
   { title: "Settings", href: "/settings", icon: Settings, kind: "fixed", roles: ["super_admin", "admin", "executive"] },
+  { title: "Documentation", href: "/docs", icon: BookOpen, kind: "fixed", roles: ["super_admin", "admin", "executive"] },
 ];
 
 

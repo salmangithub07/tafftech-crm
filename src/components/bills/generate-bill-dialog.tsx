@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -424,7 +425,11 @@ export function GenerateBillDialog({
               <h3 className="text-xs font-bold uppercase tracking-wider text-foreground" style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>Product Items</h3>
               <div className="flex items-center gap-2">
                 <Label htmlFor="bill_date" className="text-xs">Bill Date:</Label>
-                <Input id="bill_date" type="date" className="w-36 h-8 text-xs" {...register("bill_date")} />
+                <DatePicker
+                  className="w-36 h-8 text-xs"
+                  value={watch("bill_date")}
+                  onChange={(val) => setValue("bill_date", val, { shouldValidate: true })}
+                />
               </div>
             </div>
 

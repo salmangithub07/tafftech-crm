@@ -67,33 +67,35 @@ export function DashboardShell({
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 sm:px-6">
-          <Button
-            variant="outline"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileNavOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="size-4" />
-          </Button>
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="size-4" />
+            </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
-            className="hidden md:inline-flex"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="hidden md:inline-flex"
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+            </Button>
+          </div>
 
-          <div className="flex-1" />
-
-          <NotificationBell />
-          <ThemeToggle />
-          <UserNav name={session.name} email={session.email} role={session.role} />
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <ThemeToggle />
+            <UserNav name={session.name} email={session.email} role={session.role} />
+          </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-6">{children}</main>

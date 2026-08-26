@@ -67,7 +67,11 @@ function SidebarNavContent({
             >
               <Icon className={cn(
                 "size-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110",
-                active ? "text-primary dark:text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
+                active
+                  ? collapsed
+                    ? "text-primary-foreground"
+                    : "text-primary dark:text-primary-foreground"
+                  : "text-muted-foreground group-hover:text-foreground"
               )} />
               {!collapsed && <span>{item.title}</span>}
             </Link>

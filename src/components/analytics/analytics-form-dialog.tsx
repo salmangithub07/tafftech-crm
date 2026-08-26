@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -167,7 +168,11 @@ export function AnalyticsFormDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="analytics_date">Date *</Label>
-              <Input id="analytics_date" type="date" {...register("analytics_date")} />
+              <DatePicker
+                value={watch("analytics_date")}
+                onChange={(val) => setValue("analytics_date", val, { shouldValidate: true })}
+              />
+              {errors.analytics_date && <p className="text-xs text-destructive">{errors.analytics_date.message}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5 sm:col-span-2">

@@ -198,9 +198,36 @@ export async function ensureActivityTables() {
         utr_number    VARCHAR(100) NOT NULL,
         notes         TEXT,
         status        VARCHAR(20) DEFAULT 'pending',
+        coupon_code   VARCHAR(50) DEFAULT NULL,
+        discount_amount NUMERIC(10, 2) DEFAULT 0,
         created_at    TIMESTAMPTZ DEFAULT NOW(),
         updated_at    TIMESTAMPTZ DEFAULT NOW()
       );
+    `).catch(() => {});
+
+    // Table for tracking promotional offers & discount coupons created by Super Admin
+    await execute(`
+      CREATE TABLE IF NOT EXISTS subscription_coupons (
+        id                    BIGSERIAL PRIMARY KEY,
+        title                 VARCHAR(255) NOT NULL,
+        code                  VARCHAR(50) NOT NULL UNIQUE,
+        discount_percent      INTEGER NOT NULL,
+        banner_text           TEXT,
+        applicable_plan       VARCHAR(50) DEFAULT 'all',
+        valid_till            DATE DEFAULT NULL,
+        is_active             BOOLEAN DEFAULT true,
+        show_on_landing_page  BOOLEAN DEFAULT true,
+        created_at            TIMESTAMPTZ DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE subscription_payments ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(50) DEFAULT NULL;
+    `).catch(() => {});
+
+    await execute(`
+      ALTER TABLE subscription_payments ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) DEFAULT 0;
     `).catch(() => {});
 
     await execute(`

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { PhoneCall, Send, Check, MessageSquare, Sparkles, ShieldCheck, QrCode, Copy, CheckCheck, CheckCircle2 } from "lucide-react";
+import { PhoneCall, Send, Check, MessageSquare, Sparkles, ShieldCheck, QrCode, Copy, CheckCheck, CheckCircle2, Tag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -44,9 +44,21 @@ export function TenantRenewDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [requestSent, setRequestSent] = React.useState(false);
   const [copiedUpi, setCopiedUpi] = React.useState(false);
+  const [couponInput, setCouponInput] = React.useState("");
+  const [appliedCoupon, setAppliedCoupon] = React.useState<{
+    code: string;
+    discountPercent: number;
+    title: string;
+  } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = React.useState(false);
 
   React.useEffect(() => {
     if (open) {
+      setUtrNumber("");
+      setNotes("");
+      setRequestSent(false);
+      setCouponInput("");
+      setAppliedCoupon(null);
       if (planType === "yearly") {
         setSelectedPlan("3_year");
       } else {
@@ -55,8 +67,18 @@ export function TenantRenewDialog({
     }
   }, [open, planType]);
 
-  const activePriceRaw = selectedPlan === "3_year" ? (threeYearPrice || "12999") : (yearlyPrice || "4999");
-  const activePriceFormatted = Number(activePriceRaw).toLocaleString("en-IN");
+  const basePriceRaw = selectedPlan === "3_year" ? (threeYearPrice || "12999") : (yearlyPrice || "4999");
+  const basePriceNum = Number(basePriceRaw);
+
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    discountAmount = Math.round((basePriceNum * appliedCoupon.discountPercent) / 100);
+  }
+
+  const finalPriceNum = Math.max(0, basePriceNum - discountAmount);
+  const activePriceRaw = String(finalPriceNum);
+  const activePriceFormatted = finalPriceNum.toLocaleString("en-IN");
+  const basePriceFormatted = basePriceNum.toLocaleString("en-IN");
 
   const yearlyPriceFormatted = Number(yearlyPrice || 4999).toLocaleString("en-IN");
   const threeYearPriceFormatted = Number(threeYearPrice || 12999).toLocaleString("en-IN");
@@ -67,6 +89,37 @@ export function TenantRenewDialog({
     setCopiedUpi(true);
     toast.success("UPI ID copied to clipboard!");
     setTimeout(() => setCopiedUpi(false), 2000);
+  }
+
+  async function handleApplyCoupon() {
+    const clean = couponInput.trim().toUpperCase();
+    if (!clean) {
+      toast.error("Please enter a coupon code.");
+      return;
+    }
+    setValidatingCoupon(true);
+    try {
+      const res = await fetch(`/api/subscription/coupons?validate=${encodeURIComponent(clean)}&plan=${selectedPlan}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid coupon code.");
+
+      setAppliedCoupon({
+        code: data.coupon.code,
+        discountPercent: data.coupon.discount_percent,
+        title: data.coupon.title,
+      });
+      toast.success(`Coupon '${data.coupon.code}' applied! Saved ${data.coupon.discount_percent}%.`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to apply coupon.");
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    toast.info("Coupon code removed.");
   }
 
   async function handleSendRequest() {
@@ -84,7 +137,13 @@ export function TenantRenewDialog({
       const res = await fetch("/api/subscription/submit-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_type: selectedPlan, utr_number: cleanUtr, notes }),
+        body: JSON.stringify({
+          plan_type: selectedPlan,
+          utr_number: cleanUtr,
+          notes,
+          coupon_code: appliedCoupon?.code || null,
+          discount_amount: discountAmount,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit payment proof");
@@ -101,24 +160,25 @@ export function TenantRenewDialog({
   const superAdminNum = companyPhone || "+91 9876543210";
   const phoneClean = superAdminNum.replace(/[^0-9+]/g, "");
   const planLabel = selectedPlan === "3_year" ? "3-Year Plan (1095 Days)" : "1-Year Plan (365 Days)";
+  const couponText = appliedCoupon ? ` using Coupon ${appliedCoupon.code} (-₹${discountAmount.toLocaleString("en-IN")})` : "";
   const waUrl = `https://wa.me/${phoneClean.replace("+", "")}?text=${encodeURIComponent(
-    `Hello! I have paid ₹${activePriceFormatted} for ${planLabel} CRM Subscription. UTR: ${utrNumber || "N/A"}. Please approve and extend.`
+    `Hello! I have paid ₹${activePriceFormatted} for ${planLabel} CRM Subscription${couponText}. UTR: ${utrNumber || "N/A"}. Please approve and extend.`
   )}`;
 
-  // Dynamic UPI QR string based on selected plan price
+  // Dynamic UPI QR string based on final discounted price
   const qrImageSrc = paymentQrCode || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-    `upi://pay?pa=${upiId}&pn=TaffDeskCRM&am=${activePriceRaw}&cu=INR`
+    `upi://pay?pa=${upiId}&pn=TaffDeskCRM&am=${finalPriceNum}&cu=INR`
   )}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader className="pb-3 border-b">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Sparkles className="size-5 text-primary" />
-            Renew / Upgrade Subscription
+        <DialogHeader className="pb-3 border-b text-left">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-left">
+            <Sparkles className="size-5 text-primary shrink-0" />
+            <span>Renew / Upgrade Subscription</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-left text-xs sm:text-sm">
             Select your plan, scan Super Admin&apos;s QR Code to pay ₹{activePriceFormatted}, enter your UTR number, and request activation.
           </DialogDescription>
         </DialogHeader>
@@ -128,7 +188,7 @@ export function TenantRenewDialog({
           <div className="space-y-4">
             {/* Current status banner */}
             <div className="rounded-xl border border-border bg-muted/40 p-3.5 flex items-center justify-between text-xs">
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 text-left">
                 <span className="text-muted-foreground font-medium">Current Plan</span>
                 <span className="font-semibold text-foreground capitalize">{planType || "Trial"}</span>
               </div>
@@ -141,12 +201,12 @@ export function TenantRenewDialog({
             </div>
 
             {/* Plan Options Selector (1-Year vs 3-Year) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+            <div className="space-y-2 text-left">
+              <Label className="text-xs font-semibold text-foreground flex items-center justify-between flex-wrap gap-1">
                 <span>Select Subscription Plan</span>
                 <span className="text-[11px] font-normal text-muted-foreground">Select plan to update QR price</span>
               </Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1-Year Option */}
                 <button
                   type="button"
@@ -215,6 +275,63 @@ export function TenantRenewDialog({
               </div>
             </div>
 
+            {/* Discount Coupon Section */}
+            <div className="rounded-xl border border-border/80 bg-gradient-to-r from-amber-500/5 via-primary/5 to-emerald-500/5 p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Tag className="size-3.5 text-amber-500" />
+                  Have a Coupon / Offer Code?
+                </span>
+                {appliedCoupon && (
+                  <Badge variant="success" className="text-[10px]">
+                    {appliedCoupon.discountPercent}% OFF APPLIED
+                  </Badge>
+                )}
+              </div>
+
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-foreground font-mono">{appliedCoupon.code}</p>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300 truncate">
+                        {appliedCoupon.title} • Saved ₹{discountAmount.toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveCoupon}
+                    className="h-7 text-xs text-destructive hover:bg-destructive/10 shrink-0"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Enter coupon code (e.g. DIWALI20)..."
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="h-8 text-xs font-mono uppercase bg-background"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplyCoupon}
+                    disabled={validatingCoupon || !couponInput.trim()}
+                    className="h-8 text-xs shrink-0 font-semibold"
+                  >
+                    {validatingCoupon ? <Loader2 className="size-3.5 animate-spin" /> : "Apply"}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* UTR / Transaction ID Field */}
             <div className="space-y-1.5 pt-1">
               <Label htmlFor="utr_number" className="text-xs font-semibold text-foreground flex items-center gap-1">
@@ -252,8 +369,14 @@ export function TenantRenewDialog({
           <div className="space-y-4 flex flex-col justify-between">
             {/* Super Admin Static QR Code & UPI Details */}
             <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card space-y-3 text-center shadow-xs">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                <QrCode className="size-4 text-primary" /> Scan to Pay ₹{activePriceFormatted} via UPI / GPay / PhonePe
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground flex-wrap justify-center">
+                <QrCode className="size-4 text-primary shrink-0" />
+                <span>Scan to Pay</span>
+                {appliedCoupon && (
+                  <span className="line-through text-muted-foreground">₹{basePriceFormatted}</span>
+                )}
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">₹{activePriceFormatted}</span>
+                <span>via UPI / GPay / PhonePe</span>
               </div>
 
               <div className="relative size-44 rounded-xl border bg-white p-2.5 shadow-sm flex items-center justify-center">

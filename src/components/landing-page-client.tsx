@@ -82,16 +82,24 @@ function formatPrice(val: string | number): string {
 
 export function LandingPageClient() {
   const [settings, setSettings] = React.useState<PricingSettings>(DEFAULT_PRICING);
+  const [offers, setOffers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [openFaq, setOpenFaq] = React.useState<number | null>(0);
 
   React.useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch("/api/public/settings");
-        if (res.ok) {
-          const data = await res.json();
+        const [settRes, offerRes] = await Promise.all([
+          fetch("/api/public/settings"),
+          fetch("/api/subscription/coupons?landing=true"),
+        ]);
+        if (settRes.ok) {
+          const data = await settRes.json();
           setSettings((prev) => ({ ...prev, ...data }));
+        }
+        if (offerRes.ok) {
+          const offerData = await offerRes.json();
+          setOffers(offerData.offers || []);
         }
       } catch (e) {
         console.error("Failed to load live settings:", e);
@@ -111,8 +119,21 @@ export function LandingPageClient() {
   const lifetimePriceNum = Number(settings.lifetime_plan_price || 24999);
   const threeYearPerYear = Math.round(threeYearPriceNum / 3);
 
+  const activeOffer = offers.length > 0 ? offers[0] : null;
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
+      {/* Top Festival Promotional Announcement Banner */}
+      {activeOffer && activeOffer.banner_text && (
+        <div className="bg-gradient-to-r from-amber-500 via-primary to-emerald-600 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-sm z-50">
+          <Sparkles className="size-4 shrink-0 animate-bounce" />
+          <span>{activeOffer.banner_text}</span>
+          <a href="#pricing" className="underline font-bold hover:text-amber-200 ml-1">
+            Use Code: <span className="font-mono bg-white/20 px-1.5 py-0.5 rounded text-[11px]">{activeOffer.code}</span> &rarr;
+          </a>
+        </div>
+      )}
+
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne } from "@/lib/db";
+import { query, queryOne, execute } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { ensureActivityTables } from "@/lib/activity";
 
@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const statusFilter = url.searchParams.get("status") || "all";
   const search = url.searchParams.get("search")?.trim() || "";
+  const period = url.searchParams.get("period") || "all";
+  const dateValue = url.searchParams.get("dateValue")?.trim() || "";
 
   let whereSql = "WHERE 1=1";
   const params: unknown[] = [];
@@ -28,12 +30,31 @@ export async function GET(req: NextRequest) {
     params.push(like, like, like);
   }
 
+  let dateWhereSql = "";
+  const dateParams: unknown[] = [];
+
+  if (period === "day" && dateValue) {
+    dateWhereSql = " AND sp.created_at::date = ?::date";
+    dateParams.push(dateValue);
+  } else if (period === "month" && dateValue) {
+    dateWhereSql = " AND TO_CHAR(sp.created_at, 'YYYY-MM') = ?";
+    dateParams.push(dateValue);
+  } else if (period === "year" && dateValue) {
+    dateWhereSql = " AND TO_CHAR(sp.created_at, 'YYYY') = ?";
+    dateParams.push(dateValue);
+  }
+
+  whereSql += dateWhereSql;
+  params.push(...dateParams);
+
+  const summaryWhereSql = dateWhereSql ? `WHERE 1=1 ${dateWhereSql}` : "";
+
   const [payments, summary, expiringSoon, monthlyTrends, planDist] = await Promise.all([
     query(
       `SELECT sp.*, a.status AS admin_status, a.plan_expiry_date
        FROM subscription_payments sp
        LEFT JOIN admins a ON a.id = sp.tenant_id
-       ${whereSql} ORDER BY sp.created_at DESC LIMIT 100`,
+       ${whereSql} ORDER BY sp.created_at DESC LIMIT 200`,
       params
     ),
     queryOne<{
@@ -46,14 +67,16 @@ export async function GET(req: NextRequest) {
       rejected_count: number;
     }>(
       `SELECT
-         COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) AS total_revenue,
-         COALESCE(SUM(CASE WHEN status = 'approved' AND created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) AS this_month_revenue,
-         COALESCE(SUM(CASE WHEN status = 'approved' AND created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND created_at < DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) AS last_month_revenue,
-         COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_revenue,
-         COALESCE(SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END), 0) AS approved_count,
-         COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending_count,
-         COALESCE(SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END), 0) AS rejected_count
-       FROM subscription_payments`
+         COALESCE(SUM(CASE WHEN sp.status = 'approved' THEN sp.amount ELSE 0 END), 0) AS total_revenue,
+         COALESCE(SUM(CASE WHEN sp.status = 'approved' AND sp.created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN sp.amount ELSE 0 END), 0) AS this_month_revenue,
+         COALESCE(SUM(CASE WHEN sp.status = 'approved' AND sp.created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND sp.created_at < DATE_TRUNC('month', CURRENT_DATE) THEN sp.amount ELSE 0 END), 0) AS last_month_revenue,
+         COALESCE(SUM(CASE WHEN sp.status = 'pending' THEN sp.amount ELSE 0 END), 0) AS pending_revenue,
+         COALESCE(SUM(CASE WHEN sp.status = 'approved' THEN 1 ELSE 0 END), 0) AS approved_count,
+         COALESCE(SUM(CASE WHEN sp.status = 'pending' THEN 1 ELSE 0 END), 0) AS pending_count,
+         COALESCE(SUM(CASE WHEN sp.status = 'rejected' THEN 1 ELSE 0 END), 0) AS rejected_count
+       FROM subscription_payments sp
+       ${summaryWhereSql}`,
+      dateParams
     ),
     query<{ id: number; name: string; email: string; plan_type: string; plan_expiry_date: string }>(
       `SELECT id, name, email, plan_type, plan_expiry_date
@@ -116,4 +139,25 @@ export async function GET(req: NextRequest) {
     },
     expiring_soon: expiringSoon,
   });
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.role !== "super_admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  try {
+    const body = await req.json();
+    const { ids } = body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "No payment record IDs provided for deletion" }, { status: 400 });
+    }
+
+    const placeholders = ids.map(() => "?").join(",");
+    const res = await execute(`DELETE FROM subscription_payments WHERE id IN (${placeholders})`, ids);
+
+    return NextResponse.json({ success: true, count: res.affectedRows });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Could not delete payments" }, { status: 500 });
+  }
 }

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -370,7 +371,11 @@ export function QuotationDialog({
               <h3 className="text-xs font-bold uppercase tracking-wider text-foreground" style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>Product Items</h3>
               <div className="flex items-center gap-2">
                 <Label htmlFor="quotation_date" className="text-xs">Quotation Date:</Label>
-                <Input id="quotation_date" type="date" {...register("quotation_date")} className="h-8 w-36 text-xs" />
+                <DatePicker
+                  className="w-36 h-8 text-xs"
+                  value={watch("quotation_date")}
+                  onChange={(val) => setValue("quotation_date", val, { shouldValidate: true })}
+                />
               </div>
             </div>
 

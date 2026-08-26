@@ -59,16 +59,21 @@ export async function POST(req: NextRequest) {
   const amountRaw = planType === "3_year"
     ? (superAdminSettings.three_year_plan_price || "12999")
     : (superAdminSettings.yearly_plan_price || "4999");
-  const amount = parseFloat(amountRaw);
+  const baseAmount = parseFloat(amountRaw);
+  const couponCode = (body?.coupon_code || "").toString().trim().toUpperCase();
+  const discountAmount = parseFloat(body?.discount_amount) || 0;
+  const finalAmount = Math.max(0, baseAmount - discountAmount);
 
   const planTitle = planType === "3_year" ? "3-Year Plan" : "1-Year Plan";
 
   // Save payment submission record
   const result = await execute(
-    `INSERT INTO subscription_payments (tenant_id, admin_name, admin_email, plan_type, amount, utr_number, notes, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-    [tenantId, session.name, session.email, planType, amount, utrNumber, notes]
+    `INSERT INTO subscription_payments (tenant_id, admin_name, admin_email, plan_type, amount, utr_number, notes, status, coupon_code, discount_amount)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+    [tenantId, session.name, session.email, planType, finalAmount, utrNumber, notes, couponCode || null, discountAmount]
   );
+
+  const couponNote = couponCode ? ` (Coupon: ${couponCode}, -₹${discountAmount.toLocaleString("en-IN")})` : "";
 
   // Log activity for Super Admin notification
   await logActivity({
@@ -78,7 +83,7 @@ export async function POST(req: NextRequest) {
     action: "💳 Renewal Payment Proof Submitted",
     entityType: "team",
     entityId: session.id,
-    entityLabel: `${session.name} submitted UTR: ${utrNumber} for ₹${amount.toLocaleString("en-IN")} (${planTitle})`,
+    entityLabel: `${session.name} submitted UTR: ${utrNumber} for ₹${finalAmount.toLocaleString("en-IN")} (${planTitle}${couponNote})`,
   });
 
   return NextResponse.json({

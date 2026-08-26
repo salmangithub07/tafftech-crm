@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -294,7 +295,10 @@ export function AppointmentFormDialog({
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="appointment_date">Date *</Label>
-                <Input id="appointment_date" type="date" {...register("appointment_date")} />
+                <DatePicker
+                  value={watch("appointment_date")}
+                  onChange={(val) => setValue("appointment_date", val, { shouldValidate: true })}
+                />
                 {errors.appointment_date && (
                   <p className="text-xs text-destructive">{errors.appointment_date.message}</p>
                 )}
