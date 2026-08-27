@@ -40,7 +40,7 @@ export default function RegisterPage() {
   const [settings, setSettings] = React.useState({
     yearly_plan_price: "4999",
     three_year_plan_price: "12999",
-    bank_upi_id: "superadmin@upi",
+    bank_upi_id: "",
     payment_qr_code: "",
     company_phone: "+91 9876543210",
   });
@@ -79,7 +79,7 @@ export default function RegisterPage() {
   const finalPriceNum = Math.max(0, basePriceNum - discountAmount);
   const activePriceFormatted = finalPriceNum.toLocaleString("en-IN");
   const basePriceFormatted = basePriceNum.toLocaleString("en-IN");
-  const upiId = settings.bank_upi_id || "superadmin@upi";
+  const upiId = settings.bank_upi_id || "heenakausarkmt@okicici";
 
   function copyUpiToClipboard() {
     navigator.clipboard.writeText(upiId);

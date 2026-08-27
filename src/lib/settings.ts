@@ -63,7 +63,7 @@ const DEFAULTS: AppSettings = {
   bank_name: "",
   bank_account_no: "",
   bank_ifsc: "",
-  bank_upi_id: "",
+  bank_upi_id: "heenakausarkmt@okicici",
   bank_details: "",
   whatsapp_api_provider: "none",
   whatsapp_phone: "",

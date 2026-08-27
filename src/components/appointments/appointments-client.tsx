@@ -22,6 +22,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -412,16 +413,16 @@ export function AppointmentsClient({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10 text-center">
+                  <TableHead className="w-8 px-1.5 2xl:px-3 text-center">
                     <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} aria-label="Select all" />
                   </TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Title / Product</TableHead>
-                  <TableHead>Date &amp; Time</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Remarks</TableHead>
-                  <TableHead>Added By</TableHead>
-                  <TableHead className="w-10" />
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Customer</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Title / Product</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Date &amp; Time</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Status</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Remarks</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Added By</TableHead>
+                  <TableHead className="w-8 px-1 2xl:px-2" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -429,31 +430,37 @@ export function AppointmentsClient({
                   const isSelected = selectedIds.includes(a.id);
                   return (
                     <TableRow key={a.id} data-state={isSelected ? "selected" : undefined}>
-                      <TableCell className="text-center">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-center">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelectOne(a.id)} aria-label={`Select appointment`} />
                       </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <button onClick={() => setProfileCustomerId(a.customer_id)} className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 font-medium max-w-[150px] 2xl:max-w-none">
+                        <div className="flex flex-col gap-0.5">
+                          <button onClick={() => setProfileCustomerId(a.customer_id)} className="text-left font-semibold text-xs 2xl:text-sm text-foreground hover:text-primary hover:underline transition-colors cursor-pointer truncate" title={a.customer_name ?? ""}>
                             {a.customer_name ?? "—"}
                           </button>
                           {a.customer_phone && (
-                            <span className="flex items-center gap-1 text-xs text-primary font-medium">
+                            <span className="flex items-center gap-1 text-[10px] 2xl:text-[11px] text-primary font-medium">
                               <Phone className="size-3 text-primary shrink-0" /> {a.customer_phone}
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{a.title || a.customer_product || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground text-[11px] 2xl:text-xs max-w-[140px] 2xl:max-w-[200px] truncate" title={a.title || a.customer_product || ""}>
+                        {a.title || a.customer_product || "—"}
+                      </TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground whitespace-nowrap text-[11px] 2xl:text-xs font-medium">
                         {a.appointment_date}{a.appointment_time ? ` · ${a.appointment_time.slice(0, 5)}` : ""}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant[a.status]} className="capitalize">{a.status}</Badge>
+                      <TableCell className="px-1.5 py-2 2xl:px-3">
+                        <Badge variant={statusVariant[a.status]} className="capitalize px-1.5 py-0 text-[10px] 2xl:text-xs">{a.status}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-[220px] truncate text-muted-foreground">{a.remarks || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{a.created_by_name || "—"}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3 max-w-[140px] 2xl:max-w-[220px] truncate text-muted-foreground text-[11px] 2xl:text-xs" title={a.remarks || ""}>
+                        {a.remarks || "—"}
+                      </TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground text-[11px] 2xl:text-xs truncate max-w-[90px]" title={a.created_by_name || ""}>
+                        {a.created_by_name || "—"}
+                      </TableCell>
+                      <TableCell className="px-1 py-2 2xl:px-2">
                         <RowActions
                           appointment={a}
                           isTrashTab={isTrashTab}

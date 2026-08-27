@@ -30,11 +30,14 @@ import {
   HelpCircle,
   MessageSquare,
   Flame,
+  Copy,
+  CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 type PricingSettings = {
   site_name: string;
@@ -86,6 +89,8 @@ export function LandingPageClient() {
   const [loading, setLoading] = React.useState(true);
   const [openFaq, setOpenFaq] = React.useState<number | null>(0);
 
+  const [copiedCode, setCopiedCode] = React.useState(false);
+
   React.useEffect(() => {
     async function loadSettings() {
       try {
@@ -110,6 +115,13 @@ export function LandingPageClient() {
     loadSettings();
   }, []);
 
+  function handleCopyCouponCode(code: string) {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success(`Coupon code '${code}' copied to clipboard!`);
+    setTimeout(() => setCopiedCode(false), 2500);
+  }
+
   function toggleFaq(index: number) {
     setOpenFaq((prev) => (prev === index ? null : index));
   }
@@ -125,12 +137,29 @@ export function LandingPageClient() {
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
       {/* Top Festival Promotional Announcement Banner */}
       {activeOffer && activeOffer.banner_text && (
-        <div className="bg-gradient-to-r from-amber-500 via-primary to-emerald-600 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-sm z-50">
-          <Sparkles className="size-4 shrink-0 animate-bounce" />
+        <div className="bg-gradient-to-r from-amber-500 via-primary to-emerald-600 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-sm z-50 flex-wrap">
+          <Sparkles className="size-4 shrink-0 animate-bounce text-amber-200" />
           <span>{activeOffer.banner_text}</span>
-          <a href="#pricing" className="underline font-bold hover:text-amber-200 ml-1">
-            Use Code: <span className="font-mono bg-white/20 px-1.5 py-0.5 rounded text-[11px]">{activeOffer.code}</span> &rarr;
-          </a>
+          <div className="flex items-center gap-1 bg-black/25 rounded-md px-2 py-0.5 border border-white/30 ml-1">
+            <span className="text-[11px] font-medium text-amber-200">Use Code:</span>
+            <span className="font-mono text-white font-extrabold text-xs tracking-wider">{activeOffer.code}</span>
+            <button
+              type="button"
+              onClick={() => handleCopyCouponCode(activeOffer.code)}
+              className="ml-1.5 px-2 py-0.5 bg-white text-primary hover:bg-amber-100 rounded text-[11px] font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+              title="Click to copy coupon code"
+            >
+              {copiedCode ? (
+                <>
+                  <CheckCheck className="size-3.5 text-emerald-600" /> Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5" /> Copy Code
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -147,8 +176,8 @@ export function LandingPageClient() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#comparison" className="hover:text-foreground transition-colors">Comparison</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </nav>

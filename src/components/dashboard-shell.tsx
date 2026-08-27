@@ -48,7 +48,7 @@ export function DashboardShell({
         className={cn(
           "hidden shrink-0 border-r bg-sidebar text-sidebar-foreground md:block",
           mounted ? "transition-[width] duration-200" : "",
-          collapsed ? "w-16" : "w-64"
+          collapsed ? "w-16" : "w-52 2xl:w-60"
         )}
       >
         <div className="sticky top-0 h-svh">

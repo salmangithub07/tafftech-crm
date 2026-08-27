@@ -82,7 +82,7 @@ export function TenantRenewDialog({
 
   const yearlyPriceFormatted = Number(yearlyPrice || 4999).toLocaleString("en-IN");
   const threeYearPriceFormatted = Number(threeYearPrice || 12999).toLocaleString("en-IN");
-  const upiId = bankUpiId || "superadmin@upi";
+  const upiId = bankUpiId || "heenakausarkmt@okicici";
 
   function copyUpiToClipboard() {
     navigator.clipboard.writeText(upiId);

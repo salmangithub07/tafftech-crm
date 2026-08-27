@@ -20,11 +20,13 @@ import {
   Circle,
   User,
   RotateCcw,
-  ShieldAlert,
   Loader2,
   Calendar,
+  ChevronDown,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
@@ -66,12 +70,32 @@ function formatDate(dateStr?: string | null) {
   }
 }
 
-const statusVariant: Record<CustomerStatus, "success" | "warning" | "secondary" | "info" | "outline"> = {
-  active: "success",
-  lead: "warning",
-  progress: "info",
-  order_soon: "outline",
-  completed: "secondary",
+const statusStyleMap: Record<CustomerStatus, { variant: "success" | "warning" | "secondary" | "info" | "outline"; className: string; label: string }> = {
+  active: {
+    variant: "success",
+    className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold",
+    label: "Active",
+  },
+  lead: {
+    variant: "warning",
+    className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 font-semibold",
+    label: "Lead",
+  },
+  progress: {
+    variant: "info",
+    className: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30 font-semibold",
+    label: "Progress",
+  },
+  order_soon: {
+    variant: "outline",
+    className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30 font-semibold",
+    label: "Order Soon",
+  },
+  completed: {
+    variant: "secondary",
+    className: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/40 font-bold shadow-xs",
+    label: "Final",
+  },
 };
 
 const PAGE_SIZE_KEY = "nova-crm:pageSize:customers";
@@ -208,6 +232,27 @@ export function CustomersClient({
       refresh();
     } catch (err: any) {
       toast.error(err.message || "Failed to trash customers.");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }
+
+  async function handleBulkChangeStatus(targetStatus: CustomerStatus) {
+    if (selectedIds.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch("/api/customers/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_ids: selectedIds, status: targetStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update customer status.");
+
+      toast.success(`${selectedIds.length} customer(s) moved to '${data.statusLabel}'.`);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Bulk status update failed.");
     } finally {
       setBulkActionLoading(false);
     }
@@ -474,16 +519,53 @@ export function CustomersClient({
 
             <div className="flex flex-wrap items-center gap-2">
               {!isTrashTab && selectedIds.length > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={bulkActionLoading}
-                  onClick={handleBulkTrash}
-                  className="h-8 text-xs gap-1.5"
-                >
-                  {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                  Move to Trash ({selectedIds.length})
-                </Button>
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={bulkActionLoading}
+                        className="h-8 text-xs gap-1.5 font-semibold bg-background hover:bg-accent border-primary/30 text-primary shadow-xs"
+                      >
+                        {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Tag className="size-3.5" />}
+                        Update Status ({selectedIds.length}) <ChevronDown className="size-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52">
+                      <DropdownMenuLabel className="text-[11px] text-muted-foreground font-semibold">
+                        Move {selectedIds.length} Customers To:
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleBulkChangeStatus("lead")} className="text-xs font-semibold cursor-pointer">
+                        📌 Lead
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkChangeStatus("progress")} className="text-xs font-semibold cursor-pointer">
+                        🔄 In Progress
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkChangeStatus("active")} className="text-xs font-semibold cursor-pointer">
+                        🟢 Active
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkChangeStatus("order_soon")} className="text-xs font-semibold cursor-pointer">
+                        ⏳ Order Soon
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkChangeStatus("completed")} className="text-xs font-semibold cursor-pointer">
+                        ✅ Final / Completed
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={bulkActionLoading}
+                    onClick={handleBulkTrash}
+                    className="h-8 text-xs gap-1.5"
+                  >
+                    {bulkActionLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                    Move to Trash ({selectedIds.length})
+                  </Button>
+                </>
               )}
 
               {isTrashTab && selectedIds.length > 0 && (
@@ -550,14 +632,21 @@ export function CustomersClient({
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Visited</TableHead>
-                  <TableHead>Added by</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="w-10" />
+                  <TableHead className="w-8 px-1.5 2xl:px-3">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Name</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Contact</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Product</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Status</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Visited</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Added by</TableHead>
+                  <TableHead className="px-1.5 2xl:px-3 text-[10px] 2xl:text-[11px]">Date</TableHead>
+                  <TableHead className="w-8 px-1 2xl:px-2" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -565,31 +654,32 @@ export function CustomersClient({
                   const isSelected = selectedIds.includes(c.id);
                   return (
                     <TableRow key={c.id} data-state={isSelected ? "selected" : undefined}>
-                      <TableCell className="text-center">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-center">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelectOne(c.id)}
                           aria-label={`Select ${c.name}`}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 font-medium max-w-[150px] 2xl:max-w-none">
                         <div className="flex flex-col gap-0.5">
                           <button
                             onClick={() => setProfileCustomerId(c.id)}
-                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer"
+                            className="text-left font-semibold text-xs 2xl:text-sm text-foreground hover:text-primary hover:underline transition-colors cursor-pointer truncate"
+                            title={c.name}
                           >
                             {c.name}
                           </button>
                           {c.appointment_date && (
-                            <span className="flex items-center gap-1 text-[11px] text-primary font-medium">
+                            <span className="flex items-center gap-1 text-[10px] 2xl:text-[11px] text-primary font-medium">
                               <Calendar className="size-3 shrink-0 text-primary" />
                               {formatDate(c.appointment_date)}
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <div className="flex flex-col gap-0.5 text-xs">
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground">
+                        <div className="flex flex-col gap-0.5 text-[11px] 2xl:text-xs">
                           {c.phone ? (
                             <span className="font-medium text-primary flex items-center gap-1"><Phone className="size-3 text-primary shrink-0" />{c.phone}</span>
                           ) : (
@@ -597,43 +687,48 @@ export function CustomersClient({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3">
                         {c.product ? (
-                          <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-foreground shadow-2xs">
+                          <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[11px] 2xl:text-xs font-medium text-foreground shadow-2xs max-w-[130px] 2xl:max-w-[180px] truncate" title={c.product}>
                             {c.product}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant[c.status] || "secondary"} className="capitalize">
-                          {c.status === "order_soon" ? "Order Soon" : c.status === "completed" || (c.status as string) === "inactive" ? "Final" : c.status}
-                        </Badge>
+                      <TableCell className="px-1.5 py-2 2xl:px-3">
+                        {(() => {
+                          const isFinal = c.status === "completed" || (c.status as string) === "inactive";
+                          const st = isFinal ? "completed" : c.status;
+                          const conf = statusStyleMap[st] || { variant: "secondary", className: "", label: c.status };
+                          return (
+                            <Badge variant={conf.variant} className={cn("capitalize px-1.5 py-0 text-[10px] 2xl:text-xs", conf.className)}>
+                              {conf.label}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3">
                         <button
                           onClick={() => toggleVisited(c)}
-                          className="flex items-center gap-1 text-xs transition-all"
+                          className="flex items-center gap-1 text-[11px] 2xl:text-xs transition-all"
                         >
                           {c.visited ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/80 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400 shadow-2xs">
-                              <CheckCircle2 className="size-3.5 shrink-0" /> Visited
+                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/80 bg-emerald-50 px-1.5 py-0.5 text-[10px] 2xl:text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400 shadow-2xs">
+                              <CheckCircle2 className="size-3 shrink-0" /> Visited
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground shadow-2xs">
-                              <Circle className="size-3.5 shrink-0" /> Mark visited
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] 2xl:text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground shadow-2xs">
+                              <Circle className="size-3 shrink-0" /> Mark visited
                             </span>
                           )}
                         </button>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{c.created_by_name || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs font-medium">
-                          {formatDate(c.created_at)}
-                        </div>
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground text-[11px] 2xl:text-xs truncate max-w-[90px]" title={c.created_by_name || ""}>{c.created_by_name || "—"}</TableCell>
+                      <TableCell className="px-1.5 py-2 2xl:px-3 text-muted-foreground whitespace-nowrap text-[11px] 2xl:text-xs">
+                        {formatDate(c.created_at)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-1 py-2 2xl:px-2">
                         <RowActions
                           customer={c}
                           isTrashTab={isTrashTab}
@@ -776,9 +871,16 @@ export function CustomersClient({
 
                     {/* Row 3: status badge + visited toggle */}
                     <div className="ml-[26px] mt-2 flex items-center justify-between">
-                      <Badge variant={statusVariant[c.status]} className="capitalize text-[11px] h-5 px-2">
-                        {c.status}
-                      </Badge>
+                      {(() => {
+                        const isFinal = c.status === "completed" || (c.status as string) === "inactive";
+                        const st = isFinal ? "completed" : c.status;
+                        const conf = statusStyleMap[st] || { variant: "secondary", className: "", label: c.status };
+                        return (
+                          <Badge variant={conf.variant} className={cn("capitalize text-[11px] h-5 px-2", conf.className)}>
+                            {conf.label}
+                          </Badge>
+                        );
+                      })()}
                       <button
                         onClick={() => toggleVisited(c)}
                         className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"

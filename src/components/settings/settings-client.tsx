@@ -28,6 +28,7 @@ import {
   Edit3,
   Megaphone,
   Percent,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -137,29 +138,25 @@ export function SettingsClient({
         {canEditAppearance && (
           <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <MessageSquare className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">WhatsApp Gateway</span>
-            <span className="sm:hidden">WhatsApp</span>
+            <span>WA Gateway</span>
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
           <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <IndianRupee className="size-3.5 shrink-0 text-amber-500" />
-            <span className="hidden sm:inline">Subscription Pricing &amp; QR</span>
-            <span className="sm:hidden">Pricing &amp; QR</span>
+            <span>Alerts &amp; Pricing</span>
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
           <TabsTrigger value="coupons" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <Tag className="size-3.5 shrink-0 text-amber-500" />
-            <span className="hidden sm:inline">Offers &amp; Coupons</span>
-            <span className="sm:hidden">Coupons</span>
+            <span>Offers</span>
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
           <TabsTrigger value="seo" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <Code2 className="size-3.5 shrink-0 text-indigo-500" />
-            <span className="hidden sm:inline">SEO &amp; HTML Scripts</span>
-            <span className="sm:hidden">SEO &amp; Scripts</span>
+            <span>Header Scripts</span>
           </TabsTrigger>
         )}
       </TabsList>
@@ -1916,9 +1913,17 @@ function CouponsTab() {
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-foreground">{c.title}</span>
-                          <Badge variant="outline" className="font-mono font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
-                            {c.code}
-                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(c.code);
+                              toast.success(`Coupon code '${c.code}' copied to clipboard!`);
+                            }}
+                            className="font-mono font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-md hover:bg-amber-500/20 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Click to copy code"
+                          >
+                            <Copy className="size-3" /> {c.code}
+                          </button>
                           <Badge variant="success" className="text-[10px]">
                             {c.discount_percent}% OFF
                           </Badge>
