@@ -61,6 +61,8 @@ import { AdminFormDialog } from "@/components/admins/admin-form-dialog";
 import { SubscriptionDialog } from "@/components/admins/subscription-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { ResetPasswordDialog } from "@/components/reset-password-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DateFilter, type DateFilterValue } from "@/components/ui/date-filter";
 import type { Admin } from "@/lib/types";
 import { getSubscriptionInfo } from "@/lib/subscription";
 
@@ -148,10 +150,21 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
   const [paymentSearch, setPaymentSearch] = React.useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = React.useState("all");
   const [copiedUtrId, setCopiedUtrId] = React.useState<number | null>(null);
+  const [paymentDateFilter, setPaymentDateFilter] = React.useState<DateFilterValue>({
+    period: "all",
+    value: "",
+  });
+  const [selectedPaymentIds, setSelectedPaymentIds] = React.useState<number[]>([]);
+  const [deletingPaymentsOpen, setDeletingPaymentsOpen] = React.useState(false);
 
   const fetchPaymentData = React.useCallback(async () => {
     try {
-      const res = await fetch("/api/subscription/payments");
+      const params = new URLSearchParams();
+      if (paymentDateFilter.period !== "all" && paymentDateFilter.value) {
+        params.set("period", paymentDateFilter.period);
+        params.set("dateValue", paymentDateFilter.value);
+      }
+      const res = await fetch(`/api/subscription/payments?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         setAllPayments(json.payments || []);
@@ -161,7 +174,7 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
     } catch {
       // ignore
     }
-  }, []);
+  }, [paymentDateFilter]);
 
   React.useEffect(() => {
     fetchPaymentData();
@@ -255,6 +268,43 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
       p.utr_number?.toLowerCase().includes(paymentSearch.toLowerCase());
     return matchStatus && matchSearch;
   });
+
+  const allVisiblePaymentIds = filteredPayments.map((p) => p.id);
+  const isAllPaymentsSelected =
+    allVisiblePaymentIds.length > 0 && allVisiblePaymentIds.every((id) => selectedPaymentIds.includes(id));
+
+  function toggleSelectAllPayments() {
+    if (isAllPaymentsSelected) {
+      setSelectedPaymentIds([]);
+    } else {
+      setSelectedPaymentIds(allVisiblePaymentIds);
+    }
+  }
+
+  function toggleSelectPayment(id: number) {
+    setSelectedPaymentIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  async function handleBulkDeletePayments() {
+    if (selectedPaymentIds.length === 0) return;
+    try {
+      const res = await fetch("/api/subscription/payments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedPaymentIds }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to delete payments");
+      toast.success(`${selectedPaymentIds.length} payment record(s) deleted permanently.`);
+      setSelectedPaymentIds([]);
+      setDeletingPaymentsOpen(false);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete payments");
+    }
+  }
 
   function copyUtr(utr: string, id: number) {
     navigator.clipboard.writeText(utr);
@@ -646,7 +696,21 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="hidden text-muted-foreground sm:table-cell">{admin.email}</TableCell>
+                          <TableCell className="hidden text-muted-foreground sm:table-cell">
+                            <div className="flex flex-col">
+                              <span>{admin.email}</span>
+                              {admin.phone && (
+                                <a
+                                  href={`https://wa.me/${admin.phone.replace(/[^0-9]/g, "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5 font-semibold"
+                                >
+                                  <PhoneCall className="size-3" /> {admin.phone}
+                                </a>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={admin.status === "active" ? "success" : "secondary"} className="capitalize">
                               {admin.status}
@@ -768,6 +832,16 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                               </Badge>
                             </div>
                             <span className="text-[11px] text-muted-foreground truncate">{admin.email}</span>
+                            {admin.phone && (
+                              <a
+                                href={`https://wa.me/${admin.phone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5 font-semibold"
+                              >
+                                <PhoneCall className="size-3" /> {admin.phone}
+                              </a>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -885,9 +959,9 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
 
         {/* Tab 2: Payment History & Records */}
         <TabsContent value="payments" className="mt-4 space-y-4">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
-              <div className="relative w-full">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by Tenant Name, Email, or UTR..."
@@ -896,6 +970,9 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                   className="pl-9 h-9 text-xs"
                 />
               </div>
+
+              {/* Date Filter for Top Cards & Table */}
+              <DateFilter value={paymentDateFilter} onChange={setPaymentDateFilter} />
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -926,6 +1003,28 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
             </div>
           </div>
 
+          {/* Bulk Selection Action Bar */}
+          {selectedPaymentIds.length > 0 && (
+            <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-destructive/30 bg-destructive/5 text-xs">
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive" className="font-mono text-xs">
+                  {selectedPaymentIds.length} Selected
+                </Badge>
+                <span className="text-muted-foreground hidden sm:inline">
+                  Select payment records to bulk delete permanently.
+                </span>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-semibold"
+                onClick={() => setDeletingPaymentsOpen(true)}
+              >
+                <Trash2 className="size-3.5" /> Delete Selected ({selectedPaymentIds.length})
+              </Button>
+            </div>
+          )}
+
           {filteredPayments.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-xs text-muted-foreground">
@@ -939,6 +1038,12 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={isAllPaymentsSelected}
+                          onCheckedChange={toggleSelectAllPayments}
+                        />
+                      </TableHead>
                       <TableHead>Tenant / Admin</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>UTR Number</TableHead>
@@ -948,107 +1053,131 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPayments.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-sm text-foreground">{p.admin_name}</span>
-                              <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
-                                ID: #{p.admin_id}
-                              </Badge>
+                    {filteredPayments.map((p) => {
+                      const isSelected = selectedPaymentIds.includes(p.id);
+                      return (
+                        <TableRow key={p.id} className={isSelected ? "bg-muted/40" : undefined}>
+                          <TableCell className="w-10">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelectPayment(p.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-sm text-foreground">{p.admin_name}</span>
+                                <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0">
+                                  ID: #{p.admin_id}
+                                </Badge>
+                              </div>
+                              <span className="text-xs text-muted-foreground">{p.admin_email}</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">{p.admin_email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-semibold text-foreground">
-                          ₹{Number(p.amount).toLocaleString("en-IN")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs text-foreground bg-muted/60 px-2 py-0.5 rounded border">
-                              {p.utr_number}
-                            </span>
-                            <button
-                              onClick={() => copyUtr(p.utr_number, p.id)}
-                              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                              title="Copy UTR"
-                            >
-                              {copiedUtrId === p.id ? (
-                                <CheckCheck className="size-3.5 text-emerald-500" />
-                              ) : (
-                                <Copy className="size-3.5" />
+                          </TableCell>
+                          <TableCell className="font-semibold text-foreground">
+                            <div className="flex flex-col">
+                              <span>₹{Number(p.amount).toLocaleString("en-IN")}</span>
+                              {p.coupon_code && (
+                                <Badge variant="outline" className="w-fit text-[9px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 gap-0.5 px-1.5 py-0 mt-0.5">
+                                  🎟️ {p.coupon_code} (-₹{Number(p.discount_amount).toLocaleString("en-IN")})
+                                </Badge>
                               )}
-                            </button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }) : "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              p.status === "approved"
-                                ? "success"
-                                : p.status === "pending"
-                                ? "warning"
-                                : "destructive"
-                            }
-                            className="capitalize text-xs"
-                          >
-                            {p.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {p.status === "pending" ? (
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs text-destructive hover:bg-destructive/10"
-                                onClick={() => handleRejectPayment(p.id, p.admin_name)}
-                              >
-                                Reject
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                                onClick={() => handleApprovePayment(p.id, p.admin_name)}
-                              >
-                                Approve
-                              </Button>
                             </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Processed</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs text-foreground bg-muted/60 px-2 py-0.5 rounded border">
+                                {p.utr_number}
+                              </span>
+                              <button
+                                onClick={() => copyUtr(p.utr_number, p.id)}
+                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                                title="Copy UTR"
+                              >
+                                {copiedUtrId === p.id ? (
+                                  <CheckCheck className="size-3.5 text-emerald-500" />
+                                ) : (
+                                  <Copy className="size-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }) : "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                p.status === "approved"
+                                  ? "success"
+                                  : p.status === "pending"
+                                  ? "warning"
+                                  : "destructive"
+                              }
+                              className="capitalize text-xs"
+                            >
+                              {p.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {p.status === "pending" ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleRejectPayment(p.id, p.admin_name)}
+                                >
+                                  Reject
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  onClick={() => handleApprovePayment(p.id, p.admin_name)}
+                                >
+                                  Approve
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Processed</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </Card>
 
               {/* Mobile Cards View */}
               <div className="flex flex-col gap-2.5 md:hidden">
-                {filteredPayments.map((p) => (
-                  <Card key={p.id} className="p-3 space-y-2.5">
-                    {/* Header: Name & Status */}
-                    <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-sm text-foreground truncate leading-snug">{p.admin_name}</span>
-                          <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0 shrink-0">
-                            ID: #{p.admin_id}
-                          </Badge>
+                {filteredPayments.map((p) => {
+                  const isSelected = selectedPaymentIds.includes(p.id);
+                  return (
+                    <Card key={p.id} className={`p-3 space-y-2.5 ${isSelected ? "border-primary/50 bg-primary/5" : ""}`}>
+                      {/* Header: Checkbox + Name & Status */}
+                      <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelectPayment(p.id)}
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-sm text-foreground truncate leading-snug">{p.admin_name}</span>
+                              <Badge variant="outline" className="font-mono text-[10px] bg-primary/10 text-primary border-primary/20 font-bold px-1.5 py-0 shrink-0">
+                                ID: #{p.admin_id}
+                              </Badge>
+                            </div>
+                            <span className="text-[11px] text-muted-foreground truncate">{p.admin_email}</span>
+                          </div>
                         </div>
-                        <span className="text-[11px] text-muted-foreground truncate">{p.admin_email}</span>
-                      </div>
                       <Badge
                         variant={
                           p.status === "approved"
@@ -1126,9 +1255,10 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                       </div>
                     )}
                   </Card>
-                ))}
-              </div>
-            </>
+                );
+              })}
+            </div>
+          </>
           )}
         </TabsContent>
 
@@ -1524,6 +1654,14 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
           onConfirm={() => handleDelete(deleting)}
         />
       )}
+
+      <ConfirmDeleteDialog
+        open={deletingPaymentsOpen}
+        onOpenChange={setDeletingPaymentsOpen}
+        title={`Delete ${selectedPaymentIds.length} Selected Payment Record(s)?`}
+        description="Selected payment history records will be permanently removed from the system. This action cannot be undone."
+        onConfirm={handleBulkDeletePayments}
+      />
     </div>
   );
 }

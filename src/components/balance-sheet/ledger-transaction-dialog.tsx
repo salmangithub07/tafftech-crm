@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -170,7 +171,11 @@ export function LedgerTransactionDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="entry_date">Date *</Label>
-              <Input id="entry_date" type="date" {...register("entry_date")} />
+              <DatePicker
+                value={watch("entry_date")}
+                onChange={(val) => setValue("entry_date", val, { shouldValidate: true })}
+              />
+              {errors.entry_date && <p className="text-xs text-destructive">{errors.entry_date.message}</p>}
             </div>
           </div>
 

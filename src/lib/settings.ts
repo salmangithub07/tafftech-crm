@@ -165,7 +165,7 @@ const DEFAULTS: AppSettings = {
         "contactPoint": [
           {
             "@type": "ContactPoint",
-            "telephone": "+91-9607086390",
+            "telephone": "+91-7020716334",
             "contactType": "customer service",
             "areaServed": "IN",
             "availableLanguage": ["English", "Hindi"]
@@ -270,10 +270,10 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       ? (providerRaw as WhatsAppProviderType)
       : "none";
 
-    const bName = tenantMap.bank_name ?? globalMap.bank_name ?? DEFAULTS.bank_name;
-    const bAcc = tenantMap.bank_account_no ?? globalMap.bank_account_no ?? DEFAULTS.bank_account_no;
-    const bIfsc = tenantMap.bank_ifsc ?? globalMap.bank_ifsc ?? DEFAULTS.bank_ifsc;
-    const bUpi = tenantMap.bank_upi_id ?? globalMap.bank_upi_id ?? DEFAULTS.bank_upi_id;
+    const bName = (tenantMap.bank_name && tenantMap.bank_name.trim()) || globalMap.bank_name || DEFAULTS.bank_name;
+    const bAcc = (tenantMap.bank_account_no && tenantMap.bank_account_no.trim()) || globalMap.bank_account_no || DEFAULTS.bank_account_no;
+    const bIfsc = (tenantMap.bank_ifsc && tenantMap.bank_ifsc.trim()) || globalMap.bank_ifsc || DEFAULTS.bank_ifsc;
+    const bUpi = (tenantMap.bank_upi_id && tenantMap.bank_upi_id.trim()) || (globalMap.bank_upi_id && globalMap.bank_upi_id.trim()) || DEFAULTS.bank_upi_id;
 
     const formattedBankDetails = `Bank: ${bName}\nA/C No: ${bAcc}\nIFSC Code: ${bIfsc}\nUPI ID: ${bUpi}`;
 
@@ -295,10 +295,10 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       whatsapp_api_key: tenantMap.whatsapp_api_key ?? globalMap.whatsapp_api_key ?? DEFAULTS.whatsapp_api_key,
       whatsapp_instance_id: tenantMap.whatsapp_instance_id ?? globalMap.whatsapp_instance_id ?? DEFAULTS.whatsapp_instance_id,
       whatsapp_reminder_template: tenantMap.whatsapp_reminder_template ?? globalMap.whatsapp_reminder_template ?? DEFAULTS.whatsapp_reminder_template,
-      yearly_plan_price: tenantMap.yearly_plan_price ?? globalMap.yearly_plan_price ?? DEFAULTS.yearly_plan_price,
-      three_year_plan_price: tenantMap.three_year_plan_price ?? globalMap.three_year_plan_price ?? DEFAULTS.three_year_plan_price,
-      lifetime_plan_price: tenantMap.lifetime_plan_price ?? globalMap.lifetime_plan_price ?? DEFAULTS.lifetime_plan_price,
-      payment_qr_code: tenantMap.payment_qr_code ?? globalMap.payment_qr_code ?? DEFAULTS.payment_qr_code,
+      yearly_plan_price: (tenantMap.yearly_plan_price && tenantMap.yearly_plan_price.trim()) || (globalMap.yearly_plan_price && globalMap.yearly_plan_price.trim()) || DEFAULTS.yearly_plan_price,
+      three_year_plan_price: (tenantMap.three_year_plan_price && tenantMap.three_year_plan_price.trim()) || (globalMap.three_year_plan_price && globalMap.three_year_plan_price.trim()) || DEFAULTS.three_year_plan_price,
+      lifetime_plan_price: (tenantMap.lifetime_plan_price && tenantMap.lifetime_plan_price.trim()) || (globalMap.lifetime_plan_price && globalMap.lifetime_plan_price.trim()) || DEFAULTS.lifetime_plan_price,
+      payment_qr_code: (tenantMap.payment_qr_code && tenantMap.payment_qr_code.trim()) || (globalMap.payment_qr_code && globalMap.payment_qr_code.trim()) || DEFAULTS.payment_qr_code,
       trial_max_executives: tenantMap.trial_max_executives ?? globalMap.trial_max_executives ?? DEFAULTS.trial_max_executives,
       trial_max_customers: tenantMap.trial_max_customers ?? globalMap.trial_max_customers ?? DEFAULTS.trial_max_customers,
       yearly_max_executives: tenantMap.yearly_max_executives ?? globalMap.yearly_max_executives ?? DEFAULTS.yearly_max_executives,

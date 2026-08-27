@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -168,11 +169,9 @@ export function SubscriptionDialog({
                 </button>
               )}
             </div>
-            <Input
-              id="expiry_date"
-              type="date"
+            <DatePicker
               value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
+              onChange={setExpiryDate}
             />
           </div>
 

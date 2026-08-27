@@ -1,42 +1,13 @@
+"use client";
+
 import * as React from "react";
-import { CalendarDays, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export type DatePeriod = "all" | "day" | "month" | "year";
-
-export type DateFilterValue = {
-  period: DatePeriod;
-  value: string; // "" for all, "YYYY-MM-DD" for day, "YYYY-MM" for month, "YYYY" for year
-};
-
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 8 }, (_, i) => String(currentYear - i));
-const MONTHS = [
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-function formatDisplayDate(dateStr: string) {
-  if (!dateStr) return "Select date";
+function formatDisplayDate(dateStr?: string) {
+  if (!dateStr) return null;
   const [y, m, d] = dateStr.split("-").map(Number);
   if (!y || !m || !d) return dateStr;
   const date = new Date(y, m - 1, d);
@@ -47,13 +18,21 @@ function formatDisplayDate(dateStr: string) {
   });
 }
 
-function CustomDatePicker({
-  value,
+export interface DatePickerProps {
+  value?: string; // "YYYY-MM-DD"
+  onChange?: (dateStr: string) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+}
+
+export function DatePicker({
+  value = "",
   onChange,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-}) {
+  placeholder = "Select date",
+  className,
+  disabled = false,
+}: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
   const initialDate = React.useMemo(() => {
@@ -143,23 +122,30 @@ function CustomDatePicker({
   }
 
   function handleSelectDate(dateStr: string) {
-    onChange(dateStr);
+    onChange?.(dateStr);
     setOpen(false);
   }
+
+  const display = formatDisplayDate(value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
+          disabled={disabled}
           variant="outline"
-          size="sm"
-          className="h-8 min-w-[140px] justify-between text-xs font-medium border-input bg-card hover:bg-muted"
+          className={cn(
+            "w-full h-9 justify-between text-xs font-normal border-input bg-card hover:bg-muted focus:ring-1 focus:ring-primary text-left px-3",
+            !value && "text-muted-foreground",
+            className
+          )}
         >
-          <div className="flex items-center gap-1.5 min-w-0">
-            <CalendarDays className="size-3.5 text-primary shrink-0" />
-            <span className="font-semibold truncate">{formatDisplayDate(value)}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <CalendarDays className="size-4 text-primary shrink-0 opacity-80" />
+            <span className="font-medium truncate">{display || placeholder}</span>
           </div>
-          <ChevronDown className="size-3 text-muted-foreground shrink-0 opacity-70" />
+          <ChevronDown className="size-3.5 text-muted-foreground shrink-0 opacity-60 ml-1" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[285px] p-3" align="start">
@@ -229,130 +215,4 @@ function CustomDatePicker({
       </PopoverContent>
     </Popover>
   );
-}
-
-export function DateFilter({
-  value,
-  onChange,
-}: {
-  value: DateFilterValue;
-  onChange: (next: DateFilterValue) => void;
-}) {
-  function setPeriod(period: DatePeriod) {
-    if (period === "month") {
-      const defaultMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
-      onChange({ period, value: defaultMonth });
-    } else if (period === "year") {
-      onChange({ period, value: String(currentYear) });
-    } else if (period === "day") {
-      const defaultDay = new Date().toISOString().split("T")[0];
-      onChange({ period, value: defaultDay });
-    } else {
-      onChange({ period, value: "" });
-    }
-  }
-
-  const [selectedYear, selectedMonth] = React.useMemo(() => {
-    if (value.period === "month" && value.value && value.value.includes("-")) {
-      const parts = value.value.split("-");
-      return [parts[0], parts[1]];
-    }
-    return [String(currentYear), String(new Date().getMonth() + 1).padStart(2, "0")];
-  }, [value.period, value.value]);
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select value={value.period} onValueChange={(p) => setPeriod(p as DatePeriod)}>
-        <SelectTrigger size="sm" className="w-[125px] h-8 text-xs font-medium">
-          <CalendarDays className="size-3.5 text-muted-foreground shrink-0" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All time</SelectItem>
-          <SelectItem value="day">Specific day</SelectItem>
-          <SelectItem value="month">Month</SelectItem>
-          <SelectItem value="year">Year</SelectItem>
-        </SelectContent>
-      </Select>
-
-      {value.period === "day" && (
-        <CustomDatePicker
-          value={value.value}
-          onChange={(v) => onChange({ period: "day", value: v })}
-        />
-      )}
-
-      {value.period === "month" && (
-        <div className="flex items-center gap-1.5">
-          <Select
-            value={selectedMonth}
-            onValueChange={(m) => onChange({ period: "month", value: `${selectedYear}-${m}` })}
-          >
-            <SelectTrigger size="sm" className="w-[125px] h-8 text-xs font-medium">
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={selectedYear}
-            onValueChange={(y) => onChange({ period: "month", value: `${y}-${selectedMonth}` })}
-          >
-            <SelectTrigger size="sm" className="w-[95px] h-8 text-xs font-medium">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {YEARS.map((y) => (
-                <SelectItem key={y} value={y}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {value.period === "year" && (
-        <Select
-          value={value.value || String(currentYear)}
-          onValueChange={(v) => onChange({ period: "year", value: v })}
-        >
-          <SelectTrigger size="sm" className="w-[110px] h-8 text-xs font-medium">
-            <SelectValue placeholder="Select year" />
-          </SelectTrigger>
-          <SelectContent>
-            {YEARS.map((y) => (
-              <SelectItem key={y} value={y}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {value.period !== "all" && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground"
-          onClick={() => onChange({ period: "all", value: "" })}
-          title="Clear date filter"
-        >
-          <X className="size-4" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
-/** Builds the `period`/`date` query params to send to the API for a given filter value. */
-export function dateFilterParams(value: DateFilterValue): Record<string, string> {
-  if (value.period === "all" || !value.value) return {};
-  return { period: value.period, date: value.value };
 }

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -185,7 +186,10 @@ export function RecordPaymentDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="payment_date">Payment Date *</Label>
-              <Input id="payment_date" type="date" {...register("payment_date")} />
+              <DatePicker
+                value={watch("payment_date")}
+                onChange={(val) => setValue("payment_date", val, { shouldValidate: true })}
+              />
               {errors.payment_date && (
                 <p className="text-xs text-destructive">{errors.payment_date.message}</p>
               )}

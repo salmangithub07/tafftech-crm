@@ -43,6 +43,7 @@ export default async function SettingsPage() {
           initialSettings={settings}
           subscriptionInfo={subInfo}
           superAdminPhone={superAdminPhone}
+          superAdminSettings={superAdminSettings}
         />
       </Suspense>
     </div>

@@ -21,6 +21,13 @@ import {
   Eye,
   EyeOff,
   Code2,
+  CreditCard,
+  Tag,
+  Plus,
+  Trash2,
+  Edit3,
+  Megaphone,
+  Percent,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -46,6 +53,15 @@ import { ACCENT_PRESETS } from "@/lib/colors";
 import type { SessionPayload } from "@/lib/types";
 import type { AppSettings, InvoiceTemplateType, WhatsAppProviderType } from "@/lib/settings";
 import type { SubscriptionInfo } from "@/lib/subscription";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { TenantRenewDialog } from "@/components/tenant-renew-dialog";
 import { cn } from "@/lib/utils";
 
@@ -64,11 +80,13 @@ export function SettingsClient({
   initialSettings,
   subscriptionInfo,
   superAdminPhone,
+  superAdminSettings,
 }: {
   session: SessionPayload;
   initialSettings: AppSettings;
   subscriptionInfo?: SubscriptionInfo | null;
   superAdminPhone?: string | null;
+  superAdminSettings?: AppSettings | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,12 +108,15 @@ export function SettingsClient({
     router.push(`/settings?${params.toString()}`, { scroll: false });
   };
 
-  const canEditAppearance = session.role === "super_admin" || session.role === "admin";
-  const canEditInvoice = session.role === "admin";
+  const isSuperAdmin = session.role === "super_admin";
+  const isAdmin = session.role === "admin";
+
+  const canEditAppearance = isSuperAdmin || isAdmin;
+  const canEditInvoice = isAdmin;
 
   return (
-    <Tabs value={activeTab || "profile"} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-2 w-full h-auto p-1 gap-1 sm:flex sm:w-fit sm:h-9">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="flex overflow-x-auto w-max sm:w-fit max-w-full justify-start p-1 gap-1">
         <TabsTrigger value="profile" className="gap-1.5 text-xs py-1.5 sm:py-1">
           <User className="size-3.5 shrink-0" />
           <span>Profile</span>
@@ -103,29 +124,35 @@ export function SettingsClient({
         {canEditAppearance && (
           <TabsTrigger value="appearance" className="gap-1.5 text-xs py-1.5 sm:py-1">
             <Palette className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">Appearance</span>
-            <span className="sm:hidden">Theme</span>
+            <span>Appearance</span>
           </TabsTrigger>
         )}
         {canEditInvoice && (
           <TabsTrigger value="invoice" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <FileText className="size-3.5 shrink-0" />
+            <CreditCard className="size-3.5 shrink-0" />
             <span className="hidden sm:inline">Invoice &amp; Bank</span>
-            <span className="sm:hidden">Invoice &amp; Bank</span>
+            <span className="sm:hidden">Invoice</span>
           </TabsTrigger>
         )}
         {canEditAppearance && (
           <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <MessageSquare className="size-3.5 shrink-0" />
+            <MessageSquare className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span className="hidden sm:inline">WhatsApp Gateway</span>
             <span className="sm:hidden">WhatsApp</span>
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
           <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <IndianRupee className="size-3.5 shrink-0" />
+            <IndianRupee className="size-3.5 shrink-0 text-amber-500" />
             <span className="hidden sm:inline">Subscription Pricing &amp; QR</span>
             <span className="sm:hidden">Pricing &amp; QR</span>
+          </TabsTrigger>
+        )}
+        {session.role === "super_admin" && (
+          <TabsTrigger value="coupons" className="gap-1.5 text-xs py-1.5 sm:py-1">
+            <Tag className="size-3.5 shrink-0 text-amber-500" />
+            <span className="hidden sm:inline">Offers &amp; Coupons</span>
+            <span className="sm:hidden">Coupons</span>
           </TabsTrigger>
         )}
         {session.role === "super_admin" && (
@@ -143,6 +170,7 @@ export function SettingsClient({
           subscriptionInfo={subscriptionInfo}
           initialSettings={initialSettings}
           superAdminPhone={superAdminPhone}
+          superAdminSettings={superAdminSettings}
         />
       </TabsContent>
       {canEditAppearance && (
@@ -166,6 +194,11 @@ export function SettingsClient({
         </TabsContent>
       )}
       {session.role === "super_admin" && (
+        <TabsContent value="coupons" className="mt-6">
+          <CouponsTab />
+        </TabsContent>
+      )}
+      {session.role === "super_admin" && (
         <TabsContent value="seo" className="mt-6">
           <SeoHtmlScriptsTab initialSettings={initialSettings} />
         </TabsContent>
@@ -181,11 +214,13 @@ function ProfileTab({
   subscriptionInfo,
   initialSettings,
   superAdminPhone,
+  superAdminSettings,
 }: {
   session: SessionPayload;
   subscriptionInfo?: SubscriptionInfo | null;
   initialSettings: AppSettings;
   superAdminPhone?: string | null;
+  superAdminSettings?: AppSettings | null;
 }) {
   const router = useRouter();
   const [name, setName] = React.useState(session.name);
@@ -311,11 +346,11 @@ function ProfileTab({
         onOpenChange={setRenewDialogOpen}
         planType={subscriptionInfo?.planType}
         expiryDate={subscriptionInfo?.formattedExpiry}
-        companyPhone={superAdminPhone || initialSettings.company_phone}
-        yearlyPrice={initialSettings.yearly_plan_price}
-        threeYearPrice={initialSettings.three_year_plan_price}
-        bankUpiId={initialSettings.bank_upi_id}
-        paymentQrCode={initialSettings.payment_qr_code}
+        companyPhone={superAdminPhone || superAdminSettings?.company_phone || initialSettings.company_phone}
+        yearlyPrice={superAdminSettings?.yearly_plan_price || initialSettings.yearly_plan_price}
+        threeYearPrice={superAdminSettings?.three_year_plan_price || initialSettings.three_year_plan_price}
+        bankUpiId={superAdminSettings?.bank_upi_id || initialSettings.bank_upi_id}
+        paymentQrCode={superAdminSettings?.payment_qr_code || initialSettings.payment_qr_code}
       />
 
       <Card>
@@ -1531,7 +1566,7 @@ function SeoHtmlScriptsTab({ initialSettings }: { initialSettings: AppSettings }
           "contactPoint": [
             {
               "@type": "ContactPoint",
-              "telephone": "+91-9607086390",
+              "telephone": "+91-7020716334",
               "contactType": "customer service",
               "areaServed": "IN",
               "availableLanguage": ["English", "Hindi"]
@@ -1702,6 +1737,392 @@ function SeoHtmlScriptsTab({ initialSettings }: { initialSettings: AppSettings }
         </CardFooter>
       </Card>
     </form>
+  );
+}
+
+function CouponsTab() {
+  const [coupons, setCoupons] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editingCoupon, setEditingCoupon] = React.useState<any | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  // Form states
+  const [title, setTitle] = React.useState("");
+  const [code, setCode] = React.useState("");
+  const [discountPercent, setDiscountPercent] = React.useState("20");
+  const [bannerText, setBannerText] = React.useState("");
+  const [applicablePlan, setApplicablePlan] = React.useState("all");
+  const [validTill, setValidTill] = React.useState("");
+  const [isActive, setIsActive] = React.useState(true);
+  const [showOnLandingPage, setShowOnLandingPage] = React.useState(true);
+
+  const fetchCoupons = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/subscription/coupons");
+      const data = await res.json();
+      if (res.ok) setCoupons(data.coupons || []);
+    } catch {
+      toast.error("Failed to load coupons");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchCoupons();
+  }, [fetchCoupons]);
+
+  function handleOpenCreate() {
+    setEditingCoupon(null);
+    setTitle("");
+    setCode("");
+    setDiscountPercent("20");
+    setBannerText("");
+    setApplicablePlan("all");
+    setValidTill("");
+    setIsActive(true);
+    setShowOnLandingPage(true);
+    setDialogOpen(true);
+  }
+
+  function handleOpenEdit(coupon: any) {
+    setEditingCoupon(coupon);
+    setTitle(coupon.title);
+    setCode(coupon.code);
+    setDiscountPercent(String(coupon.discount_percent));
+    setBannerText(coupon.banner_text || "");
+    setApplicablePlan(coupon.applicable_plan || "all");
+    setValidTill(coupon.valid_till ? coupon.valid_till.split("T")[0] : "");
+    setIsActive(Boolean(coupon.is_active));
+    setShowOnLandingPage(Boolean(coupon.show_on_landing_page));
+    setDialogOpen(true);
+  }
+
+  async function handleSaveCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return toast.error("Please enter an offer title.");
+    if (!code.trim()) return toast.error("Please enter a coupon code.");
+
+    setSaving(true);
+    try {
+      const payload = {
+        title: title.trim(),
+        code: code.trim().toUpperCase(),
+        discount_percent: Number(discountPercent),
+        banner_text: bannerText,
+        applicable_plan: applicablePlan,
+        valid_till: validTill || null,
+        is_active: isActive,
+        show_on_landing_page: showOnLandingPage,
+      };
+
+      const res = await fetch(
+        editingCoupon ? `/api/subscription/coupons/${editingCoupon.id}` : "/api/subscription/coupons",
+        {
+          method: editingCoupon ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+
+      toast.success(editingCoupon ? "Coupon offer updated!" : "New coupon offer created!");
+      setDialogOpen(false);
+      fetchCoupons();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save coupon.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteCoupon(id: number) {
+    if (!confirm("Are you sure you want to delete this coupon offer?")) return;
+    try {
+      const res = await fetch(`/api/subscription/coupons/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      toast.success("Coupon deleted.");
+      fetchCoupons();
+    } catch {
+      toast.error("Failed to delete coupon.");
+    }
+  }
+
+  async function handleToggleField(coupon: any, field: "is_active" | "show_on_landing_page") {
+    try {
+      const updatedValue = !coupon[field];
+      const res = await fetch(`/api/subscription/coupons/${coupon.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: updatedValue }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      toast.success("Coupon status updated.");
+      fetchCoupons();
+    } catch {
+      toast.error("Failed to update status.");
+    }
+  }
+
+  return (
+    <Card className="shadow-xs border-border/80">
+      <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+        <div>
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <Tag className="size-5 text-amber-500" />
+            Promotional Offers &amp; Discount Coupons
+          </CardTitle>
+          <CardDescription className="text-xs mt-1">
+            Create festival discount codes (Diwali, Eid, New Year) for plan renewals and display promotional banners on the landing page.
+          </CardDescription>
+        </div>
+        <Button onClick={handleOpenCreate} className="h-8 text-xs gap-1.5 font-semibold">
+          <Plus className="size-4" /> Create Offer Code
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {loading ? (
+          <div className="py-12 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+            <Loader2 className="size-4 animate-spin text-primary" /> Loading coupon offers...
+          </div>
+        ) : coupons.length === 0 ? (
+          <div className="py-12 text-center text-xs text-muted-foreground space-y-3">
+            <Tag className="size-8 text-muted-foreground/50 mx-auto" />
+            <p className="font-semibold text-foreground text-sm">No promotional offers created yet</p>
+            <p>Click &quot;Create Offer Code&quot; to add your first festival discount code (e.g. DIWALI20).</p>
+            <Button size="sm" onClick={handleOpenCreate} className="h-8 text-xs gap-1.5">
+              <Plus className="size-3.5" /> Create Offer Code
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {coupons.map((c) => {
+              const today = new Date().toISOString().split("T")[0];
+              const isExpired = c.valid_till && c.valid_till < today;
+              return (
+                <div
+                  key={c.id}
+                  className={`p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                    !c.is_active || isExpired
+                      ? "bg-muted/30 border-border/60 opacity-80"
+                      : "bg-gradient-to-br from-card to-amber-500/5 border-amber-500/30 shadow-2xs"
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-foreground">{c.title}</span>
+                          <Badge variant="outline" className="font-mono font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                            {c.code}
+                          </Badge>
+                          <Badge variant="success" className="text-[10px]">
+                            {c.discount_percent}% OFF
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Plan: <span className="font-medium text-foreground capitalize">{c.applicable_plan === "all" ? "All Plans" : c.applicable_plan === "3_year" ? "3-Year Plan" : "1-Year Plan"}</span>
+                          {c.valid_till ? ` • Valid Till: ${c.valid_till.split("T")[0]}` : " • No Expiry"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {c.banner_text && (
+                      <div className="p-2 rounded-lg bg-background/80 border border-border/60 text-xs text-muted-foreground flex items-center gap-2">
+                        <Megaphone className="size-3.5 text-amber-500 shrink-0" />
+                        <span className="truncate">&quot;{c.banner_text}&quot;</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px]">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(c.is_active)}
+                          onChange={() => handleToggleField(c, "is_active")}
+                          className="rounded border-border text-primary focus:ring-primary size-3.5"
+                        />
+                        <span>Active</span>
+                      </label>
+
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px]">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(c.show_on_landing_page)}
+                          onChange={() => handleToggleField(c, "show_on_landing_page")}
+                          className="rounded border-border text-primary focus:ring-primary size-3.5"
+                        />
+                        <span>Landing Page Banner</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(c)}
+                        className="h-7 w-7 p-0"
+                        title="Edit Coupon"
+                      >
+                        <Edit3 className="size-3.5 text-muted-foreground hover:text-foreground" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteCoupon(c.id)}
+                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                        title="Delete Coupon"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+
+      {/* Create / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Tag className="size-4 text-amber-500" />
+              {editingCoupon ? "Edit Offer Code" : "Create New Promotional Offer"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Configure festival offers (e.g. Diwali, Eid), percentage discounts, and landing page announcements.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveCoupon} className="space-y-4 py-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="coupon_title" className="text-xs">Offer Title *</Label>
+                <Input
+                  id="coupon_title"
+                  placeholder="e.g. Diwali Festival Offer"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-9 text-xs"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="coupon_code" className="text-xs">Coupon Code *</Label>
+                <Input
+                  id="coupon_code"
+                  placeholder="e.g. DIWALI20"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  className="h-9 text-xs font-mono uppercase"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="discount_percent" className="text-xs">Discount % *</Label>
+                <div className="relative">
+                  <Input
+                    id="discount_percent"
+                    type="number"
+                    min={1}
+                    max={99}
+                    placeholder="20"
+                    value={discountPercent}
+                    onChange={(e) => setDiscountPercent(e.target.value)}
+                    className="h-9 text-xs pr-7"
+                    required
+                  />
+                  <Percent className="size-3.5 absolute right-2.5 top-2.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="applicable_plan" className="text-xs">Applicable Plan</Label>
+                <Select value={applicablePlan} onValueChange={setApplicablePlan}>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Plans</SelectItem>
+                    <SelectItem value="yearly">1-Year Plan Only</SelectItem>
+                    <SelectItem value="3_year">3-Year Plan Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Expiry Date (Optional)</Label>
+                <DatePicker
+                  value={validTill}
+                  onChange={setValidTill}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="banner_text" className="text-xs">Landing Page Announcement Banner Text</Label>
+              <Input
+                id="banner_text"
+                placeholder="e.g. 🪔 Diwali Sale: Get 20% OFF on 3-Year Plan! Use code DIWALI20"
+                value={bannerText}
+                onChange={(e) => setBannerText(e.target.value)}
+                className="h-9 text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                This text will be displayed in an animated banner at the top of the public landing page.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-6 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary size-4"
+                />
+                <span>Active Code</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={showOnLandingPage}
+                  onChange={(e) => setShowOnLandingPage(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary size-4"
+                />
+                <span>Feature on Landing Page</span>
+              </label>
+            </div>
+
+            <DialogFooter className="pt-3">
+              <Button type="button" variant="outline" size="sm" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={saving} className="gap-1.5 font-semibold">
+                {saving && <Loader2 className="size-3.5 animate-spin" />}
+                {editingCoupon ? "Save Changes" : "Create Offer"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 

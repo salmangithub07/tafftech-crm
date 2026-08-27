@@ -261,6 +261,7 @@ export type Admin = {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
   role: Role;
   tenant_id: number | null;
   created_by: number | null;

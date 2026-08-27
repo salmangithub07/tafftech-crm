@@ -21,7 +21,7 @@ export async function GET() {
   let admins = [];
   try {
     const rawAdmins = await query<any>(
-      `SELECT ad.id, ad.name, ad.email, ad.role, ad.status, ad.created_at,
+      `SELECT ad.id, ad.name, ad.email, ad.phone, ad.role, ad.status, ad.created_at,
          ad.plan_type, ad.plan_start_date, ad.plan_expiry_date,
          ad.last_login_at, ad.last_activity_at,
          (SELECT COUNT(*) FROM customers c WHERE c.tenant_id = ad.id AND COALESCE(c.is_trashed, 0) = 0) AS customer_count,
