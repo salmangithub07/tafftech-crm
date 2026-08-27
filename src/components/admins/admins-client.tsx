@@ -696,7 +696,21 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="hidden text-muted-foreground sm:table-cell">{admin.email}</TableCell>
+                          <TableCell className="hidden text-muted-foreground sm:table-cell">
+                            <div className="flex flex-col">
+                              <span>{admin.email}</span>
+                              {admin.phone && (
+                                <a
+                                  href={`https://wa.me/${admin.phone.replace(/[^0-9]/g, "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5 font-semibold"
+                                >
+                                  <PhoneCall className="size-3" /> {admin.phone}
+                                </a>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={admin.status === "active" ? "success" : "secondary"} className="capitalize">
                               {admin.status}
@@ -818,6 +832,16 @@ export function AdminsClient({ initialAdmins }: { initialAdmins: Admin[] }) {
                               </Badge>
                             </div>
                             <span className="text-[11px] text-muted-foreground truncate">{admin.email}</span>
+                            {admin.phone && (
+                              <a
+                                href={`https://wa.me/${admin.phone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5 font-semibold"
+                              >
+                                <PhoneCall className="size-3" /> {admin.phone}
+                              </a>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">

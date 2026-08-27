@@ -231,6 +231,10 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     await execute(`
+      ALTER TABLE admins ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT NULL;
+    `).catch(() => {});
+
+    await execute(`
       ALTER TABLE admins ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ DEFAULT NULL;
     `).catch(() => {});
 

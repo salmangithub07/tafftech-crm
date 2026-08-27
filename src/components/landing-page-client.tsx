@@ -209,7 +209,7 @@ export function LandingPageClient() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto text-sm font-semibold h-12 border-border/80 bg-background/80 backdrop-blur-xs hover:bg-muted">
-                <Link href="/login">Sign In / Demo Login</Link>
+                <Link href="/login">Sign In</Link>
               </Button>
             </div>
 
@@ -949,7 +949,7 @@ export function LandingPageClient() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto text-sm font-semibold h-12 border-white/30 text-white bg-white/10 backdrop-blur-xs hover:bg-white/20 hover:text-white">
-                <Link href="/login">Explore Demo Login</Link>
+                <Link href="/login">Sign In to Dashboard</Link>
               </Button>
             </div>
           </div>
