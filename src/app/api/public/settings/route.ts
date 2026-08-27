@@ -19,6 +19,9 @@ export async function GET() {
       three_year_max_customers: s.three_year_max_customers || "5000",
       lifetime_max_executives: s.lifetime_max_executives || "-1",
       lifetime_max_customers: s.lifetime_max_customers || "-1",
+      bank_upi_id: s.bank_upi_id || "",
+      payment_qr_code: s.payment_qr_code || "",
+      company_phone: s.company_phone || "",
     });
   } catch (err) {
     return NextResponse.json({ error: "Failed to load pricing settings" }, { status: 500 });
