@@ -59,7 +59,7 @@ export function TenantRenewDialog({
       setRequestSent(false);
       setCouponInput("");
       setAppliedCoupon(null);
-      if (planType === "yearly") {
+      if (planType === "yearly" || planType === "3_year" || planType === "three_year") {
         setSelectedPlan("3_year");
       } else {
         setSelectedPlan("yearly");

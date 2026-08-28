@@ -445,7 +445,7 @@ export function DocsClient({ session }: { session: SessionPayload }) {
                 <div className="p-4 rounded-xl border space-y-2">
                   <h4 className="font-bold text-sm text-foreground">SaaS Revenue &amp; Tenant Expiries</h4>
                   <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-                    <li><strong>SaaS Revenue Dashboard:</strong> Monitor total SaaS revenue, active tenant counts, and plan breakdown.</li>
+                    <li><strong>SaaS Dashboard:</strong> Monitor total SaaS revenue, active tenant counts, and plan breakdown.</li>
                     <li><strong>Tenants &amp; Admins:</strong> Create new tenant accounts, edit subscription plan tiers, extend expiry dates, or login as tenant.</li>
                     <li><strong>Upcoming Expiries (7d):</strong> Real-time tracking of tenant subscriptions nearing expiration.</li>
                   </ul>
