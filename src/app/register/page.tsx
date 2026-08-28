@@ -14,6 +14,12 @@ import {
   Tag,
   QrCode,
   CreditCard,
+  Mail,
+  Phone,
+  Lock,
+  Building2,
+  Receipt,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +38,11 @@ export default function RegisterPage() {
   const [agree, setAgree] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+
+  // Email / Username Availability States
+  const [emailChecking, setEmailChecking] = React.useState(false);
+  const [emailStatus, setEmailStatus] = React.useState<"idle" | "available" | "unavailable" | "invalid">("idle");
+  const [emailMessage, setEmailMessage] = React.useState("");
 
   // Plan Selection & Payment States
   const [selectedPlan, setSelectedPlan] = React.useState<"trial" | "yearly" | "3_year">("trial");
@@ -53,6 +64,51 @@ export default function RegisterPage() {
     title: string;
   } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = React.useState(false);
+
+  // Realtime Email Availability Checker
+  React.useEffect(() => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      setEmailStatus("idle");
+      setEmailMessage("");
+      setEmailChecking(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      if (trimmed.includes("@") && trimmed.split("@")[1].length > 1) {
+        setEmailStatus("invalid");
+        setEmailMessage("Please enter a valid email domain (e.g. name@company.com)");
+      } else {
+        setEmailStatus("idle");
+        setEmailMessage("");
+      }
+      setEmailChecking(false);
+      return;
+    }
+
+    setEmailChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        if (data.available) {
+          setEmailStatus("available");
+          setEmailMessage("Username / Email is available!");
+        } else {
+          setEmailStatus("unavailable");
+          setEmailMessage(data.message || "This email is already registered.");
+        }
+      } catch {
+        setEmailStatus("idle");
+      } finally {
+        setEmailChecking(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [email]);
 
   React.useEffect(() => {
     fetch("/api/public/settings")
@@ -163,6 +219,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (emailStatus === "unavailable") {
+      setError("This email address is already registered. Please sign in or use a different email.");
+      return;
+    }
+
     if (selectedPlan !== "trial") {
       const cleanUtr = utrNumber.trim();
       if (!cleanUtr) {
@@ -222,161 +283,498 @@ export default function RegisterPage() {
     )}`;
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-muted/40 p-4 sm:p-6">
-      <div className="w-full max-w-lg space-y-4">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <LayoutDashboard className="size-6" />
-          </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
-            <Sparkles className="size-3.5" />
-            Flexible Business Plans · Instant Workspace Setup
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Register your Taff Desk CRM Workspace
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
-            Select a plan and fill in your details to get started.
-          </p>
+    <div className="min-h-screen w-full flex flex-col md:grid md:grid-cols-12 bg-background font-sans items-start">
+      {/* Left Hero Section (Sticky Desktop >= 768px + Vibrant Aurora Gradient & Dot Grid) */}
+      <div className="relative hidden md:flex md:col-span-5 flex-col justify-between p-6 lg:p-10 2xl:p-14 bg-gradient-to-br from-[#1a0b2e] via-[#0d1527] to-[#2b0838] text-white overflow-hidden md:sticky md:top-0 md:h-screen border-r border-border/20 select-none">
+        {/* Vibrant Ambient Aurora Mesh Background & Dot Matrix */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-950/80 via-slate-950/90 to-rose-950/80" />
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff20_1px,transparent_1px)] bg-[size:22px_22px] opacity-70" />
+        <div className="absolute -top-16 -left-16 size-[360px] rounded-full bg-rose-500/35 blur-[80px] pointer-events-none" />
+        <div className="absolute top-1/3 -right-20 size-[360px] rounded-full bg-indigo-500/40 blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-16 left-1/4 size-[380px] rounded-full bg-purple-600/45 blur-[80px] pointer-events-none" />
+        <div className="absolute top-10 right-10 size-[180px] rounded-full bg-amber-400/20 blur-[60px] pointer-events-none" />
+
+        {/* Top Brand Logo */}
+        <div className="relative z-10">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 via-primary to-purple-600 text-white shadow-xl shadow-rose-500/30 group-hover:scale-105 transition-transform border border-white/25">
+              <LayoutDashboard className="size-6" />
+            </div>
+            <div>
+              <span className="text-xl font-extrabold tracking-tight text-white block drop-shadow-xs">Taff Desk CRM</span>
+              <span className="text-[11px] text-slate-300 font-medium block">Enterprise Workspace Suite</span>
+            </div>
+          </Link>
         </div>
 
-        <Card className="border-border/80 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold">Create Business Account</CardTitle>
-            <CardDescription className="text-xs">
-              Choose your subscription plan and fill in your admin credentials.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Center Content & Value Props */}
+        <div className="relative z-10 my-auto py-8 space-y-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/25 shadow-xs">
+            <Sparkles className="size-3.5 text-amber-300" />
+            <span>Instant Cloud Workspace Setup</span>
+          </div>
+
+          <h2 className="text-2xl lg:text-3xl 2xl:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-xs">
+            Start scaling your business with Taff Desk <span className="bg-gradient-to-r from-amber-300 via-rose-200 to-purple-200 bg-clip-text text-transparent">today</span>.
+          </h2>
+
+          <p className="text-xs lg:text-sm text-slate-200 leading-relaxed font-medium">
+            Get your dedicated multi-user CRM workspace with WhatsApp alerts, GST invoices, and financial reports ready in under 60 seconds.
+          </p>
+
+          {/* Feature Highlights Grid */}
+          <div className="grid grid-cols-1 gap-3 pt-2">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 backdrop-blur-md shadow-lg shadow-black/20 transition-colors">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+                <CheckCircle2 className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">14-Day Risk-Free Trial</p>
+                <p className="text-[11px] text-slate-300">Full access to all CRM & Billing features with ₹0 upfront</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 backdrop-blur-md shadow-lg shadow-black/20 transition-colors">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/30 text-white border border-primary/40">
+                <QrCode className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Instant QR & UPI Activation</p>
+                <p className="text-[11px] text-slate-300">1-Year & 3-Year plans with automatic discount coupons</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 backdrop-blur-md shadow-lg shadow-black/20 transition-colors">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/30 text-amber-300 border border-amber-400/40">
+                <ShieldCheck className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Isolated Tenant Database</p>
+                <p className="text-[11px] text-slate-300">Your customer & financial data is 100% private and secure</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Social Proof & Trust Footer */}
+        <div className="relative z-10 pt-6 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-emerald-400" />
+            <span className="font-medium text-white text-[11px]">256-Bit SSL Encrypted Platform</span>
+          </div>
+          <span className="text-[11px] text-slate-300">Instant Setup • No Credit Card</span>
+        </div>
+      </div>
+
+      {/* Right Form Section — Vertically Centered with Modern Ambient Background */}
+      <div className="relative flex-1 w-full md:col-span-7 flex flex-col justify-center items-center min-h-screen p-4 sm:p-6 lg:p-10 xl:p-14 bg-gradient-to-br from-slate-50/90 via-white to-slate-100/60 dark:from-background dark:to-muted/20 overflow-y-auto">
+        {/* Subtle Decorative Ambient Mesh Grid & Soft Glows */}
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-60" />
+        <div className="absolute top-0 right-0 size-96 rounded-full bg-rose-500/5 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 size-96 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-xl space-y-6 my-auto py-8">
+          {/* Top Navbar */}
+          <div className="flex items-center justify-between w-full">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-muted-foreground hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-muted transition-all border border-slate-200/80 dark:border-border/50 shadow-xs"
+            >
+              ← Back to Home
+            </Link>
+            <div className="text-xs text-muted-foreground">
+              Already registered?{" "}
+              <Link href="/login" className="font-bold text-primary hover:underline ml-1">
+                Sign In →
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile Brand Banner (<768px) */}
+          <div className="flex flex-col items-center gap-2 text-center md:hidden">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-primary text-primary-foreground shadow-md">
+              <LayoutDashboard className="size-6" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Create your Workspace</h1>
+            <p className="text-xs text-muted-foreground">Select a plan and fill in your admin credentials.</p>
+          </div>
+
+          {/* Desktop Heading (>=768px) */}
+          <div className="hidden md:block space-y-1">
+            <h1 className="text-2xl 2xl:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-foreground">
+              Register your Workspace
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-muted-foreground">
+              Choose your subscription plan and fill in your admin details to get started.
+            </p>
+          </div>
+
+          {/* Elevated Glassmorphic Card */}
+          <div className="relative bg-white/95 dark:bg-card/90 backdrop-blur-xl border border-slate-200/80 dark:border-border/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-slate-300/40 dark:shadow-none space-y-6">
+            {/* Top Card Gradient Accent Line */}
+            <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-full" />
+
             {error && (
-              <div className="rounded-lg bg-destructive/10 p-3 text-xs font-medium text-destructive border border-destructive/20 flex items-start gap-2">
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs font-medium text-destructive flex items-start gap-2 animate-in fade-in-50">
                 <span className="shrink-0 font-bold">⚠️</span>
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Plan Picker Cards */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-foreground">Select Subscription Plan *</Label>
+                <Label className="text-xs font-bold text-slate-700 dark:text-foreground">Select Subscription Plan *</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <button type="button" onClick={() => { setSelectedPlan("trial"); setAppliedCoupon(null); }} className={`relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${selectedPlan === "trial" ? "border-primary bg-primary/5 ring-2 ring-primary shadow-xs" : "border-border bg-card hover:bg-muted/40"}`}>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPlan("trial"); setAppliedCoupon(null); }}
+                    className={`group relative flex flex-col justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                      selectedPlan === "trial" 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary shadow-md shadow-primary/10" 
+                        : "border-slate-200 dark:border-border bg-slate-50/50 dark:bg-background hover:bg-slate-100/70 hover:border-slate-300"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">14-Day Trial</span>
-                      <Badge variant="success" className="text-[9px] px-1 py-0">₹0</Badge>
+                      <span className="text-xs font-bold text-slate-900 dark:text-foreground">14-Day Trial</span>
+                      <Badge variant="success" className="text-[9px] px-1.5 py-0 font-bold">₹0 Free</Badge>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">14 Days Free</p>
+                    <p className="text-[11px] text-slate-500 dark:text-muted-foreground mt-1.5 font-medium">14 Days Full Access</p>
                   </button>
-                  <button type="button" onClick={() => setSelectedPlan("yearly")} className={`relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${selectedPlan === "yearly" ? "border-primary bg-primary/5 ring-2 ring-primary shadow-xs" : "border-border bg-card hover:bg-muted/40"}`}>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlan("yearly")}
+                    className={`group relative flex flex-col justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                      selectedPlan === "yearly" 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary shadow-md shadow-primary/10" 
+                        : "border-slate-200 dark:border-border bg-slate-50/50 dark:bg-background hover:bg-slate-100/70 hover:border-slate-300"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">1-Year Plan</span>
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-primary/40 text-primary font-bold">365d</Badge>
+                      <span className="text-xs font-bold text-slate-900 dark:text-foreground">1-Year Plan</span>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/40 text-primary font-bold">365 Days</Badge>
                     </div>
-                    <p className="text-xs font-black text-foreground mt-1">₹{yearlyPriceNum.toLocaleString("en-IN")}<span className="text-[10px] text-muted-foreground font-normal"> / yr</span></p>
+                    <p className="text-xs font-extrabold text-slate-900 dark:text-foreground mt-1.5">
+                      ₹{yearlyPriceNum.toLocaleString("en-IN")}<span className="text-[10px] text-slate-500 dark:text-muted-foreground font-normal"> / yr</span>
+                    </p>
                   </button>
-                  <button type="button" onClick={() => setSelectedPlan("3_year")} className={`relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${selectedPlan === "3_year" ? "border-emerald-500 bg-emerald-500/5 ring-2 ring-emerald-500 shadow-xs" : "border-border bg-card hover:bg-muted/40"}`}>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlan("3_year")}
+                    className={`group relative flex flex-col justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                      selectedPlan === "3_year" 
+                        ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500 shadow-md shadow-emerald-500/10" 
+                        : "border-slate-200 dark:border-border bg-slate-50/50 dark:bg-background hover:bg-slate-100/70 hover:border-slate-300"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">3-Year Plan</span>
-                      <Badge variant="success" className="text-[9px] px-1 py-0">Best Value</Badge>
+                      <span className="text-xs font-bold text-slate-900 dark:text-foreground">3-Year Plan</span>
+                      <Badge variant="success" className="text-[9px] px-1.5 py-0 font-bold">Best Value</Badge>
                     </div>
-                    <p className="text-xs font-black text-foreground mt-1">₹{threeYearPriceNum.toLocaleString("en-IN")}<span className="text-[10px] text-muted-foreground font-normal"> / 3 yrs</span></p>
+                    <p className="text-xs font-extrabold text-slate-900 dark:text-foreground mt-1.5">
+                      ₹{threeYearPriceNum.toLocaleString("en-IN")}<span className="text-[10px] text-slate-500 dark:text-muted-foreground font-normal"> / 3 yrs</span>
+                    </p>
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="name" className="text-xs font-semibold">Business / Owner Name <span className="text-destructive">*</span></Label>
-                <Input id="name" type="text" placeholder="e.g. Acme Industrial Solutions" value={name} onChange={(e) => setName(e.target.value)} required className="h-9 text-xs" />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email" className="text-xs font-semibold">Admin Email Address <span className="text-destructive">*</span></Label>
-                <Input id="email" type="email" autoComplete="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-9 text-xs" />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="phone" className="text-xs font-semibold">Phone / WhatsApp Number <span className="text-destructive">*</span></Label>
-                <Input id="phone" type="tel" placeholder="e.g. +91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-9 text-xs" />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password" className="text-xs font-semibold">Password <span className="text-destructive">*</span></Label>
-                <div className="relative">
-                  <Input id="password" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="pr-10 h-9 text-xs" />
-                  <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-foreground" tabIndex={-1}>
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {selectedPlan !== "trial" && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
-                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5"><CreditCard className="size-4 text-amber-500" /> Payment Details ({selectedPlan === "3_year" ? "3-Year Plan" : "1-Year Plan"})</span>
-                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{appliedCoupon && <span className="line-through text-muted-foreground mr-1 text-[11px]">₹{basePriceFormatted}</span>}₹{activePriceFormatted}</span>
+              {/* Form Input Fields Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="name" className="text-xs font-semibold text-slate-700 dark:text-foreground">
+                    Business / Owner Name <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="e.g. Acme Industrial Solutions"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="h-11 pl-10 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-100/70 focus:bg-white dark:bg-muted/40 dark:focus:bg-background border-slate-200 dark:border-border rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
+                    />
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-foreground">
+                      Admin Email Address <span className="text-destructive">*</span>
+                    </Label>
+                    {emailChecking && (
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Loader2 className="size-3 animate-spin text-primary" /> Checking availability...
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@company.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError("");
+                      }}
+                      required
+                      className={`h-11 pl-10 pr-10 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-100/70 focus:bg-white dark:bg-muted/40 dark:focus:bg-background rounded-xl transition-all focus-visible:ring-2 ${
+                        emailStatus === "available"
+                          ? "border-emerald-500/80 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
+                          : emailStatus === "unavailable"
+                          ? "border-destructive/80 focus-visible:ring-destructive/20 focus-visible:border-destructive"
+                          : "border-slate-200 dark:border-border focus-visible:ring-primary/20 focus-visible:border-primary"
+                      }`}
+                    />
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {emailChecking ? (
+                        <Loader2 className="size-4 animate-spin text-primary" />
+                      ) : emailStatus === "available" ? (
+                        <CheckCircle2 className="size-4 text-emerald-500 animate-in zoom-in-50" />
+                      ) : emailStatus === "unavailable" ? (
+                        <AlertCircle className="size-4 text-destructive animate-in zoom-in-50" />
+                      ) : null}
+                    </div>
+                  </div>
+                  {emailStatus === "available" && (
+                    <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 animate-in fade-in-50">
+                      <CheckCircle2 className="size-3 shrink-0" />
+                      Username is available
+                    </p>
+                  )}
+                  {emailStatus === "unavailable" && (
+                    <p className="text-[11px] font-semibold text-destructive flex items-center gap-1 animate-in fade-in-50">
+                      <AlertCircle className="size-3 shrink-0" />
+                      {emailMessage}{" "}
+                      <Link href="/login" className="underline font-bold text-primary hover:text-primary/80 ml-1">
+                        Sign in instead →
+                      </Link>
+                    </p>
+                  )}
+                  {emailStatus === "invalid" && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-in fade-in-50">
+                      <span>⚠️</span> {emailMessage}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-xs font-semibold text-slate-700 dark:text-foreground">
+                    Phone / WhatsApp Number <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="e.g. +91 9876543210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      className="h-11 pl-10 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-100/70 focus:bg-white dark:bg-muted/40 dark:focus:bg-background border-slate-200 dark:border-border rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-foreground">
+                    Admin Password <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="At least 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="pl-10 pr-11 h-11 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-100/70 focus:bg-white dark:bg-muted/40 dark:focus:bg-background border-slate-200 dark:border-border rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Paid Plan QR & UTR Section */}
+              {selectedPlan !== "trial" && (
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3.5 animate-in fade-in-50">
+                  <div className="flex items-center justify-between border-b border-amber-500/20 pb-2.5">
+                    <span className="text-xs font-bold text-slate-900 dark:text-foreground flex items-center gap-1.5">
+                      <CreditCard className="size-4 text-amber-500" />
+                      Payment Details ({selectedPlan === "3_year" ? "3-Year Plan" : "1-Year Plan"})
+                    </span>
+                    <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                      {appliedCoupon && (
+                        <span className="line-through text-muted-foreground mr-1.5 text-xs">
+                          ₹{basePriceFormatted}
+                        </span>
+                      )}
+                      ₹{activePriceFormatted}
+                    </span>
+                  </div>
+
+                  {/* Coupon Box */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold">
-                      <span className="flex items-center gap-1 text-foreground"><Tag className="size-3 text-amber-500" /> Have a Coupon Code?</span>
-                      {appliedCoupon && <Badge variant="success" className="text-[9px]">{appliedCoupon.discountPercent}% OFF</Badge>}
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="flex items-center gap-1 text-slate-700 dark:text-foreground">
+                        <Tag className="size-3.5 text-amber-500" /> Have a Coupon Code?
+                      </span>
+                      {appliedCoupon && (
+                        <Badge variant="success" className="text-[10px] px-2 py-0.5">
+                          {appliedCoupon.discountPercent}% OFF APPLIED
+                        </Badge>
+                      )}
                     </div>
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2 text-xs">
-                        <div className="flex items-center gap-1.5 min-w-0"><CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" /><span className="font-bold font-mono text-foreground">{appliedCoupon.code}</span><span className="text-[10px] text-emerald-700 dark:text-emerald-300 truncate">(-₹{discountAmount.toLocaleString("en-IN")})</span></div>
-                        <button type="button" onClick={handleRemoveCoupon} className="text-[10px] font-bold text-destructive hover:underline ml-2">Remove</button>
+                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="font-bold font-mono text-foreground">{appliedCoupon.code}</span>
+                          <span className="text-[11px] text-emerald-700 dark:text-emerald-300 truncate">
+                            (-₹{discountAmount.toLocaleString("en-IN")})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-xs font-bold text-destructive hover:underline ml-2 cursor-pointer"
+                        >
+                          Remove
+                        </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5">
-                        <Input placeholder="Coupon code (e.g. DIWALI20)..." value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="h-8 text-xs font-mono uppercase bg-background" />
-                        <Button type="button" variant="outline" size="sm" onClick={handleApplyCoupon} disabled={validatingCoupon || !couponInput.trim()} className="h-8 text-xs shrink-0 font-semibold">{validatingCoupon ? <Loader2 className="size-3 animate-spin" /> : "Apply"}</Button>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+                          <Input
+                            placeholder="Enter coupon (e.g. DIWALI20)..."
+                            value={couponInput}
+                            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                            className="h-10 pl-9 text-xs font-mono uppercase bg-white dark:bg-background rounded-xl"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleApplyCoupon}
+                          disabled={validatingCoupon || !couponInput.trim()}
+                          className="h-10 px-4 text-xs shrink-0 font-bold rounded-xl"
+                        >
+                          {validatingCoupon ? <Loader2 className="size-3.5 animate-spin" /> : "Apply"}
+                        </Button>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-center justify-center p-3 rounded-lg border bg-card space-y-2 text-center">
-                    <span className="text-[11px] font-semibold text-foreground flex items-center gap-1"><QrCode className="size-3.5 text-primary" /> Scan QR & Pay ₹{activePriceFormatted} via UPI / GPay / PhonePe</span>
-                    <div className="relative size-36 rounded-lg border bg-white p-2 flex items-center justify-center">
+
+                  {/* QR Box */}
+                  <div className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card space-y-2.5 text-center shadow-xs">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-foreground flex items-center gap-1.5">
+                      <QrCode className="size-4 text-primary" /> Scan QR & Pay ₹{activePriceFormatted} via UPI / GPay / PhonePe
+                    </span>
+                    <div className="relative size-36 rounded-xl border border-slate-200 bg-white p-2 flex items-center justify-center shadow-inner">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={qrImageSrc} alt="UPI Payment QR Code" className="size-full object-contain" />
                     </div>
-                    <div className="flex items-center justify-between w-full rounded bg-muted/60 px-2.5 py-1 text-[11px]">
-                      <span className="font-mono text-foreground font-semibold truncate">UPI: {upiId}</span>
-                      <button type="button" onClick={copyUpiToClipboard} className="text-primary font-bold hover:underline shrink-0 ml-1">{copiedUpi ? "Copied" : "Copy"}</button>
+                    <div className="flex items-center justify-between w-full rounded-xl bg-slate-100/80 dark:bg-muted/60 px-3 py-1.5 text-xs">
+                      <span className="font-mono text-slate-800 dark:text-foreground font-semibold truncate">UPI: {upiId}</span>
+                      <button
+                        type="button"
+                        onClick={copyUpiToClipboard}
+                        className="text-primary font-bold hover:underline shrink-0 ml-2 cursor-pointer"
+                      >
+                        {copiedUpi ? "Copied!" : "Copy UPI"}
+                      </button>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="utr_number" className="text-xs font-semibold text-foreground">Payment UTR / Transaction Reference No. <span className="text-destructive">*</span></Label>
-                    <Input id="utr_number" placeholder="Enter 12-digit UTR number after paying..." value={utrNumber} onChange={(e) => setUtrNumber(e.target.value)} className="h-9 text-xs font-mono bg-background" required />
-                    <p className="text-[10px] text-muted-foreground">Enter the 12-digit UPI UTR number received after paying. Super Admin will verify and activate your paid license.</p>
+
+                  {/* UTR Input */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="utr_number" className="text-xs font-semibold text-slate-700 dark:text-foreground">
+                      Payment UTR / Transaction Reference No. <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Receipt className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                      <Input
+                        id="utr_number"
+                        placeholder="Enter 12-digit UPI UTR number..."
+                        value={utrNumber}
+                        onChange={(e) => setUtrNumber(e.target.value)}
+                        className="h-11 pl-10 text-xs font-mono bg-white dark:bg-background rounded-xl"
+                        required
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-muted-foreground">
+                      Enter the 12-digit UTR number from your payment app. Super Admin will verify and activate your license.
+                    </p>
                   </div>
                 </div>
               )}
 
+              {/* Terms Checkbox */}
               <div className="flex items-center gap-2 pt-1">
-                <input type="checkbox" id="agree" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="size-4 rounded border-border text-primary focus:ring-primary cursor-pointer" />
-                <label htmlFor="agree" className="text-[11px] text-muted-foreground cursor-pointer select-none">
-                  I agree to the <span className="font-semibold text-foreground">Terms of Service</span> and <span className="font-semibold text-foreground">Privacy Policy</span>
+                <input
+                  type="checkbox"
+                  id="agree"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                  className="size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                />
+                <label htmlFor="agree" className="text-xs text-slate-600 dark:text-muted-foreground cursor-pointer select-none">
+                  I agree to the <span className="font-semibold text-slate-900 dark:text-foreground">Terms of Service</span> and{" "}
+                  <span className="font-semibold text-slate-900 dark:text-foreground">Privacy Policy</span>
                 </label>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full h-10 font-bold text-xs gap-2 mt-1">
+              {/* Submit CTA */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-xs sm:text-sm font-bold bg-gradient-to-r from-primary via-rose-600 to-primary hover:opacity-95 text-white shadow-lg shadow-primary/25 rounded-xl gap-2 mt-2 transition-all"
+              >
                 {loading ? (
-                  <><Loader2 className="size-4 animate-spin" /> Creating your workspace...</>
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Setting up your workspace...
+                  </>
                 ) : (
-                  <><CheckCircle2 className="size-4" /> {selectedPlan === "trial" ? "Start 14-Day Free Trial Now" : `Submit Registration & Payment Proof (₹${activePriceFormatted})`}</>
+                  <>
+                    <CheckCircle2 className="size-4" />
+                    {selectedPlan === "trial" 
+                      ? "Start 14-Day Free Trial Now" 
+                      : `Submit Registration & Payment (₹${activePriceFormatted})`}
+                  </>
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="text-center text-xs text-muted-foreground space-y-2">
-          <p>
-            Already have an account?{" "}
-            <Link href="/login" className="font-bold text-primary hover:underline">
-              Sign in to your account
+          {/* Footer Row */}
+          <div className="pt-2 flex items-center justify-center gap-4 text-[11px] sm:text-xs text-slate-500 dark:text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <ShieldCheck className="size-3.5 text-emerald-600" />
+              <span>256-bit Encrypted</span>
+            </div>
+            <span>•</span>
+            <Link href="/login" className="hover:text-foreground underline font-semibold">
+              Already have an account? Sign in
             </Link>
-          </p>
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/80">
-            <ShieldCheck className="size-3.5 text-emerald-600" />
-            <span>Secure 256-bit Encrypted Platform</span>
           </div>
         </div>
       </div>

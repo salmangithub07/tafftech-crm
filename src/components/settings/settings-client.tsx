@@ -312,28 +312,82 @@ function ProfileTab({
               <p className="font-semibold text-foreground text-sm">{subscriptionInfo.formattedExpiry}</p>
             </div>
           </CardContent>
-          <CardFooter className="border-t border-border/40 py-3 flex items-center justify-between">
-            {subscriptionInfo.status === "grace" ||
-            subscriptionInfo.status === "locked" ||
-            (subscriptionInfo.daysRemaining !== null && subscriptionInfo.daysRemaining <= 3) ? (
-              <>
-                <span className="text-xs text-muted-foreground">Plan expiring soon. Send a renewal request to Super Admin:</span>
-                <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
-                  <Sparkles className="size-3.5" /> Send Renewal Request
-                </Button>
-              </>
-            ) : subscriptionInfo.planType === "yearly" || subscriptionInfo.planType === "trial" ? (
-              <>
-                <span className="text-xs text-muted-foreground">Want to extend your access? Upgrade to 3-Year Plan anytime:</span>
-                <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs">
-                  <Sparkles className="size-3.5" /> Upgrade to 3-Year Plan
-                </Button>
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Check className="size-3.5 text-emerald-500" /> Your subscription is active and up to date.
-              </span>
-            )}
+          <CardFooter className="border-t border-border/40 py-3 flex flex-wrap gap-2 items-center justify-between">
+            {(() => {
+              const isExpiredOrGrace = 
+                subscriptionInfo.status === "grace" || 
+                subscriptionInfo.status === "locked" || 
+                (subscriptionInfo.daysRemaining !== null && subscriptionInfo.daysRemaining <= 30);
+              
+              const isTrial = subscriptionInfo.planType === "trial";
+              const isYearly = subscriptionInfo.planType === "yearly";
+              const is3Year = subscriptionInfo.planType === "3_year";
+
+              if (isTrial) {
+                return (
+                  <>
+                    <span className="text-xs text-muted-foreground">
+                      {isExpiredOrGrace 
+                        ? "Trial expiring soon. Upgrade your plan to continue uninterrupted:" 
+                        : "Ready to unlock full workspace access? Upgrade your plan anytime:"}
+                    </span>
+                    <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs font-bold shadow-xs">
+                      <Sparkles className="size-3.5" /> Upgrade Plan
+                    </Button>
+                  </>
+                );
+              }
+
+              if (isYearly) {
+                return (
+                  <>
+                    <span className="text-xs text-muted-foreground">
+                      {isExpiredOrGrace
+                        ? "1-Year plan expiring soon. Renew or upgrade to 3-Year Plan to continue:"
+                        : "Want to extend your access? Upgrade to 3-Year Plan anytime:"}
+                    </span>
+                    <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs font-bold shadow-xs">
+                      <Sparkles className="size-3.5" /> {isExpiredOrGrace ? "Renew / Upgrade to 3-Year Plan" : "Upgrade to 3-Year Plan"}
+                    </Button>
+                  </>
+                );
+              }
+
+              if (is3Year) {
+                if (isExpiredOrGrace) {
+                  return (
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Your 3-Year plan is expiring soon. Renew your plan to continue uninterrupted service:
+                      </span>
+                      <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs font-bold shadow-xs">
+                        <Sparkles className="size-3.5" /> Renew 3-Year Plan
+                      </Button>
+                    </>
+                  );
+                }
+
+                return (
+                  <>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                      <Check className="size-3.5 text-emerald-500" /> You are on the top-tier 3-Year Plan. All features are fully unlocked.
+                    </span>
+                    <Badge variant="success" className="gap-1.5 py-1 px-3 text-xs font-bold">
+                      <Check className="size-3.5" /> Plan Upgraded
+                    </Badge>
+                  </>
+                );
+              }
+
+              return (
+                <>
+                  <span className="text-xs text-muted-foreground">Manage or upgrade your subscription plan:</span>
+                  <Button size="sm" onClick={() => setRenewDialogOpen(true)} className="gap-1.5 h-8 text-xs font-bold shadow-xs">
+                    <Sparkles className="size-3.5" /> Upgrade Plan
+                  </Button>
+                </>
+              );
+            })()}
           </CardFooter>
         </Card>
       )}
