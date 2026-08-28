@@ -19,6 +19,13 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { Customer, Product, Appointment, Quotation } from "@/lib/types";
 
@@ -36,6 +43,9 @@ const formSchema = z.object({
   customer_name: z.string().min(1, "Customer name is required"),
   customer_phone: z.string().optional(),
   customer_address: z.string().optional(),
+  customer_gst_number: z.string().optional(),
+  tax_type: z.enum(["cgst_sgst", "igst", "none"]),
+  tax_percent: z.number().min(0),
   quotation_date: z.string().min(1, "Date is required"),
   items: z.array(itemSchema).min(1, "Add at least one item"),
   tax_amount: z.number().min(0),
@@ -85,6 +95,9 @@ export function QuotationDialog({
       customer_name: "",
       customer_phone: "",
       customer_address: "",
+      customer_gst_number: "",
+      tax_type: "igst",
+      tax_percent: 18,
       quotation_date: new Date().toISOString().slice(0, 10),
       items: [
         {
@@ -112,6 +125,8 @@ export function QuotationDialog({
   });
 
   const watchedItems = watch("items") || [];
+  const watchedTaxType = watch("tax_type") || "igst";
+  const watchedTaxPercent = watch("tax_percent") ?? 18;
   const watchedTaxAmount = watch("tax_amount") || 0;
   const watchedDiscountAmount = watch("discount_amount") || 0;
   const watchedCustomerId = watch("customer_id");
@@ -121,6 +136,44 @@ export function QuotationDialog({
     const price = Number(item.unit_price) || 0;
     return acc + qty * price;
   }, 0);
+
+  const [taxPresetKey, setTaxPresetKey] = React.useState<string>("igst_18");
+
+  function deriveTaxPresetKey(taxType: string | null | undefined, taxPercent: number | null | undefined): string {
+    const type = taxType || "igst";
+    const rate = Number(taxPercent) || 18;
+    if (type === "none") return "none";
+    if (type === "cgst_sgst") return `cgst_sgst_${rate}`;
+    return `igst_${rate}`;
+  }
+
+  function handleSelectTaxPreset(key: string) {
+    setTaxPresetKey(key);
+    if (key === "none") {
+      setValue("tax_type", "none");
+      setValue("tax_percent", 0);
+      setValue("tax_amount", 0);
+    } else if (key === "custom") {
+      setValue("tax_type", "igst");
+    } else {
+      const parts = key.split("_");
+      const rate = Number(parts[parts.length - 1]);
+      const type = key.startsWith("cgst_sgst") ? "cgst_sgst" : "igst";
+      setValue("tax_type", type);
+      setValue("tax_percent", rate);
+      const calculated = Math.round((subtotal * rate) / 100);
+      setValue("tax_amount", calculated);
+    }
+  }
+
+  React.useEffect(() => {
+    if (taxPresetKey !== "none" && taxPresetKey !== "custom") {
+      const parts = taxPresetKey.split("_");
+      const rate = Number(parts[parts.length - 1]);
+      const calculated = Math.round((subtotal * rate) / 100);
+      setValue("tax_amount", calculated);
+    }
+  }, [subtotal, taxPresetKey, setValue]);
 
   const grandTotal = Math.max(0, subtotal + Number(watchedTaxAmount) - Number(watchedDiscountAmount));
 
@@ -162,6 +215,9 @@ export function QuotationDialog({
               customer_name: quotationToEdit.customer_name ?? "",
               customer_phone: quotationToEdit.customer_phone ?? "",
               customer_address: quotationToEdit.customer_address ?? "",
+              customer_gst_number: (quotationToEdit as any).customer_gst_number ?? "",
+              tax_type: (quotationToEdit as any).tax_type ?? "igst",
+              tax_percent: Number((quotationToEdit as any).tax_percent) || 18,
               quotation_date: quotationToEdit.quotation_date ? String(quotationToEdit.quotation_date).slice(0, 10) : new Date().toISOString().slice(0, 10),
               items: formattedItems,
               tax_amount: Number(quotationToEdit.tax_amount) || 0,
@@ -173,6 +229,7 @@ export function QuotationDialog({
               vehicle_no: quotationToEdit.vehicle_no ?? "",
               dispute_note: quotationToEdit.dispute_note ?? "",
             });
+            setTaxPresetKey(deriveTaxPresetKey((quotationToEdit as any).tax_type, (quotationToEdit as any).tax_percent));
           } else {
             const targetCust = initialCustomer || (appointment ? custData.find((c) => c.id === appointment.customer_id) : null);
             const initialProdName = appointment?.title || appointment?.customer_product || "";
@@ -184,6 +241,9 @@ export function QuotationDialog({
               customer_name: targetCust?.name ?? appointment?.customer_name ?? "",
               customer_phone: targetCust?.phone ?? appointment?.customer_phone ?? "",
               customer_address: targetCust?.address ?? "",
+              customer_gst_number: "",
+              tax_type: "igst",
+              tax_percent: 18,
               quotation_date: new Date().toISOString().slice(0, 10),
               items: [
                 {
@@ -203,6 +263,7 @@ export function QuotationDialog({
               vehicle_no: "",
               dispute_note: "",
             });
+            setTaxPresetKey("igst_18");
           }
         })
         .catch(() => {
@@ -341,6 +402,11 @@ export function QuotationDialog({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="customer_address">Billing Address</Label>
                 <Input id="customer_address" {...register("customer_address")} placeholder="City, State, Pin Code..." />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="customer_gst_number">Customer GSTIN (Optional)</Label>
+                <Input id="customer_gst_number" className="font-mono uppercase text-xs" {...register("customer_gst_number")} placeholder="e.g. 27AAAAA0000A1Z5" />
               </div>
             </div>
 
@@ -491,8 +557,30 @@ export function QuotationDialog({
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-mono font-semibold">₹{subtotal.toLocaleString("en-IN")}</span>
               </div>
+              {/* Single Simple GST Tax Selector */}
+              <div className="flex items-center justify-between gap-2 border-t border-b py-2.5 my-1">
+                <Label className="text-xs font-semibold text-foreground">Select GST Tax Rate:</Label>
+                <Select value={taxPresetKey} onValueChange={handleSelectTaxPreset}>
+                  <SelectTrigger className="h-8 text-xs w-60 font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="igst_18">🌐 IGST 18% (Most Cases)</SelectItem>
+                    <SelectItem value="cgst_sgst_18">🏢 CGST 9% + SGST 9% (Intra-State)</SelectItem>
+                    <SelectItem value="igst_5">🌐 IGST 5%</SelectItem>
+                    <SelectItem value="cgst_sgst_5">🏢 CGST 2.5% + SGST 2.5%</SelectItem>
+                    <SelectItem value="igst_12">🌐 IGST 12%</SelectItem>
+                    <SelectItem value="cgst_sgst_12">🏢 CGST 6% + SGST 6%</SelectItem>
+                    <SelectItem value="igst_28">🌐 IGST 28%</SelectItem>
+                    <SelectItem value="cgst_sgst_28">🏢 CGST 14% + SGST 14%</SelectItem>
+                    <SelectItem value="none">❌ No Tax (0%)</SelectItem>
+                    <SelectItem value="custom">✏️ Custom Tax (₹)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex justify-between items-center gap-2">
-                <Label htmlFor="tax_amount" className="text-xs text-muted-foreground">Tax / GST (₹):</Label>
+                <Label htmlFor="tax_amount" className="text-xs text-muted-foreground">Tax Total (₹):</Label>
                 <Input
                   id="tax_amount"
                   type="number"

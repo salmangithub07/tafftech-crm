@@ -158,15 +158,17 @@ export function BillDetailsDialog({
         </DialogHeader>
 
         {/* Invoice content */}
-        <div className="p-6">
-          <PrintableInvoice
-            bill={bill}
-            siteName={siteName}
-            template={template}
-            customTerms={terms}
-            bankDetails={bankDetails}
-            settings={settingsData}
-          />
+        <div className="p-4 sm:p-6 bg-slate-100 dark:bg-slate-900 overflow-x-auto flex justify-center">
+          <div className="min-w-[620px] sm:min-w-0 max-w-[850px] w-full bg-white text-black shadow-lg rounded-sm overflow-hidden">
+            <PrintableInvoice
+              bill={bill}
+              siteName={siteName}
+              template={template}
+              customTerms={terms}
+              bankDetails={bankDetails}
+              settings={settingsData}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

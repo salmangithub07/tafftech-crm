@@ -101,12 +101,14 @@ export async function ensureActivityTables() {
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
     `).catch(() => {});
 
-    // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE)
+    // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE, GSTIN, TAX TYPE)
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS gr_no VARCHAR(100);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS vehicle_no VARCHAR(100);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS dispute_note TEXT;`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS customer_gst_number VARCHAR(50);`).catch(() => {});
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS tax_type VARCHAR(20) DEFAULT 'igst';`).catch(() => {});
     await execute(`ALTER TABLE bill_items ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(100);`).catch(() => {});
     await execute(`ALTER TABLE products ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(100);`).catch(() => {});
 
@@ -156,6 +158,8 @@ export async function ensureActivityTables() {
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS total_amount DECIMAL(12,2) DEFAULT 0;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_gst_number VARCHAR(50);`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tax_type VARCHAR(20) DEFAULT 'igst';`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS is_trashed INT DEFAULT 0;`).catch(() => {});
 
     await execute(`

@@ -43,6 +43,9 @@ const formSchema = z.object({
   customer_phone: z.string().optional(),
   customer_email: z.string().optional(),
   customer_address: z.string().optional(),
+  customer_gst_number: z.string().optional(),
+  tax_type: z.enum(["cgst_sgst", "igst", "none"]),
+  tax_percent: z.number().min(0),
   bill_date: z.string().min(1, "Date is required"),
   items: z.array(itemSchema).min(1, "Add at least one item"),
   tax_amount: z.number().min(0),
@@ -103,6 +106,9 @@ export function GenerateBillDialog({
       customer_phone: "",
       customer_email: "",
       customer_address: "",
+      customer_gst_number: "",
+      tax_type: "igst",
+      tax_percent: 18,
       bill_date: new Date().toISOString().slice(0, 10),
       items: [
         {
@@ -129,11 +135,52 @@ export function GenerateBillDialog({
   });
 
   const watchedItems = watch("items");
+  const watchedTaxType = watch("tax_type") || "igst";
+  const watchedTaxPercent = watch("tax_percent") ?? 18;
   const watchedTax = watch("tax_amount") || 0;
   const watchedDiscount = watch("discount_amount") || 0;
   const watchedStatus = watch("payment_status");
 
   const subtotal = watchedItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0);
+
+  const [taxPresetKey, setTaxPresetKey] = React.useState<string>("igst_18");
+
+  function deriveTaxPresetKey(taxType: string | null | undefined, taxPercent: number | null | undefined): string {
+    const type = taxType || "igst";
+    const rate = Number(taxPercent) || 18;
+    if (type === "none") return "none";
+    if (type === "cgst_sgst") return `cgst_sgst_${rate}`;
+    return `igst_${rate}`;
+  }
+
+  function handleSelectTaxPreset(key: string) {
+    setTaxPresetKey(key);
+    if (key === "none") {
+      setValue("tax_type", "none");
+      setValue("tax_percent", 0);
+      setValue("tax_amount", 0);
+    } else if (key === "custom") {
+      setValue("tax_type", "igst");
+    } else {
+      const parts = key.split("_");
+      const rate = Number(parts[parts.length - 1]);
+      const type = key.startsWith("cgst_sgst") ? "cgst_sgst" : "igst";
+      setValue("tax_type", type);
+      setValue("tax_percent", rate);
+      const calculated = Math.round((subtotal * rate) / 100);
+      setValue("tax_amount", calculated);
+    }
+  }
+
+  React.useEffect(() => {
+    if (taxPresetKey !== "none" && taxPresetKey !== "custom") {
+      const parts = taxPresetKey.split("_");
+      const rate = Number(parts[parts.length - 1]);
+      const calculated = Math.round((subtotal * rate) / 100);
+      setValue("tax_amount", calculated);
+    }
+  }, [subtotal, taxPresetKey, setValue]);
+
   const grandTotal = Math.max(0, subtotal + Number(watchedTax) - Number(watchedDiscount));
 
   React.useEffect(() => {
@@ -192,6 +239,9 @@ export function GenerateBillDialog({
               customer_phone: qData.customer_phone ?? "",
               customer_email: "",
               customer_address: qData.customer_address ?? "",
+              customer_gst_number: qData.customer_gst_number ?? "",
+              tax_type: qData.tax_type ?? "igst",
+              tax_percent: Number(qData.tax_percent) || 18,
               bill_date: new Date().toISOString().slice(0, 10),
               items: qItems,
               tax_amount: qTax,
@@ -208,13 +258,16 @@ export function GenerateBillDialog({
               account_id: null,
               record_stock_out: !skipStockDeduction,
             });
-          } else {
+            setTaxPresetKey(deriveTaxPresetKey(qData.tax_type, qData.tax_percent));
             reset({
               customer_id: null,
               customer_name: "",
               customer_phone: "",
               customer_email: "",
               customer_address: "",
+              customer_gst_number: "",
+              tax_type: "igst",
+              tax_percent: 18,
               bill_date: new Date().toISOString().slice(0, 10),
               items: [
                 {
@@ -239,6 +292,7 @@ export function GenerateBillDialog({
               account_id: null,
               record_stock_out: !skipStockDeduction,
             });
+            setTaxPresetKey("igst_18");
           }
         })
         .finally(() => setLoadingOptions(false));
@@ -395,6 +449,11 @@ export function GenerateBillDialog({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="customer_address">Billing Address</Label>
                 <Input id="customer_address" {...register("customer_address")} placeholder="City, State, Pin Code..." />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="customer_gst_number">Customer GSTIN (Optional)</Label>
+                <Input id="customer_gst_number" className="font-mono uppercase text-xs" {...register("customer_gst_number")} placeholder="e.g. 27AAAAA0000A1Z5" />
               </div>
             </div>
 
@@ -601,8 +660,30 @@ export function GenerateBillDialog({
                   <span className="font-mono font-medium text-foreground">₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
 
+                {/* Single Simple GST Tax Selector */}
+                <div className="flex items-center justify-between gap-2 border-t border-b py-2.5 my-1">
+                  <Label className="text-xs font-semibold text-foreground">Select GST Tax Rate:</Label>
+                  <Select value={taxPresetKey} onValueChange={handleSelectTaxPreset}>
+                    <SelectTrigger className="h-8 text-xs w-60 font-medium">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="igst_18">🌐 IGST 18% (Most Cases)</SelectItem>
+                      <SelectItem value="cgst_sgst_18">🏢 CGST 9% + SGST 9% (Intra-State)</SelectItem>
+                      <SelectItem value="igst_5">🌐 IGST 5%</SelectItem>
+                      <SelectItem value="cgst_sgst_5">🏢 CGST 2.5% + SGST 2.5%</SelectItem>
+                      <SelectItem value="igst_12">🌐 IGST 12%</SelectItem>
+                      <SelectItem value="cgst_sgst_12">🏢 CGST 6% + SGST 6%</SelectItem>
+                      <SelectItem value="igst_28">🌐 IGST 28%</SelectItem>
+                      <SelectItem value="cgst_sgst_28">🏢 CGST 14% + SGST 14%</SelectItem>
+                      <SelectItem value="none">❌ No Tax (0%)</SelectItem>
+                      <SelectItem value="custom">✏️ Custom Tax (₹)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="tax_amount" className="text-xs text-muted-foreground">Tax / GST (₹):</Label>
+                  <Label htmlFor="tax_amount" className="text-xs text-muted-foreground">Tax Total (₹):</Label>
                   <Input
                     id="tax_amount"
                     type="number"

@@ -183,7 +183,7 @@ export function QuotationDetailsDialog({
 
         {/* Invoice content */}
         <div className="p-4 sm:p-6 bg-slate-100 dark:bg-slate-900 overflow-x-auto flex justify-center">
-          <div className="max-w-[850px] w-full bg-white text-black shadow-lg rounded-sm overflow-hidden">
+          <div className="min-w-[620px] sm:min-w-0 max-w-[850px] w-full bg-white text-black shadow-lg rounded-sm overflow-hidden">
             <PrintableInvoice
               bill={quotation}
               siteName={siteName}

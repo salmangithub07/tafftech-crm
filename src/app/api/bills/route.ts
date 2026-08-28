@@ -19,6 +19,8 @@ const createBillSchema = z.object({
   customer_phone: z.string().optional().or(z.literal("")).default(""),
   customer_email: z.string().optional().or(z.literal("")).default(""),
   customer_address: z.string().optional().or(z.literal("")).default(""),
+  customer_gst_number: z.string().optional().or(z.literal("")).default(""),
+  tax_type: z.enum(["cgst_sgst", "igst", "none"]).optional().default("igst"),
   bill_date: z.string().min(1, "Bill date required"),
   items: z.array(billItemSchema).min(1, "At least one product item required"),
   tax_amount: z.coerce.number().min(0).optional().default(0),
@@ -228,10 +230,10 @@ export async function POST(req: NextRequest) {
   // Insert Bill
   const billRes = await execute(
     `INSERT INTO bills (
-      tenant_id, bill_number, customer_id, customer_name, customer_phone, customer_email, customer_address,
+      tenant_id, bill_number, customer_id, customer_name, customer_phone, customer_email, customer_address, customer_gst_number, tax_type,
       bill_date, subtotal, tax_amount, discount_amount, total_amount, paid_amount, payment_status, payment_method,
       notes, book_to, transport, gr_no, vehicle_no, dispute_note, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       tenantId,
       billNumber,
@@ -240,6 +242,8 @@ export async function POST(req: NextRequest) {
       d.customer_phone,
       d.customer_email,
       d.customer_address,
+      d.customer_gst_number || null,
+      d.tax_type || "igst",
       d.bill_date,
       subtotal,
       d.tax_amount,
