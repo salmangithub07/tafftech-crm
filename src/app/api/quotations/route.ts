@@ -19,6 +19,8 @@ const createQuotationSchema = z.object({
   customer_name: z.string().min(1, "Customer name is required"),
   customer_phone: z.string().optional().or(z.literal("")).default(""),
   customer_address: z.string().optional().or(z.literal("")).default(""),
+  customer_gst_number: z.string().optional().or(z.literal("")).default(""),
+  tax_type: z.enum(["cgst_sgst", "igst", "none"]).optional().default("igst"),
   quotation_date: z.string().default(() => new Date().toISOString().slice(0, 10)),
   book_to: z.string().optional().or(z.literal("")).default(""),
   transport: z.string().optional().or(z.literal("")).default(""),
@@ -149,11 +151,11 @@ export async function POST(req: NextRequest) {
 
     const result = await execute(
       `INSERT INTO quotations (
-        tenant_id, quotation_number, appointment_id, customer_id, customer_name, customer_phone, customer_address,
+        tenant_id, quotation_number, appointment_id, customer_id, customer_name, customer_phone, customer_address, customer_gst_number, tax_type,
         quotation_date, book_to, transport, gr_no, vehicle_no, dispute_note,
         subtotal, tax_percent, tax_amount, discount_amount, quotation_amount, total_amount,
         quotation_status, notes, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tenantId,
         quotationNumber,
@@ -162,6 +164,8 @@ export async function POST(req: NextRequest) {
         d.customer_name,
         d.customer_phone,
         d.customer_address,
+        d.customer_gst_number || null,
+        d.tax_type || "igst",
         d.quotation_date,
         d.book_to,
         d.transport,

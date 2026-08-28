@@ -63,6 +63,8 @@ export type Quotation = {
   customer_name?: string | null;
   customer_phone?: string | null;
   customer_address?: string | null;
+  customer_gst_number?: string | null;
+  tax_type?: "cgst_sgst" | "igst" | "none" | string | null;
   quotation_date: string;
   quotation_amount: number;
   subtotal?: number;
@@ -187,6 +189,9 @@ export type Bill = {
   customer_phone?: string | null;
   customer_email?: string | null;
   customer_address?: string | null;
+  customer_gst_number?: string | null;
+  tax_type?: "cgst_sgst" | "igst" | "none" | string | null;
+  tax_percent?: number;
   bill_date: string;
   subtotal: number;
   tax_amount: number;

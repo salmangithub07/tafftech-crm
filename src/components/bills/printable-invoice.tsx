@@ -86,6 +86,8 @@ export function PrintableInvoice({
 
   const subtotalAmt = Number(b.subtotal || b.total_amount || 0);
   const taxAmt = Number(b.tax_amount || 0);
+  const taxPercent = Number(b.tax_percent || (subtotalAmt > 0 && taxAmt > 0 ? Math.round((taxAmt / subtotalAmt) * 100) : 18));
+  const taxType = b.tax_type || "igst";
   const grandTotal = Number(b.total_amount || 0);
   const balanceDue = Math.max(0, Number(b.total_amount || 0) - Number(b.paid_amount || 0));
   const termsText =
@@ -149,6 +151,7 @@ export function PrintableInvoice({
             <p className="font-sans font-semibold text-[13px] uppercase">NAME : <span className="uppercase">{bill.customer_name}</span></p>
             <p className="font-sans font-semibold">ADDRESS : {bill.customer_address || "—"}</p>
             <p className="font-sans font-semibold">MOB NO : {bill.customer_phone || "N/A"}</p>
+            {b.customer_gst_number && <p className="font-sans font-semibold text-black uppercase font-mono">GSTIN : {b.customer_gst_number}</p>}
             <p className="font-sans font-semibold">BOOK TO : {bill.book_to || "—"}</p>
           </div>
           <div className="p-2 space-y-1">
@@ -229,10 +232,28 @@ export function PrintableInvoice({
               <span>TAXABLE AMOUNT</span>
               <span className="font-mono font-bold">{subtotalAmt.toLocaleString("en-IN")}/-</span>
             </div>
-            <div className="flex justify-between border-t border-gray-300 pt-1">
-              <span>IGST(18%)</span>
-              <span className="font-mono font-bold">{taxAmt > 0 ? taxAmt.toLocaleString("en-IN") : "00"}/-</span>
-            </div>
+            {taxType === "cgst_sgst" ? (
+              <>
+                <div className="flex justify-between border-t border-gray-300 pt-1">
+                  <span>CGST({(taxPercent / 2)}%)</span>
+                  <span className="font-mono font-bold">{taxAmt > 0 ? (taxAmt / 2).toLocaleString("en-IN") : "00"}/-</span>
+                </div>
+                <div className="flex justify-between border-t border-gray-300 pt-1">
+                  <span>SGST({(taxPercent / 2)}%)</span>
+                  <span className="font-mono font-bold">{taxAmt > 0 ? (taxAmt / 2).toLocaleString("en-IN") : "00"}/-</span>
+                </div>
+              </>
+            ) : taxType === "none" ? (
+              <div className="flex justify-between border-t border-gray-300 pt-1">
+                <span>TAX (0%)</span>
+                <span className="font-mono font-bold">00/-</span>
+              </div>
+            ) : (
+              <div className="flex justify-between border-t border-gray-300 pt-1">
+                <span>IGST({taxPercent}%)</span>
+                <span className="font-mono font-bold">{taxAmt > 0 ? taxAmt.toLocaleString("en-IN") : "00"}/-</span>
+              </div>
+            )}
           </div>
         </div>
 

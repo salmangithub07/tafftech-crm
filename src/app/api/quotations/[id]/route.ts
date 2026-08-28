@@ -83,7 +83,7 @@ export async function PUT(
 
   const res = await execute(
     `UPDATE quotations SET
-      customer_id = ?, customer_name = ?, customer_phone = ?, customer_address = ?,
+      customer_id = ?, customer_name = ?, customer_phone = ?, customer_address = ?, customer_gst_number = ?, tax_type = ?,
       quotation_date = ?, book_to = ?, transport = ?, gr_no = ?, vehicle_no = ?, dispute_note = ?,
       subtotal = ?, tax_percent = ?, tax_amount = ?, discount_amount = ?, quotation_amount = ?, total_amount = ?,
       notes = ?
@@ -93,6 +93,8 @@ export async function PUT(
       body.customer_name || "",
       body.customer_phone || "",
       body.customer_address || "",
+      body.customer_gst_number || null,
+      body.tax_type || "igst",
       body.quotation_date || new Date().toISOString().slice(0, 10),
       body.book_to || "",
       body.transport || "",
