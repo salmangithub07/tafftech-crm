@@ -259,6 +259,7 @@ export function GenerateBillDialog({
               record_stock_out: !skipStockDeduction,
             });
             setTaxPresetKey(deriveTaxPresetKey(qData.tax_type, qData.tax_percent));
+          } else {
             reset({
               customer_id: null,
               customer_name: "",

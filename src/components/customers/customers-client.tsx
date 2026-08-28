@@ -625,14 +625,7 @@ export function CustomersClient({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10 text-center">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
-                  <TableHead className="w-8 px-1.5 2xl:px-3">
+                  <TableHead className="w-8 px-1.5 2xl:px-3 text-center">
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={toggleSelectAll}
