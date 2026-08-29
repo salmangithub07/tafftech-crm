@@ -41,9 +41,6 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
-import { QuotationDialog } from "@/components/quotations/quotation-dialog";
-import { QuotationDetailsDialog } from "@/components/quotations/quotation-details-dialog";
-import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import type { Quotation, QuotationStatus } from "@/lib/types";
 
 const statusVariant: Record<QuotationStatus, "warning" | "success" | "destructive"> = {
@@ -85,17 +82,6 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
 
   const [deleting, setDeleting] = React.useState<Quotation | null>(null);
   const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
-
-  // Creation, Editing, and Details dialog states
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [quotationToEdit, setQuotationToEdit] = React.useState<Quotation | null>(null);
-  const [selectedQuotation, setSelectedQuotation] = React.useState<Quotation | null>(null);
-  const [detailsOpen, setDetailsOpen] = React.useState(false);
-  const [loadingDetails, setLoadingDetails] = React.useState(false);
-
-  // Generate Bill conversion states
-  const [billGeneratingQuotation, setBillGeneratingQuotation] = React.useState<Quotation | null>(null);
-  const [generateBillOpen, setGenerateBillOpen] = React.useState(false);
 
   React.useEffect(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem(PAGE_SIZE_KEY) : null;
@@ -244,35 +230,16 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
     }
   }
 
-  async function viewQuotationDetails(q: Quotation) {
-    setLoadingDetails(true);
-    try {
-      const res = await fetch(`/api/quotations/${q.id}`);
-      if (!res.ok) throw new Error("Failed to load quotation details");
-      const fullQuotation = await res.json();
-      setSelectedQuotation(fullQuotation);
-      setDetailsOpen(true);
-    } catch {
-      toast.error("Could not load quotation details.");
-    } finally {
-      setLoadingDetails(false);
-    }
+  function viewQuotationDetails(q: Quotation) {
+    router.push(`/quotations/${q.id}`);
   }
 
   function handleGenerateBill(q: Quotation) {
-    setBillGeneratingQuotation(q);
-    setGenerateBillOpen(true);
+    router.push(`/bills/new?quotation_id=${q.id}`);
   }
 
-  async function handleEditQuotation(q: Quotation) {
-    try {
-      const res = await fetch(`/api/quotations/${q.id}`);
-      if (!res.ok) throw new Error("Failed to load quotation details.");
-      const full = await res.json();
-      setQuotationToEdit(full);
-    } catch {
-      toast.error("Could not load quotation for editing.");
-    }
+  function handleEditQuotation(q: Quotation) {
+    router.push(`/quotations/${q.id}/edit`);
   }
 
   async function updateStatus(q: Quotation, status: QuotationStatus) {
@@ -314,7 +281,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
 
         {/* Right Column */}
         <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[130px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1.5 shadow-sm">
+          <Button size="sm" onClick={() => router.push("/quotations/new")} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1.5 shadow-sm">
             <Plus className="size-4" /> Create Quotation
           </Button>
         </div>
@@ -745,35 +712,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
         </>
       )}
 
-      {/* Creation & Edit Modal */}
-      <QuotationDialog
-        open={createOpen || !!quotationToEdit}
-        onOpenChange={(op) => {
-          if (!op) {
-            setCreateOpen(false);
-            setQuotationToEdit(null);
-          }
-        }}
-        quotationToEdit={quotationToEdit}
-        onSaved={refresh}
-      />
 
-      {/* Printable Details Modal */}
-      <QuotationDetailsDialog
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        quotation={selectedQuotation}
-        onGenerateBill={handleGenerateBill}
-        onEdit={handleEditQuotation}
-      />
-
-      {/* Generate Bill Modal prefilled from Quotation */}
-      <GenerateBillDialog
-        open={generateBillOpen}
-        onOpenChange={setGenerateBillOpen}
-        initialQuotation={billGeneratingQuotation}
-        onSaved={refresh}
-      />
 
       {deleting && (
         <ConfirmDeleteDialog
