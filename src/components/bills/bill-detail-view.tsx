@@ -366,18 +366,20 @@ export function BillDetailView({ billId }: { billId: number | string }) {
       </div>
 
       {/* Invoice Document Wrapper */}
-      <div className="flex justify-center">
-        <Card className="w-full max-w-[880px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
-          <PrintableInvoice
-            bill={bill}
-            siteName={settings?.site_name}
-            settings={settings}
-            template={settings?.invoice_template || "modern"}
-            customTerms={settings?.invoice_terms}
-            bankDetails={settings?.bank_details}
-            documentType="TAX INVOICE"
-          />
-        </Card>
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="min-w-fit flex justify-center py-1">
+          <Card className="w-full max-w-[880px] min-w-[700px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
+            <PrintableInvoice
+              bill={bill}
+              siteName={settings?.site_name}
+              settings={settings}
+              template={settings?.invoice_template || "modern"}
+              customTerms={settings?.invoice_terms}
+              bankDetails={settings?.bank_details}
+              documentType="TAX INVOICE"
+            />
+          </Card>
+        </div>
       </div>
 
       {/* Record Payment Dialog */}
