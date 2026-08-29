@@ -144,6 +144,7 @@ export function QuotationDetailsDialog({
     if (!quotation) return;
     shareDocumentOnWhatsApp({
       elementId: "bill-print-root",
+      docId: quotation.id,
       docType: "Quotation",
       docNumber,
       customerName: quotation.customer_name,

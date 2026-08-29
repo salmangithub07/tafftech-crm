@@ -146,6 +146,7 @@ export function BillDetailsDialog({
     if (!bill) return;
     shareDocumentOnWhatsApp({
       elementId: "bill-print-root",
+      docId: bill.id,
       docType: "Bill",
       docNumber: bill.bill_number,
       customerName: bill.customer_name,

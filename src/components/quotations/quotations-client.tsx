@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
 import { PaginationBar } from "@/components/ui/pagination-bar";
+import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import { QuotationDialog } from "@/components/quotations/quotation-dialog";
@@ -541,7 +542,20 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => viewQuotationDetails(q)} className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    shareDocumentOnWhatsApp({
+                                      docId: q.id,
+                                      docType: "Quotation",
+                                      docNumber: q.quotation_number || `QT-${q.id}`,
+                                      customerName: q.customer_name,
+                                      customerPhone: q.customer_phone,
+                                      totalAmount: Number(q.total_amount || q.quotation_amount || 0),
+                                      date: q.quotation_date,
+                                    });
+                                  }} 
+                                  className="text-emerald-600 dark:text-emerald-400 font-medium"
+                                >
                                   <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
@@ -647,7 +661,20 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => viewQuotationDetails(q)} className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    shareDocumentOnWhatsApp({
+                                      docId: q.id,
+                                      docType: "Quotation",
+                                      docNumber: q.quotation_number || `QT-${q.id}`,
+                                      customerName: q.customer_name,
+                                      customerPhone: q.customer_phone,
+                                      totalAmount: Number(q.total_amount || q.quotation_amount || 0),
+                                      date: q.quotation_date,
+                                    });
+                                  }} 
+                                  className="text-emerald-600 dark:text-emerald-400 font-medium"
+                                >
                                   <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
