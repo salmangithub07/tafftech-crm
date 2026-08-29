@@ -192,18 +192,20 @@ function PublicQuotationContent() {
         </Button>
       </header>
 
-      <main className="flex-1 flex justify-center p-3 sm:p-8">
-        <div
-          ref={invoiceRef}
-          className="w-full max-w-[850px] bg-white text-black shadow-xl rounded-md overflow-hidden"
-          style={{ minWidth: 580, color: "#000", backgroundColor: "#fff" }}
-        >
-          <PrintableInvoice
-            bill={quotation}
-            siteName={settings?.site_name}
-            settings={settings}
-            documentType="PROFORMA INVOICE"
-          />
+      <main className="flex-1 w-full overflow-x-auto p-2 sm:p-8">
+        <div className="min-w-fit flex justify-center py-2">
+          <div
+            ref={invoiceRef}
+            className="w-full max-w-[850px] min-w-[700px] bg-white text-black shadow-xl rounded-md border"
+            style={{ color: "#000", backgroundColor: "#fff" }}
+          >
+            <PrintableInvoice
+              bill={quotation}
+              siteName={settings?.site_name}
+              settings={settings}
+              documentType="PROFORMA INVOICE"
+            />
+          </div>
         </div>
       </main>
 

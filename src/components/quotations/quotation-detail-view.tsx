@@ -423,15 +423,17 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
       </div>
 
       {/* Invoice Document Wrapper */}
-      <div className="flex justify-center">
-        <Card className="w-full max-w-[880px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
-          <PrintableInvoice
-            bill={quotation}
-            siteName={settings?.site_name}
-            settings={settings}
-            documentType="PROFORMA INVOICE"
-          />
-        </Card>
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="min-w-fit flex justify-center py-1">
+          <Card className="w-full max-w-[880px] min-w-[700px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
+            <PrintableInvoice
+              bill={quotation}
+              siteName={settings?.site_name}
+              settings={settings}
+              documentType="PROFORMA INVOICE"
+            />
+          </Card>
+        </div>
       </div>
     </div>
   );
