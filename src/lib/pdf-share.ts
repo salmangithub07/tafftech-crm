@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 export type ShareDocumentOptions = {
   elementId?: string;
+  docId?: number | string | null;
   docType: "Quotation" | "Bill" | "Invoice" | "Proforma Invoice";
   docNumber: string;
   customerName?: string | null;
@@ -21,7 +22,7 @@ export type ShareDocumentOptions = {
 export async function generatePdfBlob(elementId: string = "bill-print-root"): Promise<Blob | null> {
   const element = document.getElementById(elementId);
   if (!element) {
-    throw new Error(`Printable element #${elementId} not found.`);
+    return null;
   }
 
   // Render element to canvas with high resolution scale
@@ -62,12 +63,13 @@ export async function generatePdfBlob(elementId: string = "bill-print-root"): Pr
 
 /**
  * Smart WhatsApp & PDF Sharing:
- * - Mobile / Tablets: Uses Native Web Share API to attach the actual .pdf file directly in WhatsApp!
- * - Desktop / PC: Automatically downloads the PDF and opens WhatsApp Web with pre-formatted invoice summary text.
+ * - Mobile / Tablet: Generates PDF and shares direct .pdf document file via Native Share.
+ * - Desktop / PC: Downloads PDF file and opens WhatsApp Web with 1-Click PDF Link.
  */
 export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promise<void> {
   const {
     elementId = "bill-print-root",
+    docId,
     docType,
     docNumber,
     customerName,
@@ -77,11 +79,15 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     date,
   } = opts;
 
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const routeSegment = docType.toLowerCase() === "bill" ? "bill" : "quotation";
+  const publicViewUrl = docId ? `${origin}/view/${routeSegment}/${docId}` : "";
+
   const pdfFileName = `${customerName ? customerName.trim() + " - " : ""}${docNumber}`;
   const formattedAmount = totalAmount ? `₹${Number(totalAmount).toLocaleString("en-IN")}` : "—";
   const businessTitle = siteName?.trim() || "Our Company";
 
-  // Professional WhatsApp Message Summary
+  // Professional WhatsApp Message Summary with 1-Click PDF Link
   const waMessage = [
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `📄 *${docType.toUpperCase()}: ${docNumber}*`,
@@ -89,10 +95,13 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     customerName ? `Dear *${customerName.trim()}*,` : `Hello,`,
     ``,
-    `Please find your official *${docType}* document attached.`,
+    `Please find your official *${docType}* details below:`,
     date ? `📅 *Date:* ${date}` : ``,
     `💰 *Total Amount:* *${formattedAmount}*`,
     ``,
+    publicViewUrl
+      ? `👉 *View & Download PDF Invoice:*\n${publicViewUrl}\n`
+      : ``,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `Thank you for your business!`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -106,63 +115,68 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(waMessage)}`
     : `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
 
-  // Check if Mobile or Tablet supporting native file share
+  // Check if Mobile / Tablet device
   const isMobileOrTablet =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   try {
-    toast.loading("Generating PDF for WhatsApp...", { id: "wa-share" });
-    const pdfBlob = await generatePdfBlob(elementId);
+    toast.loading("Preparing PDF for WhatsApp...", { id: "wa-share" });
 
-    if (!pdfBlob) {
-      throw new Error("Could not generate PDF file.");
+    let pdfBlob: Blob | null = null;
+    try {
+      pdfBlob = await generatePdfBlob(elementId);
+    } catch {
+      pdfBlob = null;
     }
 
-    const pdfFile = new File([pdfBlob], `${pdfFileName}.pdf`, {
-      type: "application/pdf",
-      lastModified: Date.now(),
-    });
-
-    // Try Mobile Native Share (WhatsApp with PDF attached)
-    if (isMobileOrTablet && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      toast.dismiss("wa-share");
-      await navigator.share({
-        files: [pdfFile],
-        title: `${docType} - ${docNumber}`,
-        text: waMessage,
+    // On Mobile/Tablet: If PDF blob is ready and navigator supports file sharing
+    if (pdfBlob) {
+      const pdfFile = new File([pdfBlob], `${pdfFileName}.pdf`, {
+        type: "application/pdf",
+        lastModified: Date.now(),
       });
-      toast.success("Shared to WhatsApp successfully!");
-      return;
+
+      if (isMobileOrTablet && typeof navigator.share === "function" && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        toast.dismiss("wa-share");
+        try {
+          // Native file share with ONLY files array ensures WhatsApp attaches the actual PDF document
+          await navigator.share({
+            files: [pdfFile],
+            title: `${docNumber}.pdf`,
+          });
+          toast.success("PDF shared successfully!");
+          return;
+        } catch (shareErr: any) {
+          if (shareErr?.name === "AbortError") return; // User closed share drawer
+          console.warn("Native share failed, falling back to WhatsApp link:", shareErr);
+        }
+      }
+
+      // Desktop / Fallback: Instant Download PDF to browser bar
+      const fileUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = `${pdfFileName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 2000);
     }
 
-    // Desktop / Fallback Flow: Download PDF + Open WhatsApp Web
     toast.dismiss("wa-share");
-
-    // 1. Instant Download PDF
-    const fileUrl = URL.createObjectURL(pdfBlob);
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = `${pdfFileName}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(fileUrl), 2000);
-
-    // 2. Open WhatsApp Web
+    // Open WhatsApp Web/App
     window.open(waUrl, "_blank");
-
-    toast.success("PDF saved! Drag and attach it in the opened WhatsApp chat.", {
-      duration: 6000,
-    });
+    toast.success(
+      isMobileOrTablet
+        ? "Opening WhatsApp..."
+        : "PDF saved! Drag and attach it in the opened WhatsApp chat.",
+      { duration: 5000 }
+    );
   } catch (err: any) {
     toast.dismiss("wa-share");
-    if (err?.name === "AbortError") {
-      // User cancelled share dialog
-      return;
-    }
+    if (err?.name === "AbortError") return;
     console.error("WhatsApp share error:", err);
-    // If PDF generation failed, open WhatsApp with text message
     window.open(waUrl, "_blank");
     toast.info("Opened WhatsApp with invoice summary.");
   }

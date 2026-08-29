@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
 import { PaginationBar } from "@/components/ui/pagination-bar";
+import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
 import { BillDetailsDialog } from "@/components/bills/bill-details-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
@@ -333,7 +334,17 @@ export function BillsClient() {
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setViewingBill(b)}
+                            onClick={() => {
+                              shareDocumentOnWhatsApp({
+                                docId: b.id,
+                                docType: "Bill",
+                                docNumber: b.bill_number,
+                                customerName: b.customer_name,
+                                customerPhone: b.customer_phone,
+                                totalAmount: Number(b.total_amount || 0),
+                                date: b.bill_date,
+                              });
+                            }}
                             className="text-emerald-600 dark:text-emerald-400 font-medium"
                           >
                             <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
@@ -409,7 +420,17 @@ export function BillsClient() {
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setViewingBill(b)}
+                            onClick={() => {
+                              shareDocumentOnWhatsApp({
+                                docId: b.id,
+                                docType: "Bill",
+                                docNumber: b.bill_number,
+                                customerName: b.customer_name,
+                                customerPhone: b.customer_phone,
+                                totalAmount: Number(b.total_amount || 0),
+                                date: b.bill_date,
+                              });
+                            }}
                             className="text-emerald-600 dark:text-emerald-400 font-medium"
                           >
                             <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
