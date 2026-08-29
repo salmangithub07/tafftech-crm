@@ -42,8 +42,6 @@ import {
 import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components/ui/date-filter";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
-import { GenerateBillDialog } from "@/components/bills/generate-bill-dialog";
-import { BillDetailsDialog } from "@/components/bills/bill-details-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CustomerProfileDialog } from "@/components/customers/customer-profile-dialog";
 import { RecordPaymentDialog } from "@/components/bills/record-payment-dialog";
@@ -66,8 +64,6 @@ export function BillsClient() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
 
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [viewingBill, setViewingBill] = React.useState<Bill | null>(null);
   const [deletingBill, setDeletingBill] = React.useState<Bill | null>(null);
   const [paymentBill, setPaymentBill] = React.useState<Bill | null>(null);
   const [profileCustomerId, setProfileCustomerId] = React.useState<number | null>(null);
@@ -140,7 +136,7 @@ export function BillsClient() {
 
         {/* Right Column (50%) */}
         <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[130px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
+          <Button size="sm" onClick={() => router.push("/bills/new")} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
             <Plus className="size-4" /> Create Bill
           </Button>
 
@@ -281,7 +277,7 @@ export function BillsClient() {
                     <TableCell className="font-mono font-medium text-primary">
                       <button
                         className="hover:underline focus:outline-none text-left cursor-pointer"
-                        onClick={() => setViewingBill(b)}
+                        onClick={() => router.push(`/bills/${b.id}`)}
                       >
                         {b.bill_number}
                       </button>
@@ -330,7 +326,7 @@ export function BillsClient() {
                               <DollarSign className="size-4" /> Record Payment
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => setViewingBill(b)}>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -377,7 +373,7 @@ export function BillsClient() {
                     <div>
                       <button
                         className="font-mono text-sm font-bold text-primary hover:underline cursor-pointer"
-                        onClick={() => setViewingBill(b)}
+                        onClick={() => router.push(`/bills/${b.id}`)}
                       >
                         {b.bill_number}
                       </button>
@@ -416,7 +412,7 @@ export function BillsClient() {
                               <DollarSign className="size-4" /> Record Payment
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => setViewingBill(b)}>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -473,20 +469,9 @@ export function BillsClient() {
         </>
       )}
 
-      {/* Dialogs */}
-      <GenerateBillDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSaved={fetchBills}
-      />
 
-      {viewingBill && (
-        <BillDetailsDialog
-          open={!!viewingBill}
-          onOpenChange={(op) => !op && setViewingBill(null)}
-          bill={viewingBill}
-        />
-      )}
+
+
 
       {deletingBill && (
         <ConfirmDeleteDialog

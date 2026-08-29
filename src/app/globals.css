@@ -227,9 +227,21 @@ h1, h2, h3, .font-heading {
   header,
   nav,
   aside,
-  main,
   [role="dialog"] > button {
     display: none !important;
+  }
+
+  /* Hide main content area UNLESS it contains our invoice */
+  main:not(:has(#bill-print-root)) {
+    display: none !important;
+  }
+
+  /* When main contains the invoice (public view pages), show main but hide everything else inside it */
+  main:has(#bill-print-root) {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
   }
 
   /* Flatten Radix Dialog overlay wrappers so they don't clip or transform the bill */
@@ -274,6 +286,11 @@ h1, h2, h3, .font-heading {
     print-color-adjust: exact !important;
   }
 
+  /* Hide everything inside main EXCEPT the invoice wrapper and bill-print-root */
+  main:has(#bill-print-root) > *:not(:has(#bill-print-root)):not(#bill-print-root) {
+    display: none !important;
+  }
+
   #bill-print-root .bg-yellow-banner {
     background-color: #facc15 !important;
     color: #000000 !important;
@@ -281,6 +298,7 @@ h1, h2, h3, .font-heading {
     print-color-adjust: exact !important;
   }
 }
+
 
 @media (max-width:575px) {
   .mobileCards {
