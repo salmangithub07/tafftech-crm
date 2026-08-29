@@ -6,6 +6,8 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
 import type { Bill } from "@/lib/types";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export default function PublicBillPage() {
   const params = useParams();
@@ -13,6 +15,8 @@ export default function PublicBillPage() {
   const [data, setData] = React.useState<{ bill: Bill; settings: any } | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [downloading, setDownloading] = React.useState(false);
+  const invoiceRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!id) return;
@@ -26,13 +30,45 @@ export default function PublicBillPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  function handlePrint() {
-    window.print();
+  async function handleDownloadPDF() {
+    if (!invoiceRef.current || !data) return;
+    setDownloading(true);
+    try {
+      const element = invoiceRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: element.scrollWidth,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdfWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+        heightLeft -= pageHeight;
+      }
+      const customerName = data.bill.customer_name || "";
+      pdf.save(`${customerName ? customerName + " - " : ""}${data.bill.bill_number}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
         <Loader2 className="size-8 animate-spin text-primary mb-3" />
         <p className="text-sm font-medium text-muted-foreground">Loading invoice details...</p>
       </div>
@@ -41,11 +77,11 @@ export default function PublicBillPage() {
 
   if (error || !data?.bill) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 text-center">
-        <div className="max-w-md bg-white dark:bg-card p-8 rounded-2xl border border-border shadow-sm space-y-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
+        <div className="max-w-md bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
           <span className="text-4xl">🧾</span>
-          <h1 className="text-xl font-bold text-foreground">Invoice Not Found</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold text-gray-900">Invoice Not Found</h1>
+          <p className="text-sm text-gray-500">
             The requested invoice document is either expired, removed, or the link is invalid.
           </p>
         </div>
@@ -56,28 +92,40 @@ export default function PublicBillPage() {
   const { bill, settings } = data;
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-20 bg-white/90 dark:bg-card/90 backdrop-blur-md border-b border-border px-4 py-3 sm:px-8 flex items-center justify-between no-print shadow-xs">
+      <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 py-3 sm:px-8 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-sm sm:text-base text-foreground">
+          <span className="font-bold text-sm sm:text-base text-gray-900">
             {settings?.site_name || "Invoice Details"}
           </span>
-          <span className="text-xs bg-primary/10 text-primary font-mono font-semibold px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-orange-100 text-orange-700 font-mono font-semibold px-2 py-0.5 rounded-full">
             {bill.bill_number}
           </span>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button onClick={handlePrint} variant="default" size="sm" className="gap-1.5 shadow-xs">
-            <Download className="size-4" /> Download / Print PDF
-          </Button>
-        </div>
+        <Button
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          variant="default"
+          size="sm"
+          className="gap-1.5 shadow-sm"
+        >
+          {downloading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Download className="size-4" />
+          )}
+          {downloading ? "Generating..." : "Download / Print PDF"}
+        </Button>
       </header>
 
       {/* Invoice Container */}
-      <main className="flex-1 flex justify-center p-3 sm:p-8 overflow-x-auto">
-        <div className="w-[620px] sm:w-full max-w-[850px] bg-white text-black shadow-xl rounded-md overflow-hidden shrink-0 my-auto">
+      <main className="flex-1 flex justify-center p-3 sm:p-8">
+        <div
+          ref={invoiceRef}
+          className="w-full max-w-[850px] bg-white text-black shadow-xl rounded-md overflow-hidden"
+          style={{ minWidth: 600 }}
+        >
           <PrintableInvoice
             bill={bill}
             siteName={settings?.site_name}
@@ -91,8 +139,8 @@ export default function PublicBillPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-muted-foreground no-print border-t border-border bg-white dark:bg-card">
-        Powered by <span className="font-bold text-primary">Taff Desk CRM</span>
+      <footer className="py-4 text-center text-xs text-gray-400 border-t border-gray-200 bg-white">
+        Powered by <span className="font-bold text-orange-600">Taff Desk CRM</span>
       </footer>
     </div>
   );
