@@ -21,50 +21,125 @@ export type ShareDocumentOptions = {
  */
 export async function generatePdfBlob(elementId: string = "bill-print-root"): Promise<Blob | null> {
   const element = document.getElementById(elementId);
-  if (!element) {
-    return null;
-  }
+  if (!element) return null;
 
-  // Render element to canvas with high resolution scale
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
-    windowWidth: 1024,
+    windowWidth: element.scrollWidth,
   });
 
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
-
-  const pdfWidth = 210; // A4 width in mm
-  const pageHeight = 297; // A4 height in mm
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pdfWidth = 210;
+  const pageHeight = 297;
   const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
   let heightLeft = imgHeight;
   let position = 0;
 
   pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
   heightLeft -= pageHeight;
-
   while (heightLeft > 0) {
     position = heightLeft - imgHeight;
     pdf.addPage();
     pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
     heightLeft -= pageHeight;
   }
-
   return pdf.output("blob");
 }
 
 /**
+ * Generates a PDF Blob by fetching public API data and rendering the invoice
+ * into a hidden off-screen div. Works regardless of whether the modal is open.
+ */
+async function generatePdfFromPublicApi(
+  docId: number | string,
+  docType: "Quotation" | "Bill" | "Invoice" | "Proforma Invoice",
+  pdfFileName: string
+): Promise<Blob | null> {
+  try {
+    const routeSegment = docType.toLowerCase() === "bill" ? "bills" : "quotations";
+    const res = await fetch(`/api/public/${routeSegment}/${docId}`);
+    if (!res.ok) return null;
+    const apiData = await res.json();
+    const docData = apiData.quotation || apiData.bill;
+    const settings = apiData.settings || {};
+
+    if (!docData) return null;
+
+    // Dynamically import PrintableInvoice renderer
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { PrintableInvoice } = await import("@/components/bills/printable-invoice");
+    const React = await import("react");
+
+    const html = renderToStaticMarkup(
+      React.createElement(PrintableInvoice, {
+        bill: docData,
+        siteName: settings.site_name,
+        settings: settings,
+        template: settings.invoice_template || "modern",
+        customTerms: settings.invoice_terms,
+        bankDetails: settings.bank_details,
+        documentType: docType === "Bill" ? "TAX INVOICE" : "PROFORMA INVOICE",
+      } as any)
+    );
+
+    // Mount in a hidden off-screen container
+    const container = document.createElement("div");
+    container.style.cssText = [
+      "position:fixed",
+      "top:0",
+      "left:-9999px",
+      "width:850px",
+      "background:#fff",
+      "color:#000",
+      "z-index:-9999",
+      "overflow:visible",
+    ].join(";");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    // Wait a tick for styles to apply
+    await new Promise((r) => setTimeout(r, 120));
+
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      windowWidth: 850,
+    });
+
+    document.body.removeChild(container);
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pdfWidth = 210;
+    const pageHeight = 297;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+    heightLeft -= pageHeight;
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+      heightLeft -= pageHeight;
+    }
+    return pdf.output("blob");
+  } catch (err) {
+    console.error("generatePdfFromPublicApi error:", err);
+    return null;
+  }
+}
+
+/**
  * Smart WhatsApp & PDF Sharing:
- * - Mobile / Tablet: Generates PDF and shares direct .pdf document file via Native Share.
- * - Desktop / PC: Downloads PDF file and opens WhatsApp Web with 1-Click PDF Link.
+ * - Mobile / Tablet: Generates actual PDF and opens Native Share Sheet with ONLY the .pdf file — WhatsApp attaches it directly.
+ * - Desktop / PC: Downloads PDF file and opens WhatsApp Web with 1-Click View & Download link.
  */
 export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promise<void> {
   const {
@@ -87,7 +162,6 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
   const formattedAmount = totalAmount ? `₹${Number(totalAmount).toLocaleString("en-IN")}` : "—";
   const businessTitle = siteName?.trim() || "Our Company";
 
-  // Professional WhatsApp Message Summary with 1-Click PDF Link
   const waMessage = [
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `📄 *${docType.toUpperCase()}: ${docNumber}*`,
@@ -99,9 +173,7 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     date ? `📅 *Date:* ${date}` : ``,
     `💰 *Total Amount:* *${formattedAmount}*`,
     ``,
-    publicViewUrl
-      ? `👉 *View & Download PDF Invoice:*\n${publicViewUrl}\n`
-      : ``,
+    publicViewUrl ? `👉 *View & Download PDF Invoice:*\n${publicViewUrl}\n` : ``,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `Thank you for your business!`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -115,45 +187,71 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(waMessage)}`
     : `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
 
-  // Check if Mobile / Tablet device
   const isMobileOrTablet =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  try {
-    toast.loading("Preparing PDF for WhatsApp...", { id: "wa-share" });
-
-    let pdfBlob: Blob | null = null;
+  // ──────────────────────────────────────────────────
+  // MOBILE PATH: Generate actual PDF → Native Share → WhatsApp file attachment
+  // ──────────────────────────────────────────────────
+  if (isMobileOrTablet && typeof navigator.share === "function") {
+    toast.loading("Generating PDF...", { id: "wa-share" });
     try {
-      pdfBlob = await generatePdfBlob(elementId);
-    } catch {
-      pdfBlob = null;
-    }
+      // Try from existing DOM element first (when modal is open)
+      let pdfBlob = await generatePdfBlob(elementId);
 
-    // On Mobile/Tablet: If PDF blob is ready and navigator supports file sharing
-    if (pdfBlob) {
-      const pdfFile = new File([pdfBlob], `${pdfFileName}.pdf`, {
-        type: "application/pdf",
-        lastModified: Date.now(),
-      });
+      // If modal not open → generate from public API
+      if (!pdfBlob && docId) {
+        pdfBlob = await generatePdfFromPublicApi(docId, docType, pdfFileName);
+      }
 
-      if (isMobileOrTablet && typeof navigator.share === "function" && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-        toast.dismiss("wa-share");
-        try {
-          // Native file share with ONLY files array ensures WhatsApp attaches the actual PDF document
-          await navigator.share({
-            files: [pdfFile],
-            title: `${docNumber}.pdf`,
-          });
-          toast.success("PDF shared successfully!");
-          return;
-        } catch (shareErr: any) {
-          if (shareErr?.name === "AbortError") return; // User closed share drawer
-          console.warn("Native share failed, falling back to WhatsApp link:", shareErr);
+      if (pdfBlob) {
+        const pdfFile = new File([pdfBlob], `${pdfFileName}.pdf`, {
+          type: "application/pdf",
+          lastModified: Date.now(),
+        });
+
+        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+          toast.dismiss("wa-share");
+          try {
+            // Pass ONLY files — no title/text — so WhatsApp doesn't drop the file
+            await navigator.share({ files: [pdfFile] });
+            toast.success("PDF shared successfully!");
+            return;
+          } catch (shareErr: any) {
+            if (shareErr?.name === "AbortError") {
+              toast.dismiss("wa-share");
+              return;
+            }
+            console.warn("Native file share failed:", shareErr);
+          }
         }
       }
 
-      // Desktop / Fallback: Instant Download PDF to browser bar
+      // Native share not supported or failed → open WhatsApp text link
+      toast.dismiss("wa-share");
+      window.open(waUrl, "_blank");
+      toast.info("Opened WhatsApp with invoice link.");
+    } catch (err: any) {
+      toast.dismiss("wa-share");
+      if (err?.name === "AbortError") return;
+      console.error("Mobile share error:", err);
+      window.open(waUrl, "_blank");
+    }
+    return;
+  }
+
+  // ──────────────────────────────────────────────────
+  // DESKTOP PATH: Download PDF + Open WhatsApp Web
+  // ──────────────────────────────────────────────────
+  toast.loading("Preparing PDF...", { id: "wa-share" });
+  try {
+    let pdfBlob = await generatePdfBlob(elementId);
+    if (!pdfBlob && docId) {
+      pdfBlob = await generatePdfFromPublicApi(docId, docType, pdfFileName);
+    }
+
+    if (pdfBlob) {
       const fileUrl = URL.createObjectURL(pdfBlob);
       const link = document.createElement("a");
       link.href = fileUrl;
@@ -165,18 +263,12 @@ export async function shareDocumentOnWhatsApp(opts: ShareDocumentOptions): Promi
     }
 
     toast.dismiss("wa-share");
-    // Open WhatsApp Web/App
     window.open(waUrl, "_blank");
-    toast.success(
-      isMobileOrTablet
-        ? "Opening WhatsApp..."
-        : "PDF saved! Drag and attach it in the opened WhatsApp chat.",
-      { duration: 5000 }
-    );
+    toast.success("PDF saved! WhatsApp is opening...", { duration: 5000 });
   } catch (err: any) {
     toast.dismiss("wa-share");
     if (err?.name === "AbortError") return;
-    console.error("WhatsApp share error:", err);
+    console.error("Desktop share error:", err);
     window.open(waUrl, "_blank");
     toast.info("Opened WhatsApp with invoice summary.");
   }
