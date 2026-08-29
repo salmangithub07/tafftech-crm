@@ -17,6 +17,7 @@ import {
   AlertCircle,
   CheckCircle2,
   DollarSign,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -331,6 +332,12 @@ export function BillsClient() {
                           <DropdownMenuItem onClick={() => setViewingBill(b)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setViewingBill(b)}
+                            className="text-emerald-600 dark:text-emerald-400 font-medium"
+                          >
+                            <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
+                          </DropdownMenuItem>
                           <DropdownMenuItem variant="destructive" onClick={() => setDeletingBill(b)}>
                             <Trash2 className="size-4" /> Delete
                           </DropdownMenuItem>
@@ -400,6 +407,12 @@ export function BillsClient() {
                           )}
                           <DropdownMenuItem onClick={() => setViewingBill(b)}>
                             <Eye className="size-4" /> View / Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setViewingBill(b)}
+                            className="text-emerald-600 dark:text-emerald-400 font-medium"
+                          >
+                            <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
                           </DropdownMenuItem>
                           <DropdownMenuItem variant="destructive" onClick={() => setDeletingBill(b)}>
                             <Trash2 className="size-4" /> Delete

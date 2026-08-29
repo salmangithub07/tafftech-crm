@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Printer, Receipt, Pencil } from "lucide-react";
+import { Printer, Receipt, Pencil, MessageSquare } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
+import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import type { Quotation } from "@/lib/types";
 
 export function QuotationDetailsDialog({
@@ -139,6 +140,20 @@ export function QuotationDetailsDialog({
     resetTitle();
   }
 
+  function handleWhatsAppShare() {
+    if (!quotation) return;
+    shareDocumentOnWhatsApp({
+      elementId: "bill-print-root",
+      docType: "Quotation",
+      docNumber,
+      customerName: quotation.customer_name,
+      customerPhone: quotation.customer_phone,
+      totalAmount: Number(quotation.total_amount || quotation.quotation_amount || 0),
+      siteName,
+      date: quotation.quotation_date,
+    });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
@@ -175,6 +190,14 @@ export function QuotationDetailsDialog({
                 <Receipt className="size-4 text-primary" /> Generate Bill
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleWhatsAppShare}
+              className="gap-1.5 border-emerald-500/50 bg-emerald-50/50 hover:bg-emerald-100/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold"
+            >
+              <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
+            </Button>
             <Button variant="default" size="sm" onClick={handlePrint} className="gap-1.5">
               <Printer className="size-4 no-print" /> Print / Save PDF
             </Button>
