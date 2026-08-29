@@ -14,6 +14,7 @@ import {
   Receipt,
   RotateCcw,
   Pencil,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -540,6 +541,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => viewQuotationDetails(q)} className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                  <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
                                   <Pencil className="size-4 text-primary" /> Edit Quotation
                                 </DropdownMenuItem>
@@ -642,6 +646,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                               <>
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => viewQuotationDetails(q)} className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                  <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" /> Share on WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
                                   <Pencil className="size-4 text-primary" /> Edit Quotation
