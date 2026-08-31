@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -54,7 +55,11 @@ export default function RegisterPage() {
     bank_upi_id: "",
     payment_qr_code: "",
     company_phone: "+91 9876543210",
+    terms_of_service: "",
+    privacy_policy: "",
   });
+  const [termsModalOpen, setTermsModalOpen] = React.useState(false);
+  const [privacyModalOpen, setPrivacyModalOpen] = React.useState(false);
 
   // Coupon States
   const [couponInput, setCouponInput] = React.useState("");
@@ -728,17 +733,31 @@ export default function RegisterPage() {
               )}
 
               {/* Terms Checkbox */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-start sm:items-center gap-2.5 pt-1">
                 <input
                   type="checkbox"
                   id="agree"
                   checked={agree}
                   onChange={(e) => setAgree(e.target.checked)}
-                  className="size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                  className="mt-0.5 sm:mt-0 size-4 rounded border-slate-300 dark:border-border text-primary focus:ring-primary cursor-pointer shrink-0"
                 />
-                <label htmlFor="agree" className="text-xs text-slate-600 dark:text-muted-foreground cursor-pointer select-none">
-                  I agree to the <span className="font-semibold text-slate-900 dark:text-foreground">Terms of Service</span> and{" "}
-                  <span className="font-semibold text-slate-900 dark:text-foreground">Privacy Policy</span>
+                <label htmlFor="agree" className="text-xs text-slate-600 dark:text-muted-foreground select-none leading-relaxed">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    className="font-bold text-slate-900 dark:text-foreground underline underline-offset-2 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    onClick={() => setPrivacyModalOpen(true)}
+                    className="font-bold text-slate-900 dark:text-foreground underline underline-offset-2 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
                 </label>
               </div>
 
@@ -778,6 +797,96 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms of Service Dialog */}
+      <Dialog open={termsModalOpen} onOpenChange={setTermsModalOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
+              <ShieldCheck className="size-5 text-primary" /> Terms of Service
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Please read the terms governing the use of your workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-xs text-slate-700 dark:text-muted-foreground space-y-3 leading-relaxed py-2">
+            {settings.terms_of_service?.trim() ? (
+              <p className="whitespace-pre-line bg-muted/30 p-3.5 rounded-xl border">
+                {settings.terms_of_service}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">1. Acceptance of Terms</h4>
+                  <p>By registering and creating a tenant workspace on this platform, you agree to comply with and be bound by all applicable laws, acceptable usage policies, and license rules.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">2. Account Responsibility</h4>
+                  <p>You are solely responsible for maintaining the confidentiality of your workspace credentials and for all activities, data transactions, and customer records created by your team accounts.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">3. Subscription &amp; Billing</h4>
+                  <p>Paid plans are activated upon payment verification. Access to multi-user executives, customer lead quotas, and GST invoice generations are governed by your active subscription tier.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">4. System Fair Use</h4>
+                  <p>Automated scraping, unauthorized penetration testing, reverse engineering, or sending unsolicited spam through integrated WhatsApp features is strictly prohibited.</p>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button size="sm" onClick={() => setTermsModalOpen(false)}>
+              Close &amp; Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Privacy Policy Dialog */}
+      <Dialog open={privacyModalOpen} onOpenChange={setPrivacyModalOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
+              <ShieldCheck className="size-5 text-emerald-600" /> Privacy Policy
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              How your workspace, customer data, and business records are protected.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-xs text-slate-700 dark:text-muted-foreground space-y-3 leading-relaxed py-2">
+            {settings.privacy_policy?.trim() ? (
+              <p className="whitespace-pre-line bg-muted/30 p-3.5 rounded-xl border">
+                {settings.privacy_policy}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">1. Data Ownership &amp; Privacy</h4>
+                  <p>We value your privacy. All customer contact details, lead pipelines, appointment schedules, GST billing records, and financial balance sheets remain 100% your private property.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">2. Tenant Database Isolation</h4>
+                  <p>Each tenant workspace operates inside a strictly isolated data partition. No other business or third party has access to your customer base or business performance metrics.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">3. Security &amp; Encryption</h4>
+                  <p>We employ industry-standard 256-bit encryption in transit, hashed passwords, and secure session management to ensure your enterprise records are protected around the clock.</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-foreground">4. No Data Selling</h4>
+                  <p>We never sell, rent, or monetize your customer lists or business data to advertisers or third-party brokers.</p>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button size="sm" onClick={() => setPrivacyModalOpen(false)}>
+              Close &amp; Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

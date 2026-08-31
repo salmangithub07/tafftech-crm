@@ -29,6 +29,7 @@ import {
   Megaphone,
   Percent,
   Copy,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -115,51 +116,84 @@ export function SettingsClient({
   const canEditAppearance = isSuperAdmin || isAdmin;
   const canEditInvoice = isAdmin;
 
+  const settingsTabsRef = React.useRef<HTMLDivElement>(null);
+  const handleScrollTabsRight = () => {
+    if (settingsTabsRef.current) {
+      settingsTabsRef.current.scrollBy({ left: 160, behavior: "smooth" });
+    }
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="flex overflow-x-auto w-max sm:w-fit max-w-full justify-start p-1 gap-1">
-        <TabsTrigger value="profile" className="gap-1.5 text-xs py-1.5 sm:py-1">
-          <User className="size-3.5 shrink-0" />
-          <span>Profile</span>
-        </TabsTrigger>
-        {canEditAppearance && (
-          <TabsTrigger value="appearance" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <Palette className="size-3.5 shrink-0" />
-            <span>Appearance</span>
-          </TabsTrigger>
-        )}
-        {canEditInvoice && (
-          <TabsTrigger value="invoice" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <CreditCard className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">Invoice &amp; Bank</span>
-            <span className="sm:hidden">Invoice</span>
-          </TabsTrigger>
-        )}
-        {canEditAppearance && (
-          <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <MessageSquare className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>WA Gateway</span>
-          </TabsTrigger>
-        )}
-        {session.role === "super_admin" && (
-          <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <IndianRupee className="size-3.5 shrink-0 text-amber-500" />
-            <span>Alerts &amp; Pricing</span>
-          </TabsTrigger>
-        )}
-        {session.role === "super_admin" && (
-          <TabsTrigger value="coupons" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <Tag className="size-3.5 shrink-0 text-amber-500" />
-            <span>Offers</span>
-          </TabsTrigger>
-        )}
-        {session.role === "super_admin" && (
-          <TabsTrigger value="seo" className="gap-1.5 text-xs py-1.5 sm:py-1">
-            <Code2 className="size-3.5 shrink-0 text-indigo-500" />
-            <span>Header Scripts</span>
-          </TabsTrigger>
-        )}
-      </TabsList>
+      <div className="flex flex-col gap-1.5 w-full">
+        {/* Full-width Tabs Bar */}
+        <div className="relative w-full overflow-hidden">
+          <div
+            ref={settingsTabsRef}
+            className="w-full overflow-x-auto scrollbar-none py-0.5 no-scrollbar flex items-center"
+          >
+            <TabsList className="flex overflow-x-auto w-max sm:w-fit max-w-full justify-start p-1 gap-1">
+              <TabsTrigger value="profile" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                <User className="size-3.5 shrink-0" />
+                <span>Profile</span>
+              </TabsTrigger>
+              {canEditAppearance && (
+                <TabsTrigger value="appearance" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <Palette className="size-3.5 shrink-0" />
+                  <span>Appearance</span>
+                </TabsTrigger>
+              )}
+              {canEditInvoice && (
+                <TabsTrigger value="invoice" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <CreditCard className="size-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Invoice &amp; Bank</span>
+                  <span className="sm:hidden">Invoice</span>
+                </TabsTrigger>
+              )}
+              {canEditAppearance && (
+                <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <MessageSquare className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>WA Gateway</span>
+                </TabsTrigger>
+              )}
+              {session.role === "super_admin" && (
+                <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <IndianRupee className="size-3.5 shrink-0 text-amber-500" />
+                  <span>Alerts &amp; Pricing</span>
+                </TabsTrigger>
+              )}
+              {session.role === "super_admin" && (
+                <TabsTrigger value="coupons" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <Tag className="size-3.5 shrink-0 text-amber-500" />
+                  <span>Offers</span>
+                </TabsTrigger>
+              )}
+              {session.role === "super_admin" && (
+                <TabsTrigger value="seo" className="gap-1.5 text-xs py-1.5 sm:py-1">
+                  <Code2 className="size-3.5 shrink-0 text-indigo-500" />
+                  <span>Header Scripts</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+          {/* Subtle Right Gradient */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background via-background/60 to-transparent sm:hidden z-10" />
+        </div>
+
+        {/* Row 2 on Mobile: Dedicated Non-Overlapping Swipe Indicator */}
+        <div className="flex sm:hidden items-center justify-end w-full">
+          <button
+            type="button"
+            onClick={handleScrollTabsRight}
+            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 text-primary border border-primary/25 rounded-lg px-2.5 py-1 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs transition-all select-none"
+            title="Swipe or tap to see more tabs"
+          >
+            <span className="text-sm leading-none animate-swipe-hand select-none">👆</span>
+            <span className="text-[11px] font-semibold whitespace-nowrap">Swipe tabs</span>
+            <ChevronRight className="size-3.5 opacity-75 shrink-0" />
+          </button>
+        </div>
+      </div>
 
       <TabsContent value="profile" className="mt-6">
         <ProfileTab
@@ -666,9 +700,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
   const [bankBranch, setBankBranch] = React.useState(initialSettings.bank_branch || "");
   const [bankAcc, setBankAcc] = React.useState(initialSettings.bank_account_no || "");
   const [bankIfsc, setBankIfsc] = React.useState(initialSettings.bank_ifsc || "");
-  const [bankUpi, setBankUpi] = React.useState(initialSettings.bank_upi_id || "");
   const [disputeNote, setDisputeNote] = React.useState(initialSettings.dispute_note || "");
-  const [privacyPolicy, setPrivacyPolicy] = React.useState(initialSettings.privacy_policy || "");
   const [saving, setSaving] = React.useState(false);
   const logoInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -710,9 +742,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
           bank_branch: bankBranch,
           bank_account_no: bankAcc,
           bank_ifsc: bankIfsc,
-          bank_upi_id: bankUpi,
           dispute_note: disputeNote,
-          privacy_policy: privacyPolicy,
         }),
       });
       if (!res.ok) throw new Error();
@@ -847,7 +877,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
             <Building className="size-4 text-primary" /> Bank Account &amp; Payment Details (Tenant-Wise)
           </CardTitle>
           <CardDescription>
-            Individual structured fields for your tenant bank account, branch, IFSC code, and UPI ID printed on every invoice.
+            Individual structured fields for your tenant bank account, branch, and IFSC code printed on every invoice.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -873,7 +903,7 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="bankAcc">Account Number (A/C No)</Label>
               <Input
@@ -893,17 +923,6 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
                 onChange={(e) => setBankIfsc(e.target.value)}
                 placeholder="ICIC0001462"
                 className="font-mono uppercase"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="bankUpi">UPI ID / VPA</Label>
-              <Input
-                id="bankUpi"
-                value={bankUpi}
-                onChange={(e) => setBankUpi(e.target.value)}
-                placeholder="merchant@upi"
-                className="font-mono"
               />
             </div>
           </div>
@@ -951,36 +970,6 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
           Save Invoice &amp; Branding Settings
         </Button>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="size-4 text-primary" /> Privacy Policy &amp; Invoice Policy Note
-          </CardTitle>
-          <CardDescription>
-            Separate dynamic policy statement printed on your tenant invoices and customer billing portals.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1.5">
-            <Label htmlFor="privacyPolicy">Tenant Privacy &amp; Invoice Policy</Label>
-            <Textarea
-              id="privacyPolicy"
-              rows={3}
-              value={privacyPolicy}
-              onChange={(e) => setPrivacyPolicy(e.target.value)}
-              placeholder="We value your privacy. All customer data and transaction history are protected under our privacy guidelines."
-              className="text-xs"
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="border-t">
-          <Button type="submit" disabled={saving} className="ml-auto gap-1.5">
-            {saving && <Loader2 className="size-4 animate-spin" />}
-            Save Tenant Invoice Settings
-          </Button>
-        </CardFooter>
-      </Card>
     </form>
   );
 }
@@ -1162,6 +1151,10 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
   const [announcementType, setAnnouncementType] = React.useState(initialSettings.broadcast_announcement_type || "info");
   const [announcementTarget, setAnnouncementTarget] = React.useState(initialSettings.broadcast_announcement_target_plan || "all");
 
+  // Platform Terms & Privacy Policy state
+  const [termsOfService, setTermsOfService] = React.useState(initialSettings.terms_of_service || "");
+  const [privacyPolicy, setPrivacyPolicy] = React.useState(initialSettings.privacy_policy || "");
+
   const [saving, setSaving] = React.useState(false);
 
   async function handleSave(e: React.FormEvent) {
@@ -1189,6 +1182,8 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
           broadcast_announcement_message: announcementMessage,
           broadcast_announcement_type: announcementType,
           broadcast_announcement_target_plan: announcementTarget,
+          terms_of_service: termsOfService,
+          privacy_policy: privacyPolicy,
         }),
       });
       if (!res.ok) throw new Error();
@@ -1502,9 +1497,56 @@ function SubscriptionSettingsTab({ initialSettings }: { initialSettings: AppSett
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Platform Legal & Registration Policies Card */}
+      <Card className="border-blue-500/30 bg-blue-500/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="size-5 text-blue-600 dark:text-blue-400" /> Platform Legal Policies &amp; Registration Terms
+          </CardTitle>
+          <CardDescription>
+            Manage separate Terms &amp; Conditions and Privacy Policy shown on the tenant registration page. If left blank, standard platform defaults will be displayed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="super_terms_of_service" className="font-semibold text-foreground">
+              Platform Terms of Service / Terms &amp; Conditions (Registration Page)
+            </Label>
+            <Textarea
+              id="super_terms_of_service"
+              rows={4}
+              value={termsOfService}
+              onChange={(e) => setTermsOfService(e.target.value)}
+              placeholder="Enter custom Terms & Conditions for tenant registration (or leave empty for default text)..."
+              className="text-xs bg-background"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Displayed when new users click &quot;Terms of Service&quot; on the registration form.
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="super_privacy_policy" className="font-semibold text-foreground">
+              Platform Privacy Policy (Registration Page)
+            </Label>
+            <Textarea
+              id="super_privacy_policy"
+              rows={4}
+              value={privacyPolicy}
+              onChange={(e) => setPrivacyPolicy(e.target.value)}
+              placeholder="Enter custom Privacy Policy for tenant registration (or leave empty for default text)..."
+              className="text-xs bg-background"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Displayed when new users click &quot;Privacy Policy&quot; on the registration form.
+            </span>
+          </div>
+        </CardContent>
         <CardFooter className="border-t">
           <Button type="submit" disabled={saving} className="ml-auto">
-            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save All Settings &amp; Broadcasts
+            {saving && <Loader2 className="size-4 animate-spin mr-1.5" />} Save All Settings &amp; Policies
           </Button>
         </CardFooter>
       </Card>

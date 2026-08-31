@@ -5,25 +5,8 @@ import { query } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { PublicBillView } from "@/components/bills/public-bill-view";
 
-import { headers } from "next/headers";
-
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-async function getOrigin(): Promise<string> {
-  try {
-    const h = await headers();
-    const host = h.get("x-forwarded-host") || h.get("host");
-    const proto = h.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
-    if (host) return `${proto}://${host}`;
-  } catch {
-    // fallback
-  }
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://tafftech-crm.vercel.app")
-  );
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -50,12 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const total = Number(bill.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
     const dateStr = bill.bill_date ? new Date(bill.bill_date).toLocaleDateString("en-IN") : "";
 
-    const origin = await getOrigin();
-    const pageUrl = `${origin}/view/bill/${id}`;
-    const ogImageUrl = `${origin}/api/og/bill/${id}`;
-
     const title = `Tax Invoice: ${docNo} — ${company}`;
     const description = `Customer: ${customer} | Total Amount: ₹${total}${dateStr ? ` | Date: ${dateStr}` : ""} — Click to view and download full invoice.`;
+    const ogImageUrl = `/api/og/bill/${id}`;
 
     return {
       title,
@@ -63,16 +43,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title,
         description,
-        url: pageUrl,
-        siteName: company,
         type: "website",
         images: [
           {
             url: ogImageUrl,
-            secureUrl: ogImageUrl,
             width: 1200,
             height: 630,
-            type: "image/png",
             alt: `${company} - ${docNo}`,
           },
         ],

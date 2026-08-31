@@ -15,12 +15,14 @@ import {
   RotateCcw,
   Pencil,
   MessageSquare,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs-wrapper";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -351,18 +353,15 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
       </div>
 
       <Tabs value={tab} onValueChange={changeTab}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="overflow-x-auto -mx-1 px-1 py-0.5 no-scrollbar sm:overflow-visible">
-            <TabsList className="w-max sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
-              <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
-              <TabsTrigger value="accepted">Accepted ({counts.accepted})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
-              <TabsTrigger value="trash">Trash ({counts.trash})</TabsTrigger>
-            </TabsList>
-          </div>
-          <DateFilter value={dateFilter} onChange={changeDateFilter} />
-        </div>
+        <ScrollableTabsWrapper filter={<DateFilter value={dateFilter} onChange={changeDateFilter} />}>
+          <TabsList className="w-max sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
+            <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
+            <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
+            <TabsTrigger value="accepted">Accepted ({counts.accepted})</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
+            <TabsTrigger value="trash">Trash ({counts.trash})</TabsTrigger>
+          </TabsList>
+        </ScrollableTabsWrapper>
       </Tabs>
 
       {/* Bulk action toolbar */}
@@ -580,45 +579,38 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
           </Card>
 
           {/* Mobile Card View */}
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex flex-col gap-2.5 md:hidden">
             {quotations.map((q) => {
               const docNo = q.quotation_number || `QT-${q.id}`;
               const isSelected = selectedIds.includes(q.id);
               return (
-                <Card key={q.id}>
-                  <CardContent className="flex flex-col gap-3 py-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2.5">
+                <Card key={q.id} className="border shadow-2xs hover:border-primary/30 transition-colors">
+                  <CardContent className="flex flex-col gap-2 p-3.5">
+                    {/* Top Row: Checkbox, Document Badge, Status, 3-dots */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelectOne(q.id)}
-                          className="mt-1 shrink-0"
+                          className="shrink-0"
                         />
-                        <div>
-                          <button
-                            onClick={() => viewQuotationDetails(q)}
-                            className="font-mono text-xs font-semibold text-primary hover:underline block cursor-pointer"
-                          >
-                            {docNo}
-                          </button>
-                          <button
-                            onClick={() => setProfileCustomerId(q.customer_id || null)}
-                            className="text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors mt-0.5 block cursor-pointer"
-                          >
-                            {q.customer_name ?? "—"}
-                          </button>
-                          <p className="font-mono font-bold text-base text-primary mt-1">
-                            ₹{Number(q.total_amount || q.quotation_amount || 0).toLocaleString("en-IN")}
-                          </p>
-                        </div>
+                        <button
+                          onClick={() => viewQuotationDetails(q)}
+                          className="font-mono text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/25 rounded-md px-2 py-0.5 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                          title="View Quotation"
+                        >
+                          <Eye className="size-3" />
+                          <span>{docNo}</span>
+                        </button>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant={statusVariant[q.quotation_status]} className="capitalize text-[10px]">
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant={statusVariant[q.quotation_status]} className="capitalize text-[10px] px-2 py-0.5">
                           {q.quotation_status}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8 -mr-2">
+                            <Button variant="ghost" size="icon" className="size-7 -mr-1">
                               <MoreVertical className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -686,15 +678,36 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                       </div>
                     </div>
 
+                    {/* Middle Row: Customer Name (Compact font-size) & Total Amount */}
+                    <div className="flex items-baseline justify-between gap-2 pl-6">
+                      <button
+                        onClick={() => setProfileCustomerId(q.customer_id || null)}
+                        className="text-left font-semibold text-xs text-foreground hover:text-primary hover:underline transition-colors truncate block cursor-pointer"
+                        title={q.customer_name ?? "—"}
+                      >
+                        {q.customer_name ?? "—"}
+                      </button>
+                      <p className="font-mono font-bold text-sm text-primary shrink-0">
+                        ₹{Number(q.total_amount || q.quotation_amount || 0).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+
                     {q.notes && (
-                      <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40 ml-7">
+                      <p className="text-[11px] text-muted-foreground bg-muted/30 p-1.5 rounded border border-border/40 ml-6">
                         {q.notes}
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40 ml-7">
-                      <span>Date: {q.quotation_date}</span>
-                      <span>By: {q.created_by_name || "—"}</span>
+                    {/* Footer Row: Date & View Button */}
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1.5 border-t border-border/40 pl-6">
+                      <span>Date: {q.quotation_date || "—"}</span>
+                      <button
+                        onClick={() => viewQuotationDetails(q)}
+                        className="flex items-center gap-1 font-semibold text-[11px] text-primary hover:underline cursor-pointer"
+                      >
+                        <Eye className="size-3.5" />
+                        <span>View</span>
+                      </button>
                     </div>
                   </CardContent>
                 </Card>

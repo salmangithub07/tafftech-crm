@@ -28,12 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     ? settings.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
     : undefined;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://tafftech-crm.vercel.app");
-
   return {
-    metadataBase: new URL(baseUrl),
     title: settings.meta_title || `${settings.site_name || "Taff Desk CRM"} — Admin Dashboard`,
     description: settings.meta_description || "Manage customer leads, appointments, and billing from one clean dashboard.",
     keywords: keywordsList,

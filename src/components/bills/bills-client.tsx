@@ -215,15 +215,13 @@ export function BillsClient() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
           {/* 1. Status Tabs */}
-          <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }} className="shrink-0">
-            <div className="overflow-x-auto scrollbar-none py-0.5">
-              <TabsList className="w-max sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
-                <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All Bills</TabsTrigger>
-                <TabsTrigger value="paid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Paid</TabsTrigger>
-                <TabsTrigger value="unpaid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Unpaid</TabsTrigger>
-                <TabsTrigger value="partial" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Partial</TabsTrigger>
-              </TabsList>
-            </div>
+          <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }} className="shrink-0 w-full sm:w-auto">
+            <TabsList className="w-full sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
+              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All Bills</TabsTrigger>
+              <TabsTrigger value="paid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Paid</TabsTrigger>
+              <TabsTrigger value="unpaid" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Unpaid</TabsTrigger>
+              <TabsTrigger value="partial" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Partial</TabsTrigger>
+            </TabsList>
           </Tabs>
 
           {/* 2. Searchbar */}
@@ -365,41 +363,34 @@ export function BillsClient() {
           </Card>
 
           {/* Mobile Card View */}
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex flex-col gap-2.5 md:hidden">
             {bills.map((b) => (
-              <Card key={b.id}>
-                <CardContent className="flex flex-col gap-3 py-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <button
-                        className="font-mono text-sm font-bold text-primary hover:underline cursor-pointer"
-                        onClick={() => router.push(`/bills/${b.id}`)}
-                      >
-                        {b.bill_number}
-                      </button>
-                      <button
-                        onClick={() => setProfileCustomerId(b.customer_id ?? null)}
-                        className="font-medium text-sm text-foreground hover:text-primary hover:underline transition-colors mt-0.5 text-left cursor-pointer block"
-                      >
-                        {b.customer_name}
-                      </button>
-                      {b.customer_phone && (
-                        <p className="text-xs text-muted-foreground">{b.customer_phone}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5">
+              <Card key={b.id} className="border shadow-2xs hover:border-primary/30 transition-colors">
+                <CardContent className="flex flex-col gap-2 p-3.5">
+                  {/* Top Row: Document Number Badge, Status, 3-dots */}
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      className="font-mono text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/25 rounded-md px-2 py-0.5 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                      onClick={() => router.push(`/bills/${b.id}`)}
+                      title="View Bill"
+                    >
+                      <Eye className="size-3" />
+                      <span>{b.bill_number}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1 shrink-0">
                       <Badge
                         variant={
                           b.payment_status === "paid" ? "success" :
                           b.payment_status === "unpaid" ? "destructive" : "warning"
                         }
-                        className="uppercase text-[10px]"
+                        className="uppercase text-[10px] px-2 py-0.5"
                       >
                         {b.payment_status}
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8 -mr-2">
+                          <Button variant="ghost" size="icon" className="size-7 -mr-1">
                             <MoreVertical className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -439,20 +430,38 @@ export function BillsClient() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground text-[10px]">Total Amount</span>
-                      <span className="font-mono font-bold text-foreground text-sm">{money(b.total_amount)}</span>
+                  {/* Middle Row: Customer Name (Compact font-size) & Phone */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <button
+                        onClick={() => setProfileCustomerId(b.customer_id ?? null)}
+                        className="font-semibold text-xs text-foreground hover:text-primary hover:underline transition-colors text-left cursor-pointer truncate block"
+                        title={b.customer_name ?? "—"}
+                      >
+                        {b.customer_name}
+                      </button>
+                      {b.customer_phone && (
+                        <p className="text-[11px] text-muted-foreground">{b.customer_phone}</p>
+                      )}
                     </div>
-                    <div className="flex flex-col text-right">
-                      <span className="text-muted-foreground text-[10px]">Paid Amount</span>
-                      <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{money(b.paid_amount)}</span>
+                    <div className="flex flex-col text-right shrink-0">
+                      <span className="font-mono font-bold text-foreground text-sm">{money(b.total_amount)}</span>
+                      {b.payment_status !== "paid" && (
+                        <span className="text-[10px] text-muted-foreground font-mono">Paid: {money(b.paid_amount)}</span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-                    <span>Date: {b.bill_date}</span>
-                    <span>{b.items?.length ?? 1} item{(b.items?.length ?? 1) > 1 ? "s" : ""}</span>
+                  {/* Footer Row: Date, Items count & Quick View Button */}
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1.5 border-t border-border/40">
+                    <span>Date: {b.bill_date || "—"}</span>
+                    <button
+                      onClick={() => router.push(`/bills/${b.id}`)}
+                      className="flex items-center gap-1 font-semibold text-[11px] text-primary hover:underline cursor-pointer"
+                    >
+                      <Eye className="size-3.5" />
+                      <span>View</span>
+                    </button>
                   </div>
                 </CardContent>
               </Card>

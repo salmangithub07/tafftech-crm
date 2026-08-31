@@ -7,6 +7,7 @@ export type AppSettings = {
   site_name: string;
   company_phone: string;
   privacy_policy: string;
+  terms_of_service: string;
   accent_color: string;
   radius: string;
   invoice_template: InvoiceTemplateType;
@@ -56,6 +57,7 @@ const DEFAULTS: AppSettings = {
   site_name: "Taff Desk CRM",
   company_phone: "",
   privacy_policy: "We value your privacy. All customer data and transaction history are protected under our privacy guidelines.",
+  terms_of_service: "By registering and using Taff Desk CRM, you agree to comply with our acceptable use policies, license terms, and maintain the confidentiality of your account credentials.",
   accent_color: "#2563eb",
   radius: "0.65",
   invoice_template: "modern",
@@ -281,6 +283,7 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       site_name: tenantMap.site_name ?? globalMap.site_name ?? DEFAULTS.site_name,
       company_phone: tenantMap.company_phone ?? globalMap.company_phone ?? DEFAULTS.company_phone,
       privacy_policy: tenantMap.privacy_policy ?? globalMap.privacy_policy ?? DEFAULTS.privacy_policy,
+      terms_of_service: tenantMap.terms_of_service ?? globalMap.terms_of_service ?? DEFAULTS.terms_of_service,
       accent_color: tenantMap.accent_color ?? globalMap.accent_color ?? DEFAULTS.accent_color,
       radius: tenantMap.radius ?? globalMap.radius ?? DEFAULTS.radius,
       invoice_template,
