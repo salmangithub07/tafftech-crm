@@ -14,6 +14,7 @@ import {
   IndianRupee,
   Clock,
   BookOpen,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { canAccess, type SessionPayload, type PermissionModule } from "@/lib/types";
@@ -39,6 +40,7 @@ export const navItems: NavItem[] = [
   { title: "Bills & Invoices", href: "/bills", icon: Receipt, kind: "module", module: "bills" },
   { title: "Products & Stock", href: "/products", icon: Package, kind: "module", module: "products" },
   { title: "SM Analytics", href: "/analytics", icon: BarChart3, kind: "module", module: "analytics" },
+  { title: "Performance Graph", href: "/performance", icon: TrendingUp, kind: "fixed", roles: ["admin", "executive"] },
   { title: "Balance Sheet", href: "/balance-sheet", icon: Wallet, kind: "fixed", roles: ["admin"] },
   { title: "Team(Users)", href: "/team", icon: UserCog, kind: "fixed", roles: ["admin"] },
   { title: "Settings", href: "/settings", icon: Settings, kind: "fixed", roles: ["super_admin", "admin", "executive"] },

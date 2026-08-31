@@ -152,25 +152,25 @@ export function SettingsClient({
               )}
               {canEditAppearance && (
                 <TabsTrigger value="whatsapp" className="gap-1.5 text-xs py-1.5 sm:py-1">
-                  <MessageSquare className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <MessageSquare className="size-3.5 shrink-0" />
                   <span>WA Gateway</span>
                 </TabsTrigger>
               )}
               {session.role === "super_admin" && (
                 <TabsTrigger value="subscription" className="gap-1.5 text-xs py-1.5 sm:py-1">
-                  <IndianRupee className="size-3.5 shrink-0 text-amber-500" />
+                  <IndianRupee className="size-3.5 shrink-0" />
                   <span>Alerts &amp; Pricing</span>
                 </TabsTrigger>
               )}
               {session.role === "super_admin" && (
                 <TabsTrigger value="coupons" className="gap-1.5 text-xs py-1.5 sm:py-1">
-                  <Tag className="size-3.5 shrink-0 text-amber-500" />
+                  <Tag className="size-3.5 shrink-0" />
                   <span>Offers</span>
                 </TabsTrigger>
               )}
               {session.role === "super_admin" && (
                 <TabsTrigger value="seo" className="gap-1.5 text-xs py-1.5 sm:py-1">
-                  <Code2 className="size-3.5 shrink-0 text-indigo-500" />
+                  <Code2 className="size-3.5 shrink-0" />
                   <span>Header Scripts</span>
                 </TabsTrigger>
               )}

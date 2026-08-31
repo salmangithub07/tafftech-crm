@@ -149,6 +149,53 @@ export type AnalyticsEntry = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  engagement_rate?: number;
+};
+
+export type SmGoal = {
+  id: number;
+  tenant_id: number;
+  title: string;
+  platform_id?: number | null;
+  platform_name?: string | null;
+  period_month: string; // e.g. "2026-08"
+  target_posts: number;
+  target_views: number;
+  target_inquiries: number;
+  target_likes: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  // Computed progress fields
+  actual_posts?: number;
+  actual_views?: number;
+  actual_inquiries?: number;
+  actual_likes?: number;
+  progress_percent?: number;
+  status?: "on_track" | "at_risk" | "behind" | "achieved";
+};
+
+export type SmTaskCategory = "content" | "seo" | "thumbnail" | "engagement" | "ads" | "other";
+export type SmTaskPriority = "urgent" | "high" | "medium" | "low";
+export type SmTaskStatus = "todo" | "in_progress" | "completed";
+
+export type SmTask = {
+  id: number;
+  tenant_id: number;
+  goal_id?: number | null;
+  goal_title?: string | null;
+  platform_id?: number | null;
+  platform_name?: string | null;
+  executive_id?: number | null;
+  executive_name?: string | null;
+  title: string;
+  description?: string | null;
+  category: SmTaskCategory;
+  priority: SmTaskPriority;
+  status: SmTaskStatus;
+  due_date?: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Role = "super_admin" | "admin" | "executive";

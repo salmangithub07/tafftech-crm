@@ -7,7 +7,6 @@ import {
   Plus,
   MoreVertical,
   Trash2,
-  Download,
   Receipt,
   Printer,
   Search,
@@ -105,28 +104,11 @@ export function BillsClient() {
     fetchBills();
   }
 
-  const exportUrl = React.useMemo(() => {
-    const params = new URLSearchParams({
-      ...(search ? { search } : {}),
-      ...(status !== "all" ? { status } : {}),
-      ...dateFilterParams(dateFilter),
-    });
-    return `/api/bills/export?${params}`;
-  }, [search, status, dateFilter]);
-
-  const exportLabel = React.useMemo(() => {
-    const parts: string[] = [];
-    if (status !== "all") parts.push(status.charAt(0).toUpperCase() + status.slice(1));
-    if (dateFilter.period && dateFilter.period !== "all") parts.push(dateFilter.period);
-    if (search) parts.push(`"${search}"`);
-    return parts.length ? parts.join(" · ") : "All";
-  }, [search, status, dateFilter]);
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Header - 50/50 2 Columns on Mobile */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 sm:items-center">
-        {/* Left Column (50%) */}
+        {/* Left Column */}
         <div className="flex flex-col min-w-0 flex-1">
           <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Bills &amp; Invoices</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
@@ -134,16 +116,10 @@ export function BillsClient() {
           </p>
         </div>
 
-        {/* Right Column (50%) */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0 min-w-[130px] sm:min-w-0 sm:flex-row sm:items-center sm:gap-2">
-          <Button size="sm" onClick={() => router.push("/bills/new")} className="w-full sm:w-auto h-9 px-3 text-xs font-semibold gap-1 shadow-sm">
+        {/* Right Column */}
+        <div className="flex items-center shrink-0">
+          <Button size="sm" onClick={() => router.push("/bills/new")} className="h-9 px-3.5 text-xs font-semibold gap-1.5 shadow-sm">
             <Plus className="size-4" /> Create Bill
-          </Button>
-
-          <Button variant="outline" size="sm" asChild title={`Export: ${exportLabel}`} className="w-full sm:w-auto h-8 px-2 text-[11px] font-medium justify-center gap-1">
-            <Link href={exportUrl}>
-              <Download className="size-3" /> Export CSV
-            </Link>
           </Button>
         </div>
       </div>
