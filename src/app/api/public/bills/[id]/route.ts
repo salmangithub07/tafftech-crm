@@ -38,17 +38,7 @@ export async function GET(
 
     return NextResponse.json({
       bill,
-      settings: {
-        site_name: settings.site_name,
-        company_phone: settings.company_phone,
-        bank_name: settings.bank_name,
-        bank_account_no: settings.bank_account_no,
-        bank_ifsc: settings.bank_ifsc,
-        bank_upi_id: settings.bank_upi_id,
-        bank_details: settings.bank_details,
-        invoice_terms: settings.invoice_terms,
-        invoice_template: settings.invoice_template,
-      },
+      settings,
     });
   } catch (error) {
     console.error("Error fetching public bill:", error);
