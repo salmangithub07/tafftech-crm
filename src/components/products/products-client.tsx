@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs-wrapper";
 import {
   Table,
   TableBody,
@@ -382,17 +383,14 @@ export function ProductsClient({
         <TabsContent value="products" className="mt-4 flex flex-col gap-4">
 
           <Tabs value={tab} onValueChange={changeTab}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
-              <div className="w-full sm:w-auto overflow-x-auto scrollbar-none py-0.5">
-                <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10">
-                  <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
-                  <TabsTrigger value="in" className="px-2.5 sm:px-3 text-xs sm:text-sm">In Stock ({counts.in})</TabsTrigger>
-                  <TabsTrigger value="low" className="px-2.5 sm:px-3 text-xs sm:text-sm">Low Stock ({counts.low})</TabsTrigger>
-                  <TabsTrigger value="out" className="px-2.5 sm:px-3 text-xs sm:text-sm">Out of Stock ({counts.out})</TabsTrigger>
-                </TabsList>
-              </div>
-              <DateFilter value={dateFilter} onChange={changeDateFilter} />
-            </div>
+            <ScrollableTabsWrapper filter={<DateFilter value={dateFilter} onChange={changeDateFilter} />}>
+              <TabsList className="w-max sm:w-fit justify-start sm:justify-center h-9 sm:h-10">
+                <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs sm:text-sm">All ({counts.all})</TabsTrigger>
+                <TabsTrigger value="in" className="px-2.5 sm:px-3 text-xs sm:text-sm">In Stock ({counts.in})</TabsTrigger>
+                <TabsTrigger value="low" className="px-2.5 sm:px-3 text-xs sm:text-sm">Low Stock ({counts.low})</TabsTrigger>
+                <TabsTrigger value="out" className="px-2.5 sm:px-3 text-xs sm:text-sm">Out of Stock ({counts.out})</TabsTrigger>
+              </TabsList>
+            </ScrollableTabsWrapper>
           </Tabs>
 
           {products.length === 0 ? (

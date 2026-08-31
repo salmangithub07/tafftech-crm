@@ -28,15 +28,12 @@ export async function GET(
     const q = quotations[0] as any;
     const settings = await getSettings(q.tenant_id);
 
-    const rawCompanyName = settings.site_name || "TAFF TECH";
-    const companyName = rawCompanyName.replace(/\bCRM\b/gi, "").replace(/\s+/g, " ").trim() || "TAFF TECH";
+    const companyName = (settings.site_name || "TAFF TECH").replace(/\bCRM\b/gi, "").trim() || "TAFF TECH";
     const tagline = settings.business_tagline || "INDUSTRIAL SOLUTIONS";
-    const address = settings.business_address
-      ? settings.business_address.replace(/\n+/g, ", ")
-      : "PLOT NO 03 WANJRA BEHIND NAKA NO 02, KAMPTEE ROAD NAGPUR , MAHARASHTRA , INDIA – 440026 Mobile No - 9607086390/8788099744";
-    const gstin = settings.gstin || "27CENPA9070D1Z1";
-    const pan = settings.pan_no || "CENPA9070D";
-    const phone = settings.company_phone || "+91 9607086390";
+    const address = settings.business_address || "";
+    const gstin = settings.gstin || "";
+    const pan = settings.pan_no || "";
+    const phone = settings.company_phone || "";
     const docNo = q.quotation_number || `QT-${q.id}`;
     const customer = q.customer_name || "Valued Customer";
     const totalAmount = Number(q.total_amount || 0).toLocaleString("en-IN", {
@@ -48,11 +45,7 @@ export async function GET(
           month: "short",
           year: "numeric",
         })
-      : new Date().toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        });
+      : new Date().toLocaleDateString("en-IN");
 
     return new ImageResponse(
       (
@@ -63,11 +56,12 @@ export async function GET(
             display: "flex",
             flexDirection: "column",
             backgroundColor: "#ffffff",
-            padding: "36px 44px",
+            padding: "36px 48px",
+            fontFamily: "sans-serif",
             border: "12px solid #f1f5f9",
           }}
         >
-          {/* Top metadata header */}
+          {/* Top meta row */}
           <div
             style={{
               display: "flex",
@@ -75,17 +69,17 @@ export async function GET(
               width: "100%",
               fontSize: 16,
               color: "#334155",
-              fontWeight: 700,
-              paddingBottom: 14,
-              borderBottom: "2px solid #cbd5e1",
+              fontWeight: 600,
+              paddingBottom: 12,
+              borderBottom: "2px solid #e2e8f0",
             }}
           >
-            <div style={{ display: "flex", gap: 24 }}>
-              <span>GSTIN: {gstin}</span>
-              <span>PAN: {pan}</span>
+            <div style={{ display: "flex", gap: 16 }}>
+              {gstin ? <span>GSTIN: {gstin}</span> : null}
+              {pan ? <span>PAN: {pan}</span> : null}
             </div>
-            <div style={{ display: "flex", gap: 24 }}>
-              <span>PH: {phone}</span>
+            <div style={{ display: "flex", gap: 16 }}>
+              {phone ? <span>PH: {phone}</span> : null}
               <span>DATE: {dateStr}</span>
             </div>
           </div>
@@ -102,10 +96,10 @@ export async function GET(
           >
             <h1
               style={{
-                fontSize: 50,
+                fontSize: 48,
                 fontWeight: 900,
                 color: "#1e3a8a",
-                letterSpacing: "0.12em",
+                letterSpacing: "0.1em",
                 margin: 0,
                 textTransform: "uppercase",
               }}
@@ -122,11 +116,11 @@ export async function GET(
               justifyContent: "center",
               backgroundColor: "#f59e0b",
               color: "#000000",
-              fontWeight: 900,
-              fontSize: 20,
-              letterSpacing: "0.2em",
-              padding: "8px 0",
-              marginTop: 12,
+              fontWeight: 800,
+              fontSize: 18,
+              letterSpacing: "0.15em",
+              padding: "6px 0",
+              marginTop: 10,
               width: "100%",
               textTransform: "uppercase",
             }}
@@ -134,20 +128,21 @@ export async function GET(
             {tagline}
           </div>
 
-          {/* Business Address */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              textAlign: "center",
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#475569",
-              marginTop: 10,
-            }}
-          >
-            {address}
-          </div>
+          {/* Address */}
+          {address ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                textAlign: "center",
+                fontSize: 14,
+                color: "#475569",
+                marginTop: 8,
+              }}
+            >
+              {address}
+            </div>
+          ) : null}
 
           {/* Document Summary Card */}
           <div
@@ -157,7 +152,7 @@ export async function GET(
               alignItems: "center",
               backgroundColor: "#f8fafc",
               border: "2px solid #cbd5e1",
-              borderRadius: 14,
+              borderRadius: 12,
               padding: "20px 28px",
               marginTop: "auto",
             }}
@@ -166,10 +161,10 @@ export async function GET(
               <span style={{ fontSize: 14, color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
                 PROFORMA INVOICE / QUOTATION
               </span>
-              <span style={{ fontSize: 28, color: "#0f172a", fontWeight: 900 }}>
+              <span style={{ fontSize: 26, color: "#0f172a", fontWeight: 800 }}>
                 {docNo}
               </span>
-              <span style={{ fontSize: 16, color: "#334155", fontWeight: 700 }}>
+              <span style={{ fontSize: 16, color: "#334155", fontWeight: 600 }}>
                 Customer: {customer}
               </span>
             </div>
@@ -178,7 +173,7 @@ export async function GET(
               <span style={{ fontSize: 14, color: "#64748b", fontWeight: 700 }}>
                 TOTAL AMOUNT
               </span>
-              <span style={{ fontSize: 34, color: "#d97706", fontWeight: 900 }}>
+              <span style={{ fontSize: 32, color: "#d97706", fontWeight: 900 }}>
                 ₹{totalAmount}
               </span>
             </div>
@@ -188,9 +183,6 @@ export async function GET(
       {
         width: 1200,
         height: 630,
-        headers: {
-          "Cache-Control": "public, max-age=3600, s-maxage=3600",
-        },
       }
     );
   } catch (error) {

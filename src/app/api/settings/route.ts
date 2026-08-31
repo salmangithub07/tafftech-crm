@@ -7,6 +7,7 @@ const settingsSchema = z.object({
   site_name: z.string().min(1).optional(),
   company_phone: z.string().optional(),
   privacy_policy: z.string().optional(),
+  terms_of_service: z.string().optional(),
   accent_color: z
     .string()
     .regex(/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/, "Invalid hex color")

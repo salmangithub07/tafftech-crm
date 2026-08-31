@@ -347,3 +347,25 @@ h1, h2, h3, .font-heading {
 .animate-float-reverse {
   animation: float-reverse 7s ease-in-out infinite;
 }
+
+@keyframes swipe-hand {
+  0% {
+    transform: translateX(10px) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-12px) rotate(-18deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-18px) rotate(-22deg);
+    opacity: 0;
+  }
+}
+
+.animate-swipe-hand {
+  animation: swipe-hand 1.6s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
