@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
+import { PinchZoomContainer } from "@/components/ui/pinch-zoom-container";
 import type { Bill } from "@/lib/types";
 
 function PublicBillContent() {
@@ -180,11 +181,11 @@ function PublicBillContent() {
         </Button>
       </header>
 
-      <main className="flex-1 w-full overflow-x-auto p-2 sm:p-8">
-        <div className="min-w-fit flex justify-center py-2">
+      <main className="flex-1 w-full p-2 sm:p-8">
+        <PinchZoomContainer>
           <div
             ref={invoiceRef}
-            className="w-full max-w-[850px] min-w-[700px] bg-white text-black shadow-xl rounded-md border"
+            className="w-[750px] bg-white text-black shadow-xl rounded-md border"
             style={{ color: "#000", backgroundColor: "#fff" }}
           >
             <PrintableInvoice
@@ -197,7 +198,7 @@ function PublicBillContent() {
               documentType="TAX INVOICE"
             />
           </div>
-        </div>
+        </PinchZoomContainer>
       </main>
 
       <footer className="py-4 text-center text-xs text-gray-400 border-t border-gray-200 bg-white">

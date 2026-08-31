@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
+import { PinchZoomContainer } from "@/components/ui/pinch-zoom-container";
 import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import type { Quotation, QuotationStatus } from "@/lib/types";
 
@@ -423,9 +424,9 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
       </div>
 
       {/* Invoice Document Wrapper */}
-      <div className="w-full overflow-x-auto pb-4">
-        <div className="min-w-fit flex justify-center py-1">
-          <Card className="w-full max-w-[880px] min-w-[700px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
+      <div className="w-full pb-4">
+        <PinchZoomContainer>
+          <Card className="w-[750px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
             <PrintableInvoice
               bill={quotation}
               siteName={settings?.site_name}
@@ -433,7 +434,7 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
               documentType="PROFORMA INVOICE"
             />
           </Card>
-        </div>
+        </PinchZoomContainer>
       </div>
     </div>
   );
