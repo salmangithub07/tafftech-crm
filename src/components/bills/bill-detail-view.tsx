@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PrintableInvoice } from "@/components/bills/printable-invoice";
+import { PinchZoomContainer } from "@/components/ui/pinch-zoom-container";
 import { RecordPaymentDialog } from "@/components/bills/record-payment-dialog";
 import { shareDocumentOnWhatsApp } from "@/lib/pdf-share";
 import type { Bill } from "@/lib/types";
@@ -366,9 +367,9 @@ export function BillDetailView({ billId }: { billId: number | string }) {
       </div>
 
       {/* Invoice Document Wrapper */}
-      <div className="w-full overflow-x-auto pb-4">
-        <div className="min-w-fit flex justify-center py-1">
-          <Card className="w-full max-w-[880px] min-w-[700px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
+      <div className="w-full pb-4">
+        <PinchZoomContainer>
+          <Card className="w-[750px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
             <PrintableInvoice
               bill={bill}
               siteName={settings?.site_name}
@@ -379,7 +380,7 @@ export function BillDetailView({ billId }: { billId: number | string }) {
               documentType="TAX INVOICE"
             />
           </Card>
-        </div>
+        </PinchZoomContainer>
       </div>
 
       {/* Record Payment Dialog */}
