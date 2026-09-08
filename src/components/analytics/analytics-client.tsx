@@ -449,8 +449,8 @@ export function AnalyticsClient({
 
         {/* ----------------- TAB 1: ENTRIES ----------------- */}
         <TabsContent value="entries" className="mt-4 flex flex-col gap-4">
-          {/* Filters Bar - Full Width on Mobile */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          {/* Filters Bar - 2 Columns on Mobile */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
             <div className="w-full sm:w-auto">
               <Select value={platformFilter} onValueChange={(val) => { setPlatformFilter(val); setPage(1); }}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
@@ -467,7 +467,7 @@ export function AnalyticsClient({
               </Select>
             </div>
 
-            <div className="w-full sm:w-auto">
+            <div className="w-full sm:w-auto flex justify-end">
               <DateFilter value={dateFilter} onChange={changeDateFilter} />
             </div>
           </div>
