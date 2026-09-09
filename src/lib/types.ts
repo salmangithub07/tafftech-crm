@@ -356,11 +356,14 @@ export type LedgerAccount = {
   balance?: number;
 };
 
+export type VoucherType = "receipt" | "payment" | "contra" | "journal";
+
 export type LedgerTransaction = {
   id: number;
   tenant_id: number;
   account_id: number;
   account_name?: string;
+  account_type?: LedgerAccountType;
   entry_date: string;
   direction: "increase" | "decrease";
   amount: number;
@@ -368,6 +371,14 @@ export type LedgerTransaction = {
   created_by: number | null;
   created_by_name?: string | null;
   created_at: string;
+  // Tally & Accounting additions
+  voucher_type?: VoucherType | null;
+  voucher_no?: string | null;
+  linked_tx_id?: number | null;
+  dr_amount?: number;
+  cr_amount?: number;
+  running_balance?: number;
+  balance_type?: "Dr" | "Cr";
 };
 
 export type FixedAsset = {

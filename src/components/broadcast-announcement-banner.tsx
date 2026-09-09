@@ -73,7 +73,7 @@ export function BroadcastAnnouncementBanner({
 
   return (
     <div
-      className={`w-full ${currentVariant.bg} px-4 py-2.5 text-xs font-medium flex items-center justify-between gap-3 shadow-sm border-b ${currentVariant.border} z-40 transition-all`}
+      className={`w-full ${currentVariant.bg} px-4 py-2.5 text-xs font-medium flex items-center justify-between gap-3 shadow-sm border-b ${currentVariant.border} z-40 transition-all print:hidden print-hide`}
     >
       <div className="flex items-center gap-2 min-w-0">
         {currentVariant.icon}

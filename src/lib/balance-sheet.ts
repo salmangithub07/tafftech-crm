@@ -1,5 +1,18 @@
-import { query } from "@/lib/db";
+import { query, execute } from "@/lib/db";
 import type { LedgerAccount, FixedAsset, BalanceSheetSummary } from "@/lib/types";
+
+let schemaEnsured = false;
+export async function ensureLedgerSchema(): Promise<void> {
+  if (schemaEnsured) return;
+  try {
+    await execute(`ALTER TABLE ledger_transactions ADD COLUMN IF NOT EXISTS voucher_type VARCHAR(30) DEFAULT 'journal'`);
+    await execute(`ALTER TABLE ledger_transactions ADD COLUMN IF NOT EXISTS voucher_no VARCHAR(50) NULL`);
+    await execute(`ALTER TABLE ledger_transactions ADD COLUMN IF NOT EXISTS linked_tx_id INT NULL`);
+    schemaEnsured = true;
+  } catch (err) {
+    console.error("ensureLedgerSchema error:", err);
+  }
+}
 
 /**
  * Builds the full Balance Sheet for a tenant.

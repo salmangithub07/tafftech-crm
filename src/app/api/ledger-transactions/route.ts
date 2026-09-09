@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
 import { getSession, tenantOf } from "@/lib/auth";
+import { ensureLedgerSchema } from "@/lib/balance-sheet";
 import { z } from "zod";
 
 const transactionSchema = z.object({
@@ -9,9 +10,12 @@ const transactionSchema = z.object({
   direction: z.enum(["increase", "decrease"]),
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   description: z.string().optional().or(z.literal("")).default(""),
+  voucher_type: z.enum(["receipt", "payment", "contra", "journal"]).optional(),
+  voucher_no: z.string().optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
+  await ensureLedgerSchema();
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -24,6 +28,7 @@ export async function GET(req: NextRequest) {
 
   const accountId = url.searchParams.get("account_id");
   const direction = url.searchParams.get("direction");
+  const voucherType = url.searchParams.get("voucher_type");
   const search = url.searchParams.get("search") || "";
   const year = url.searchParams.get("year");
   const fromDate = url.searchParams.get("from");
@@ -44,6 +49,11 @@ export async function GET(req: NextRequest) {
   if (direction && direction !== "all") {
     whereSql += " AND t.direction = ?";
     params.push(direction);
+  }
+
+  if (voucherType && voucherType !== "all") {
+    whereSql += " AND t.voucher_type = ?";
+    params.push(voucherType);
   }
 
   if (year && year !== "all") {
@@ -76,8 +86,8 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
-    whereSql += " AND (t.description ILIKE ? OR a.name ILIKE ? OR ad.name ILIKE ?)";
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    whereSql += " AND (t.description ILIKE ? OR a.name ILIKE ? OR ad.name ILIKE ? OR t.voucher_no ILIKE ?)";
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   // Calculate totals for filtered dataset
@@ -106,7 +116,7 @@ export async function GET(req: NextRequest) {
   const total = parseInt(countRes[0]?.count || "0", 10);
 
   let dataSql = `
-    SELECT t.*, a.name AS account_name, a.type AS account_type, ad.name AS created_by_name
+    SELECT t.*, a.name AS account_name, a.type AS account_type, a.opening_balance, ad.name AS created_by_name
     FROM ledger_transactions t
     LEFT JOIN ledger_accounts a ON a.id = t.account_id
     LEFT JOIN admins ad ON ad.id = t.created_by
@@ -117,9 +127,36 @@ export async function GET(req: NextRequest) {
   if (isPaginated) {
     dataSql += ` LIMIT ? OFFSET ?`;
     const dataParams = [...params, limit, offset];
-    const transactions = await query(dataSql, dataParams);
+    const transactions = await query<any>(dataSql, dataParams);
+
+    const enriched = transactions.map((tx) => {
+      const isCreditor = tx.account_type === "creditor";
+      const isIncrease = tx.direction === "increase";
+
+      // Debit / Credit mapping
+      const drAmount = isCreditor ? (isIncrease ? 0 : Number(tx.amount)) : (isIncrease ? Number(tx.amount) : 0);
+      const crAmount = isCreditor ? (isIncrease ? Number(tx.amount) : 0) : (isIncrease ? 0 : Number(tx.amount));
+
+      // Default voucher type if not set
+      let vType = tx.voucher_type;
+      if (!vType) {
+        if (tx.account_type === "cash" || tx.account_type === "bank") {
+          vType = isIncrease ? "receipt" : "payment";
+        } else {
+          vType = "journal";
+        }
+      }
+
+      return {
+        ...tx,
+        voucher_type: vType,
+        dr_amount: drAmount,
+        cr_amount: crAmount,
+      };
+    });
+
     return NextResponse.json({
-      data: transactions,
+      data: enriched,
       total,
       page,
       limit,
@@ -129,11 +166,12 @@ export async function GET(req: NextRequest) {
 
   // Backwards compatibility if no page parameter passed
   dataSql += ` LIMIT 200`;
-  const transactions = await query(dataSql, params);
+  const transactions = await query<any>(dataSql, params);
   return NextResponse.json(transactions);
 }
 
 export async function POST(req: NextRequest) {
+  await ensureLedgerSchema();
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -149,22 +187,33 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
 
-  const account = await query("SELECT id FROM ledger_accounts WHERE id = ? AND tenant_id = ?", [
+  const account = await query<any>("SELECT id, type FROM ledger_accounts WHERE id = ? AND tenant_id = ?", [
     d.account_id,
     tenantId,
   ]);
   if (!account.length) return NextResponse.json({ error: "Account not found." }, { status: 404 });
 
+  // Determine standard voucher type
+  let vType = d.voucher_type;
+  if (!vType) {
+    if (account[0].type === "cash" || account[0].type === "bank") {
+      vType = d.direction === "increase" ? "receipt" : "payment";
+    } else {
+      vType = "journal";
+    }
+  }
+
   const result = await execute(
-    `INSERT INTO ledger_transactions (tenant_id, account_id, entry_date, direction, amount, description, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [tenantId, d.account_id, d.entry_date, d.direction, d.amount, d.description, session.id]
+    `INSERT INTO ledger_transactions (tenant_id, account_id, entry_date, direction, amount, description, voucher_type, voucher_no, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [tenantId, d.account_id, d.entry_date, d.direction, d.amount, d.description, vType, d.voucher_no || null, session.id]
   );
 
   const transaction = await query(
-    `SELECT t.*, a.name AS account_name FROM ledger_transactions t
+    `SELECT t.*, a.name AS account_name, a.type AS account_type FROM ledger_transactions t
      LEFT JOIN ledger_accounts a ON a.id = t.account_id WHERE t.id = ?`,
     [result.insertId]
   );
   return NextResponse.json(transaction[0], { status: 201 });
 }
+
