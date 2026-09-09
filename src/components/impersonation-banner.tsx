@@ -32,7 +32,7 @@ export function ImpersonationBanner({
   }
 
   return (
-    <div className="w-full bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md z-50 sticky top-0">
+    <div className="w-full bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md z-50 sticky top-0 print:hidden print-hide">
       <div className="flex items-center gap-2">
         <ShieldAlert className="size-4 text-amber-300 shrink-0" />
         <span>

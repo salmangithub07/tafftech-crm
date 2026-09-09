@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
   const transactions = await query<any>(
     `SELECT t.entry_date, a.name AS account_name, a.type AS account_type,
-            t.direction, t.amount, t.description, ad.name AS created_by_name, t.created_at
+            t.direction, t.amount, t.description, t.voucher_type, t.voucher_no, ad.name AS created_by_name, t.created_at
      FROM ledger_transactions t
      LEFT JOIN ledger_accounts a ON a.id = t.account_id
      LEFT JOIN admins ad ON ad.id = t.created_by
@@ -76,23 +76,33 @@ export async function GET(req: NextRequest) {
     params
   );
 
-  const rows = transactions.map((t) => ({
-    "Date": t.entry_date,
-    "Account Name": t.account_name || "",
-    "Account Type": t.account_type ? t.account_type.toUpperCase() : "",
-    "Direction": t.direction.toUpperCase(),
-    "Amount (₹)": t.amount,
-    "Description": t.description || "",
-    "Recorded By": t.created_by_name || "",
-    "Created At": t.created_at,
-  }));
+  const rows = transactions.map((t) => {
+    const isCreditor = t.account_type === "creditor";
+    const isIncrease = t.direction === "increase";
+    const drAmount = isCreditor ? (isIncrease ? 0 : Number(t.amount)) : (isIncrease ? Number(t.amount) : 0);
+    const crAmount = isCreditor ? (isIncrease ? Number(t.amount) : 0) : (isIncrease ? 0 : Number(t.amount));
+
+    return {
+      "Date": t.entry_date,
+      "Account Name": t.account_name || "",
+      "Account Type": t.account_type ? t.account_type.toUpperCase() : "",
+      "Voucher Type": (t.voucher_type || "JOURNAL").toUpperCase(),
+      "Voucher No": t.voucher_no || `TX-${t.id || ""}`,
+      "Debit (₹ Dr)": drAmount > 0 ? drAmount : "",
+      "Credit (₹ Cr)": crAmount > 0 ? crAmount : "",
+      "Amount (₹)": t.amount,
+      "Particulars / Narration": t.description || "",
+      "Recorded By": t.created_by_name || "",
+      "Created At": t.created_at,
+    };
+  });
 
   const csv = Papa.unparse(rows);
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="ledger_transactions_${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="tally_ledger_${new Date().toISOString().slice(0, 10)}.csv"`,
     },
   });
 }

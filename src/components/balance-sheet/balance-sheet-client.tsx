@@ -21,6 +21,11 @@ import {
   MoreHorizontal,
   Download,
   Search,
+  ArrowRightLeft,
+  ArrowUpRight,
+  BookOpen,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -54,6 +59,7 @@ import { DateFilter, dateFilterParams, type DateFilterValue } from "@/components
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { LedgerAccountDialog } from "@/components/balance-sheet/ledger-account-dialog";
 import { LedgerTransactionDialog } from "@/components/balance-sheet/ledger-transaction-dialog";
+import { ContraVoucherDialog } from "@/components/balance-sheet/contra-voucher-dialog";
 import { FixedAssetDialog } from "@/components/balance-sheet/fixed-asset-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import type { BalanceSheetSummary, LedgerAccount, LedgerAccountType, LedgerTransaction, FixedAsset } from "@/lib/types";
@@ -76,6 +82,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
   const [txSearch, setTxSearch] = React.useState("");
   const [txAccountId, setTxAccountId] = React.useState("all");
   const [txDirection, setTxDirection] = React.useState("all");
+  const [txVoucherType, setTxVoucherType] = React.useState("all");
   const [txYear, setTxYear] = React.useState("all");
   const [txDateFilter, setTxDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
 
@@ -85,6 +92,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
   } | null>(null);
   const [txDialogOpen, setTxDialogOpen] = React.useState(false);
   const [txDefaultAccount, setTxDefaultAccount] = React.useState<number | null>(null);
+  const [contraDialogOpen, setContraDialogOpen] = React.useState(false);
   const [assetDialog, setAssetDialog] = React.useState<{ asset?: FixedAsset | null } | null>(null);
   const [deleteAccount, setDeleteAccount] = React.useState<LedgerAccount | null>(null);
   const [deleteAsset, setDeleteAsset] = React.useState<FixedAsset | null>(null);
@@ -107,6 +115,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         ...(txSearch ? { search: txSearch } : {}),
         ...(txAccountId !== "all" ? { account_id: txAccountId } : {}),
         ...(txDirection !== "all" ? { direction: txDirection } : {}),
+        ...(txVoucherType !== "all" ? { voucher_type: txVoucherType } : {}),
         ...(txYear !== "all" ? { year: txYear } : {}),
         ...dateFilterParams(txDateFilter),
       });
@@ -120,7 +129,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
     } finally {
       setLoadingTx(false);
     }
-  }, [txPage, txPageSize, txSearch, txAccountId, txDirection, txYear, txDateFilter]);
+  }, [txPage, txPageSize, txSearch, txAccountId, txDirection, txVoucherType, txYear, txDateFilter]);
 
   React.useEffect(() => {
     loadTransactions();
@@ -180,23 +189,35 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
     return parts.length ? parts.join(" · ") : "All";
   }, [txSearch, txAccountId, txDirection, txYear, txDateFilter]);
 
-  const currentYear = new Date().getFullYear();
-  const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
-
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
+      {/* Top Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Balance Sheet</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Assets and liabilities, always tallied — visible to Admin only.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            Balance Sheet &amp; Ledger Hub
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Tally-style double-entry accounting with real-time Dr/Cr running balances &amp; asset tracking.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant={balanced ? "success" : "destructive"} className="gap-1 py-1.5 text-xs">
             {balanced ? <CheckCircle2 className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
             {balanced ? "Balanced" : "Out of balance"}
           </Badge>
+          
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs gap-1.5"
+            onClick={() => setContraDialogOpen(true)}
+            disabled={summary.cash.length === 0 && summary.bank.length === 0}
+            title="Transfer money between Bank & Cash (Contra Voucher)"
+          >
+            <ArrowRightLeft className="size-3.5 text-primary" /> Fund Transfer (Contra)
+          </Button>
+
           <Button
             size="sm"
             onClick={() => {
@@ -204,14 +225,15 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               setTxDialogOpen(true);
             }}
             disabled={allAccounts.length === 0}
+            className="text-xs gap-1.5"
           >
-            <Plus className="size-4" /> Record Transaction
+            <Plus className="size-3.5" /> Record Transaction
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-6">
-        {/* ------------------------------- Assets (First on Mobile, Second on Desktop) ------------------------------- */}
+        {/* ------------------------------- Assets ------------------------------- */}
         <Card className="order-1 md:order-2 border-emerald-500/20 dark:border-emerald-500/30 overflow-hidden shadow-xs">
           <CardHeader className="bg-emerald-500/5 dark:bg-emerald-500/10 border-b border-emerald-500/15 py-3 px-3.5 sm:py-4 sm:px-6">
             <CardTitle className="flex items-center justify-between text-emerald-700 dark:text-emerald-300">
@@ -231,9 +253,11 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               icon={<Wallet className="size-3.5" />}
               iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
               title="Cash"
+              subtitle="Click any account to view Tally statement ledger"
               accounts={summary.cash}
               onAdd={() => setAccountDialog({ type: "cash" })}
               onEdit={(a) => setAccountDialog({ type: "cash", account: a })}
+              onViewStatement={(a) => router.push(`/balance-sheet/${a.id}`)}
               onTransact={(a) => {
                 setTxDefaultAccount(a.id);
                 setTxDialogOpen(true);
@@ -245,9 +269,11 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               icon={<Landmark className="size-3.5" />}
               iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400"
               title="Bank"
+              subtitle="Click any account to view Tally statement ledger"
               accounts={summary.bank}
               onAdd={() => setAccountDialog({ type: "bank" })}
               onEdit={(a) => setAccountDialog({ type: "bank", account: a })}
+              onViewStatement={(a) => router.push(`/balance-sheet/${a.id}`)}
               onTransact={(a) => {
                 setTxDefaultAccount(a.id);
                 setTxDialogOpen(true);
@@ -259,7 +285,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               icon={<HandCoins className="size-3.5" />}
               iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400"
               title="Debtors / Outstanding"
-              subtitle="Money owed to you"
+              subtitle="Money owed to you (Click row to view Tally ledger)"
               accounts={summary.debtors}
               extraValue={summary.billsOutstandingValue}
               extraLabel="Bills & Invoices Outstanding"
@@ -267,6 +293,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               extraLink="/bills"
               onAdd={() => setAccountDialog({ type: "debtor" })}
               onEdit={(a) => setAccountDialog({ type: "debtor", account: a })}
+              onViewStatement={(a) => router.push(`/balance-sheet/${a.id}`)}
               onTransact={(a) => {
                 setTxDefaultAccount(a.id);
                 setTxDialogOpen(true);
@@ -289,8 +316,8 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               </div>
               <div className="flex items-center gap-2">
                 <p className="font-mono text-sm font-bold text-indigo-900 dark:text-indigo-200">{money(summary.rawMaterialValue)}</p>
-                <Button variant="ghost" size="icon" className="size-7 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10" asChild>
-                  <Link href="/products" title="View Products">
+                <Button variant="ghost" size="icon" className="size-7 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 cursor-pointer" asChild>
+                  <Link href="/products" className="cursor-pointer" title="View Products">
                     <ExternalLink className="size-3.5" />
                   </Link>
                 </Button>
@@ -353,7 +380,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
           </CardContent>
         </Card>
 
-        {/* ---------------------------- Liabilities (Second on Mobile, First on Desktop) ---------------------------- */}
+        {/* ---------------------------- Liabilities ---------------------------- */}
         <Card className="order-2 md:order-1 border-rose-500/20 dark:border-rose-500/30 overflow-hidden shadow-xs">
           <CardHeader className="bg-rose-500/5 dark:bg-rose-500/10 border-b border-rose-500/15 py-3 px-3.5 sm:py-4 sm:px-6">
             <CardTitle className="flex items-center justify-between text-rose-700 dark:text-rose-300">
@@ -373,10 +400,11 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               icon={<Users className="size-3.5" />}
               iconBg="bg-rose-500/15 text-rose-600 dark:text-rose-400"
               title="Creditors"
-              subtitle="Parties you owe money to"
+              subtitle="Parties you owe money to (Click row to view Tally ledger)"
               accounts={summary.creditors}
               onAdd={() => setAccountDialog({ type: "creditor" })}
               onEdit={(a) => setAccountDialog({ type: "creditor", account: a })}
+              onViewStatement={(a) => router.push(`/balance-sheet/${a.id}`)}
               onTransact={(a) => {
                 setTxDefaultAccount(a.id);
                 setTxDialogOpen(true);
@@ -387,7 +415,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
             <Separator />
 
             {/* Capital & Reserves Box */}
-            <div className="rounded-xl border border-purple-500/20 bg-linear-to-r from-purple-500/10 via-indigo-500/5 to-purple-500/10 p-3 sm:p-4">
+            <div className="rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-purple-500/10 p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-purple-900 dark:text-purple-200">Capital &amp; Reserves</p>
@@ -407,13 +435,15 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         </Card>
       </div>
 
-      {/* --------------------------- All Transactions Ledger --------------------------- */}
+      {/* --------------------------- All Transactions Tally Ledger --------------------------- */}
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 px-3.5 sm:py-4 sm:px-6">
           <div>
-            <CardTitle className="text-base sm:text-lg">All Transactions Ledger</CardTitle>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <FileSpreadsheet className="size-4 text-primary" /> All Transactions Ledger
+            </CardTitle>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-              Complete historical record of all account increases &amp; decreases.
+              Complete historical record of all Debits (Dr), Credits (Cr) &amp; voucher movements.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -432,76 +462,62 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
           {/* Summary stats bar for filtered view */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 rounded-lg border p-2.5 sm:p-3 bg-muted/20 text-xs">
             <div className="flex justify-between items-center sm:flex-col sm:items-start">
-              <span className="text-muted-foreground uppercase font-semibold">Total Inflow (+):</span>
+              <span className="text-muted-foreground uppercase font-semibold text-[10px]">Total Debit / Inflow (Dr):</span>
               <span className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
                 {money(txStats.totalInflow)}
               </span>
             </div>
             <div className="flex justify-between items-center sm:flex-col sm:items-start">
-              <span className="text-muted-foreground uppercase font-semibold">Total Outflow (-):</span>
-              <span className="font-mono text-sm font-bold text-red-600 dark:text-red-400">
+              <span className="text-muted-foreground uppercase font-semibold text-[10px]">Total Credit / Outflow (Cr):</span>
+              <span className="font-mono text-sm font-bold text-rose-600 dark:text-rose-400">
                 {money(txStats.totalOutflow)}
               </span>
             </div>
             <div className="flex justify-between items-center sm:flex-col sm:items-start">
-              <span className="text-muted-foreground uppercase font-semibold">Net Flow:</span>
-              <span className={`font-mono text-sm font-bold ${txStats.netFlow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+              <span className="text-muted-foreground uppercase font-semibold text-[10px]">Net Cash Movement:</span>
+              <span className={`font-mono text-sm font-bold ${txStats.netFlow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                 {txStats.netFlow >= 0 ? "+" : ""}{money(txStats.netFlow)}
               </span>
             </div>
           </div>
 
-          {/* Filter Toolbar: Search full width + 2x2 grid on mobile (2 lines of 2 dropdowns) */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative w-full lg:w-64 shrink-0">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+          {/* Filter Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
               <Input
-                placeholder="Search description..."
-                className="pl-9 h-9 text-xs w-full"
+                placeholder="Search narration, ref no, account..."
                 value={txSearch}
                 onChange={(e) => { setTxSearch(e.target.value); setTxPage(1); }}
+                className="pl-8 h-9 text-xs"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 w-full sm:flex sm:flex-wrap sm:items-center">
-              <Select value={txYear} onValueChange={(val) => {
-                if (val !== "all") setTxDateFilter({ period: "all", value: "" });
-                setTxYear(val);
-                setTxPage(1);
-              }}>
-                <SelectTrigger className="h-9 text-xs w-full sm:w-[130px]">
-                  <SelectValue placeholder="Year Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  {availableYears.map((yr) => (
-                    <SelectItem key={yr} value={String(yr)}>Year {yr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
+            <div className="flex flex-wrap items-center gap-2">
               <Select value={txAccountId} onValueChange={(val) => { setTxAccountId(val); setTxPage(1); }}>
-                <SelectTrigger className="h-9 text-xs w-full sm:w-[150px]">
-                  <SelectValue placeholder="Account Filter" />
+                <SelectTrigger className="h-9 text-xs w-[140px]">
+                  <SelectValue placeholder="All Accounts" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Accounts</SelectItem>
-                  {allAccounts.map((acc) => (
-                    <SelectItem key={acc.id} value={String(acc.id)}>
-                      {acc.name} ({acc.type.toUpperCase()})
+                  {allAccounts.map((a) => (
+                    <SelectItem key={a.id} value={String(a.id)}>
+                      {a.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={txDirection} onValueChange={(val) => { setTxDirection(val); setTxPage(1); }}>
-                <SelectTrigger className="h-9 text-xs w-full sm:w-[130px]">
-                  <SelectValue placeholder="Direction" />
+              <Select value={txVoucherType} onValueChange={(val) => { setTxVoucherType(val); setTxPage(1); }}>
+                <SelectTrigger className="h-9 text-xs w-[130px]">
+                  <SelectValue placeholder="All Vouchers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Directions</SelectItem>
-                  <SelectItem value="increase">Increase (+)</SelectItem>
-                  <SelectItem value="decrease">Decrease (-)</SelectItem>
+                  <SelectItem value="all">All Vouchers</SelectItem>
+                  <SelectItem value="receipt">🟢 Receipt</SelectItem>
+                  <SelectItem value="payment">🔴 Payment</SelectItem>
+                  <SelectItem value="contra">🔁 Contra</SelectItem>
+                  <SelectItem value="journal">📝 Journal</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -521,7 +537,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
           {/* Table / Cards */}
           {!loadingTx && transactions.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-0">
-              No transactions match the selected filters.
+              No ledger transactions match the selected filters.
             </p>
           ) : (
             <>
@@ -529,49 +545,66 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
               <div className="hidden overflow-hidden rounded-md border md:block">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Account</TableHead>
-                      <TableHead>Direction</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>By</TableHead>
+                    <TableRow className="bg-muted/40 text-xs">
+                      <TableHead className="w-[90px]">Date</TableHead>
+                      <TableHead className="w-[140px]">Account</TableHead>
+                      <TableHead className="w-[95px]">Vch Type</TableHead>
+                      <TableHead className="w-[90px]">Vch No</TableHead>
+                      <TableHead>Particulars / Narration</TableHead>
+                      <TableHead className="text-right w-[110px]">Debit (₹ Dr)</TableHead>
+                      <TableHead className="text-right w-[110px]">Credit (₹ Cr)</TableHead>
+                      <TableHead className="w-[90px]">By</TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {transactions.map((t) => (
-                      <TableRow key={t.id}>
-                        <TableCell className="text-muted-foreground">{t.entry_date}</TableCell>
-                        <TableCell className="font-medium">{t.account_name}</TableCell>
-                        <TableCell>
-                          {t.direction === "increase" ? (
-                            <Badge variant="success" className="gap-1">
-                              <ArrowUpCircle className="size-3" /> Increase
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="gap-1">
-                              <ArrowDownCircle className="size-3" /> Decrease
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono font-semibold">{money(t.amount)}</TableCell>
-                        <TableCell className="max-w-[240px] truncate text-muted-foreground">
-                          {t.description || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{t.created_by_name || "—"}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            onClick={() => handleDeleteTransaction(t.id)}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                  <TableBody className="text-xs">
+                    {transactions.map((t) => {
+                      const voucherBadge = {
+                        receipt: <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[10px]">Receipt</Badge>,
+                        payment: <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/30 text-[10px]">Payment</Badge>,
+                        contra: <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30 text-[10px]">Contra</Badge>,
+                        journal: <Badge variant="outline" className="text-[10px]">Journal</Badge>,
+                      }[t.voucher_type || "journal"];
+
+                      return (
+                        <TableRow key={t.id} className="hover:bg-muted/30">
+                          <TableCell className="text-muted-foreground font-mono">{t.entry_date}</TableCell>
+                          <TableCell className="font-semibold text-foreground">
+                            <Link
+                              href={`/balance-sheet/${t.account_id}`}
+                              className="hover:underline hover:text-primary transition-colors inline-flex items-center gap-1"
+                              title="View Account Statement"
+                            >
+                              {t.account_name}
+                            </Link>
+                          </TableCell>
+                          <TableCell>{voucherBadge}</TableCell>
+                          <TableCell className="font-mono text-muted-foreground text-[11px]">
+                            {t.voucher_no || `TX-${t.id}`}
+                          </TableCell>
+                          <TableCell className="max-w-[240px] truncate text-muted-foreground">
+                            {t.description || "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-semibold text-emerald-600">
+                            {t.dr_amount && t.dr_amount > 0 ? money(t.dr_amount) : "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-semibold text-rose-600">
+                            {t.cr_amount && t.cr_amount > 0 ? money(t.cr_amount) : "—"}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-[11px]">{t.created_by_name || "—"}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => handleDeleteTransaction(t.id)}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 <PaginationBar
@@ -585,50 +618,69 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
 
               {/* Mobile Card View */}
               <div className="flex flex-col gap-3 md:hidden">
-                {transactions.map((t) => (
-                  <Card key={t.id}>
-                    <CardContent className="flex flex-col gap-3 py-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-sm text-foreground">{t.account_name}</p>
-                          <p className="font-mono font-bold text-base text-foreground mt-0.5">
-                            {money(t.amount)}
+                {transactions.map((t) => {
+                  const voucherBadge = {
+                    receipt: <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[10px]">Receipt</Badge>,
+                    payment: <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/30 text-[10px]">Payment</Badge>,
+                    contra: <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30 text-[10px]">Contra</Badge>,
+                    journal: <Badge variant="outline" className="text-[10px]">Journal</Badge>,
+                  }[t.voucher_type || "journal"];
+
+                  return (
+                    <Card key={t.id}>
+                      <CardContent className="flex flex-col gap-2.5 py-3.5 px-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <Link
+                              href={`/balance-sheet/${t.account_id}`}
+                              className="font-semibold text-sm text-foreground hover:underline hover:text-primary transition-colors block"
+                            >
+                              {t.account_name}
+                            </Link>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {voucherBadge}
+                              <span className="font-mono text-[11px] text-muted-foreground">
+                                {t.voucher_no || `TX-${t.id}`}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {t.dr_amount && t.dr_amount > 0 ? (
+                              <p className="font-mono font-bold text-sm text-emerald-600">
+                                +{money(t.dr_amount)} <span className="text-[10px]">Dr</span>
+                              </p>
+                            ) : (
+                              <p className="font-mono font-bold text-sm text-rose-600">
+                                -{money(t.cr_amount || t.amount)} <span className="text-[10px]">Cr</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {t.description && (
+                          <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40">
+                            {t.description}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {t.direction === "increase" ? (
-                            <Badge variant="success" className="gap-1 text-[10px]">
-                              <ArrowUpCircle className="size-3" /> Increase
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="gap-1 text-[10px]">
-                              <ArrowDownCircle className="size-3" /> Decrease
-                            </Badge>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 -mr-2"
-                            onClick={() => handleDeleteTransaction(t.id)}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
+                        )}
 
-                      {t.description && (
-                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/40">
-                          {t.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-                        <span>Date: {t.entry_date}</span>
-                        <span>By: {t.created_by_name || "—"}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                          <span>📅 {t.entry_date}</span>
+                          <div className="flex items-center gap-2">
+                            <span>By: {t.created_by_name || "—"}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 -mr-1"
+                              onClick={() => handleDeleteTransaction(t.id)}
+                            >
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
                 <PaginationBar
                   page={txPage}
@@ -643,6 +695,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         </CardContent>
       </Card>
 
+      {/* Account Create/Edit Dialog */}
       {accountDialog && (
         <LedgerAccountDialog
           open={!!accountDialog}
@@ -653,6 +706,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         />
       )}
 
+      {/* Record Transaction Dialog */}
       <LedgerTransactionDialog
         open={txDialogOpen}
         onOpenChange={setTxDialogOpen}
@@ -664,6 +718,19 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         }}
       />
 
+      {/* Contra Voucher Fund Transfer Dialog */}
+      <ContraVoucherDialog
+        open={contraDialogOpen}
+        onOpenChange={setContraDialogOpen}
+        cashAccounts={summary.cash}
+        bankAccounts={summary.bank}
+        onSaved={() => {
+          refreshSummary();
+          loadTransactions();
+        }}
+      />
+
+      {/* Fixed Asset Dialog */}
       {assetDialog && (
         <FixedAssetDialog
           open={!!assetDialog}
@@ -673,6 +740,7 @@ export function BalanceSheetClient({ initialSummary }: { initialSummary: Balance
         />
       )}
 
+      {/* Confirm Deletions */}
       {deleteAccount && (
         <ConfirmDeleteDialog
           open={!!deleteAccount}
@@ -708,6 +776,7 @@ function AccountSection({
   extraLink,
   onAdd,
   onEdit,
+  onViewStatement,
   onTransact,
   onDelete,
 }: {
@@ -722,6 +791,7 @@ function AccountSection({
   extraLink?: string;
   onAdd: () => void;
   onEdit: (account: LedgerAccount) => void;
+  onViewStatement: (account: LedgerAccount) => void;
   onTransact: (account: LedgerAccount) => void;
   onDelete: (account: LedgerAccount) => void;
 }) {
@@ -765,8 +835,8 @@ function AccountSection({
                   {money(extraValue)}
                 </span>
                 {extraLink && (
-                  <Button variant="ghost" size="icon" className="size-7 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15" asChild>
-                    <Link href={extraLink} title="View Bills">
+                  <Button variant="ghost" size="icon" className="size-7 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15 cursor-pointer" asChild>
+                    <Link href={extraLink} className="cursor-pointer" title="View Bills">
                       <ExternalLink className="size-3.5" />
                     </Link>
                   </Button>
@@ -778,30 +848,48 @@ function AccountSection({
           {accounts.map((a) => (
             <div
               key={a.id}
-              className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2 hover:bg-muted/50 transition-colors"
+              className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 px-3 py-2.5 transition-all group shadow-2xs"
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
-                {a.notes && <p className="truncate text-xs text-muted-foreground">{a.notes}</p>}
-              </div>
+              <Link
+                href={`/balance-sheet/${a.id}`}
+                className="cursor-pointer min-w-0 text-left flex-1 pr-2.5 focus:outline-hidden"
+                title={`Click to view ${a.name} Tally Ledger Statement`}
+              >
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="cursor-pointer font-semibold text-sm text-foreground group-hover:text-primary group-hover:underline transition-colors flex items-center gap-1.5">
+                    {a.name}
+                    <ArrowUpRight className="size-3.5 text-primary/70 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {a.notes && <span className="truncate text-xs text-muted-foreground">{a.notes}</span>}
+                  <span className="text-[10px] text-muted-foreground/70 group-hover:text-primary transition-colors flex items-center gap-1 font-medium">
+                    <BookOpen className="size-2.5" /> Ledger Statement
+                  </span>
+                </div>
+              </Link>
+
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-semibold text-foreground">
+                <span className="font-mono text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                   {money(a.balance ?? a.opening_balance)}
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-7">
+                    <Button variant="ghost" size="icon" className="size-7 cursor-pointer hover:bg-muted">
                       <MoreHorizontal className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onTransact(a)}>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => onViewStatement(a)}>
+                      <BookOpen className="size-4" /> View Ledger Statement
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => onTransact(a)}>
                       <Plus className="size-4" /> Record transaction
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(a)}>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit(a)}>
                       <Pencil className="size-4" /> Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(a)}>
+                    <DropdownMenuItem className="cursor-pointer" variant="destructive" onClick={() => onDelete(a)}>
                       <Trash2 className="size-4" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
