@@ -183,7 +183,7 @@ export function BillDetailsDialog({
 
         {/* Invoice content */}
         <div className="p-3 sm:p-6 bg-slate-100 dark:bg-slate-900 overflow-x-auto sm:flex sm:justify-center">
-          <div className="w-[620px] sm:w-full max-w-[850px] bg-white text-black shadow-lg rounded-sm overflow-hidden shrink-0">
+          <div className="w-[620px] sm:w-full max-w-[850px] bg-white text-black shadow-lg rounded-none overflow-hidden shrink-0">
             <PrintableInvoice
               bill={bill}
               siteName={siteName}
