@@ -369,7 +369,7 @@ export function BillDetailView({ billId }: { billId: number | string }) {
       {/* Invoice Document Wrapper */}
       <div className="w-full pb-4">
         <PinchZoomContainer>
-          <Card className="w-[750px] bg-white text-black shadow-md border rounded-xl overflow-hidden p-0">
+          <Card className="w-[750px] bg-white text-black shadow-md border rounded-none overflow-hidden p-0">
             <PrintableInvoice
               bill={bill}
               siteName={settings?.site_name}

@@ -216,7 +216,7 @@ export function PublicQuotationView({ id }: { id: string }) {
         <PinchZoomContainer>
           <div
             ref={invoiceRef}
-            className="w-[750px] bg-white text-black shadow-xl rounded-md border"
+            className="w-[750px] bg-white text-black shadow-xl rounded-none border"
             style={{ color: "#000", backgroundColor: "#fff" }}
           >
             <PrintableInvoice

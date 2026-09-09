@@ -288,10 +288,10 @@ export function PrintableInvoice({
     return (
       <div
         id="bill-print-root"
-        className="printable-invoice w-full p-6 bg-card text-card-foreground font-sans border border-border rounded-md shadow-xs text-xs"
+        className="printable-invoice w-full p-6 bg-card text-card-foreground font-sans border border-border rounded-none shadow-xs text-xs"
       >
         {/* Top Header Banner */}
-        <div className="bg-slate-900 text-white p-4 flex items-center justify-between mb-6 rounded-xs">
+        <div className="bg-slate-900 text-white p-4 flex items-center justify-between mb-6 rounded-none">
           <div>
             <h1 className="text-xl font-bold tracking-wider uppercase">TAX INVOICE</h1>
             <p className="text-xs text-slate-300 mt-0.5">Invoice #: {b.bill_number || b.quotation_number || docNumber}</p>
@@ -304,7 +304,7 @@ export function PrintableInvoice({
 
         {/* Billed To & Payment Details */}
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <div className="border border-border p-3.5 bg-muted/30 rounded-xs">
+          <div className="border border-border p-3.5 bg-muted/30 rounded-none">
             <p className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border pb-1 mb-2">
               Billed To
             </p>
@@ -314,7 +314,7 @@ export function PrintableInvoice({
             {b.customer_address && <p className="text-xs text-muted-foreground mt-1">{b.customer_address}</p>}
           </div>
 
-          <div className="border border-border p-3.5 bg-muted/30 rounded-xs flex flex-col justify-between">
+          <div className="border border-border p-3.5 bg-muted/30 rounded-none flex flex-col justify-between">
             <div>
               <p className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border pb-1 mb-2">
                 Payment Details
@@ -363,7 +363,7 @@ export function PrintableInvoice({
 
         {/* Totals Summary */}
         <div className="flex justify-end mb-6">
-          <div className="w-72 border border-border p-3.5 space-y-1.5 bg-muted/30 rounded-xs text-muted-foreground">
+          <div className="w-72 border border-border p-3.5 space-y-1.5 bg-muted/30 rounded-none text-muted-foreground">
             <div className="flex justify-between text-xs">
               <span>Subtotal:</span>
               <span className="font-semibold text-foreground">{formatCurrency(b.subtotal || b.total_amount || 0)}</span>
@@ -420,7 +420,7 @@ export function PrintableInvoice({
     return (
       <div
         id="bill-print-root"
-        className="printable-invoice w-full p-6 bg-card text-card-foreground font-sans text-xs border border-border rounded-md shadow-xs"
+        className="printable-invoice w-full p-6 bg-card text-card-foreground font-sans text-xs border border-border rounded-none shadow-xs"
       >
         {/* Header */}
         <div className="flex justify-between items-start pb-6 mb-6 border-b border-border">
@@ -518,7 +518,7 @@ export function PrintableInvoice({
     return (
       <div
         id="bill-print-root"
-        className="printable-invoice w-full p-5 bg-card text-card-foreground font-sans text-[11px] leading-tight border border-border rounded-md shadow-xs"
+        className="printable-invoice w-full p-5 bg-card text-card-foreground font-sans text-[11px] leading-tight border border-border rounded-none shadow-xs"
       >
         {/* Compact Header */}
         <div className="flex justify-between items-center border-b border-border pb-2 mb-3">
@@ -527,14 +527,14 @@ export function PrintableInvoice({
             <p className="text-[10px] text-muted-foreground">Invoice #: {b.bill_number || b.quotation_number || docNumber} | Date: {formattedDate}</p>
           </div>
           <div className="text-right">
-            <span className="font-bold text-[10px] uppercase px-2 py-0.5 border border-border rounded bg-muted/40 text-foreground">
+            <span className="font-bold text-[10px] uppercase px-2 py-0.5 border border-border rounded-none bg-muted/40 text-foreground">
               {b.payment_status || b.quotation_status || "Pending"}
             </span>
           </div>
         </div>
 
         {/* Billed To */}
-        <div className="mb-3 bg-muted/30 p-2 rounded border border-border text-foreground">
+        <div className="mb-3 bg-muted/30 p-2 rounded-none border border-border text-foreground">
           <span className="font-bold text-[10px] uppercase text-muted-foreground">Customer: </span>
           <span className="font-bold text-xs text-foreground">{b.customer_name}</span>
           {b.customer_phone && <span className="ml-2 text-muted-foreground">({b.customer_phone})</span>}
@@ -591,7 +591,7 @@ export function PrintableInvoice({
   return (
     <div
       id="bill-print-root"
-      className="printable-invoice w-full rounded-lg bg-card text-card-foreground font-sans text-xs shadow-xs border border-border p-6"
+      className="printable-invoice w-full rounded-none bg-card text-card-foreground font-sans text-xs shadow-xs border border-border p-6"
     >
       {/* Header */}
       <div className="flex items-start justify-between border-b border-border pb-5 mb-6">
@@ -611,7 +611,7 @@ export function PrintableInvoice({
 
       {/* Billed To + Payment Details */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="rounded-md border border-border p-4 bg-muted/30">
+        <div className="rounded-none border border-border p-4 bg-muted/30">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
             Billed To
           </p>
@@ -629,7 +629,7 @@ export function PrintableInvoice({
           )}
         </div>
 
-        <div className="rounded-md border border-border p-4 bg-muted/30 flex flex-col justify-between">
+        <div className="rounded-none border border-border p-4 bg-muted/30 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
               Payment Details
@@ -637,7 +637,7 @@ export function PrintableInvoice({
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-muted-foreground">Status:</span>
               <span
-                className={`font-bold uppercase px-2 py-0.5 rounded text-[10px] ${
+                className={`font-bold uppercase px-2 py-0.5 rounded-none text-[10px] ${
                   (b.payment_status || b.quotation_status) === "paid" || (b.payment_status || b.quotation_status) === "accepted"
                     ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
                     : (b.payment_status || b.quotation_status) === "unpaid" || (b.payment_status || b.quotation_status) === "rejected"
@@ -661,7 +661,7 @@ export function PrintableInvoice({
       </div>
 
       {/* Items Table */}
-      <div className="rounded-md border border-border mb-6 overflow-hidden">
+      <div className="rounded-none border border-border mb-6 overflow-hidden">
         <table className="w-full text-sm table-fixed">
           <thead className="text-xs font-bold uppercase text-muted-foreground bg-muted/50 border-b border-border">
             <tr>
@@ -698,7 +698,7 @@ export function PrintableInvoice({
 
       {/* Summary Totals */}
       <div className="flex justify-end mb-6">
-        <div className="w-72 rounded-md border border-border p-4 flex flex-col gap-1.5 bg-muted/30">
+        <div className="w-72 rounded-none border border-border p-4 flex flex-col gap-1.5 bg-muted/30">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Subtotal:</span>
             <span className="font-mono font-semibold text-foreground">
