@@ -231,8 +231,8 @@ export function PublicBillView({ id }: { id: string }) {
         </PinchZoomContainer>
       </main>
 
-      <footer className="py-4 text-center text-xs text-gray-400 border-t border-gray-200 bg-white">
-        Powered by <span className="font-bold text-orange-600">Taff Desk CRM</span>
+      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-gray-200 bg-white">
+        Powered by <span className="font-semibold text-primary">{settings?.site_name || "Taff Desk CRM"}</span>
       </footer>
     </div>
   );

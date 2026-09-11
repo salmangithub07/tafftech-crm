@@ -21,6 +21,7 @@ export type AppSettings = {
   whatsapp_phone: string;
   whatsapp_api_key: string;
   whatsapp_instance_id: string;
+  whatsapp_gateways_config: string;
   whatsapp_reminder_template: string;
   yearly_plan_price: string;
   three_year_plan_price: string;
@@ -71,6 +72,7 @@ const DEFAULTS: AppSettings = {
   whatsapp_phone: "",
   whatsapp_api_key: "",
   whatsapp_instance_id: "",
+  whatsapp_gateways_config: "{}",
   whatsapp_reminder_template: "Hello {customer_name}, your appointment is scheduled for {appointment_date} at {appointment_time}. Please contact us if you need to reschedule.",
   yearly_plan_price: "4999",
   three_year_plan_price: "11999",
@@ -262,24 +264,40 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       else tenantMap[r.key] = r.value;
     }
 
+    const isTenant = tenantId > 0;
+
     const templateRaw = tenantMap.invoice_template ?? globalMap.invoice_template ?? DEFAULTS.invoice_template;
     const invoice_template: InvoiceTemplateType = ["modern", "classic", "minimal", "compact"].includes(templateRaw)
       ? (templateRaw as InvoiceTemplateType)
       : "modern";
 
-    const providerRaw = tenantMap.whatsapp_api_provider ?? globalMap.whatsapp_api_provider ?? DEFAULTS.whatsapp_api_provider;
+    // Strict Tenant Isolation: Never leak tenant 0 (Super Admin) credentials or business details to tenants
+    const providerRaw = isTenant
+      ? (tenantMap.whatsapp_api_provider ?? "none")
+      : (globalMap.whatsapp_api_provider ?? DEFAULTS.whatsapp_api_provider);
     const whatsapp_api_provider: WhatsAppProviderType = ["none", "ultramsg", "greenapi", "wati", "twilio"].includes(providerRaw)
       ? (providerRaw as WhatsAppProviderType)
       : "none";
 
-    const bName = (tenantMap.bank_name && tenantMap.bank_name.trim()) || globalMap.bank_name || DEFAULTS.bank_name;
-    const bAcc = (tenantMap.bank_account_no && tenantMap.bank_account_no.trim()) || globalMap.bank_account_no || DEFAULTS.bank_account_no;
-    const bIfsc = (tenantMap.bank_ifsc && tenantMap.bank_ifsc.trim()) || globalMap.bank_ifsc || DEFAULTS.bank_ifsc;
-    const bUpi = (tenantMap.bank_upi_id && tenantMap.bank_upi_id.trim()) || (globalMap.bank_upi_id && globalMap.bank_upi_id.trim()) || DEFAULTS.bank_upi_id;
+    const bName = isTenant
+      ? (tenantMap.bank_name ?? "")
+      : ((globalMap.bank_name && globalMap.bank_name.trim()) || DEFAULTS.bank_name);
+    const bAcc = isTenant
+      ? (tenantMap.bank_account_no ?? "")
+      : ((globalMap.bank_account_no && globalMap.bank_account_no.trim()) || DEFAULTS.bank_account_no);
+    const bIfsc = isTenant
+      ? (tenantMap.bank_ifsc ?? "")
+      : ((globalMap.bank_ifsc && globalMap.bank_ifsc.trim()) || DEFAULTS.bank_ifsc);
+    const bUpi = isTenant
+      ? (tenantMap.bank_upi_id ?? "")
+      : ((globalMap.bank_upi_id && globalMap.bank_upi_id.trim()) || DEFAULTS.bank_upi_id);
 
-    const formattedBankDetails = `Bank: ${bName}\nA/C No: ${bAcc}\nIFSC Code: ${bIfsc}\nUPI ID: ${bUpi}`;
+    const formattedBankDetails = (bName || bAcc || bIfsc || bUpi)
+      ? `Bank: ${bName}\nA/C No: ${bAcc}\nIFSC Code: ${bIfsc}\nUPI ID: ${bUpi}`
+      : "";
 
     return {
+      // Platform-wide / Branding defaults (Safe to fall back to Super Admin / Global)
       site_name: tenantMap.site_name ?? globalMap.site_name ?? DEFAULTS.site_name,
       company_phone: tenantMap.company_phone ?? globalMap.company_phone ?? DEFAULTS.company_phone,
       privacy_policy: tenantMap.privacy_policy ?? globalMap.privacy_policy ?? DEFAULTS.privacy_policy,
@@ -288,45 +306,56 @@ export async function getSettings(tenantId = 0): Promise<AppSettings> {
       radius: tenantMap.radius ?? globalMap.radius ?? DEFAULTS.radius,
       invoice_template,
       invoice_terms: tenantMap.invoice_terms ?? globalMap.invoice_terms ?? DEFAULTS.invoice_terms,
+
+      // Banking & Financials (Strictly isolated for business tenants)
       bank_name: bName,
       bank_account_no: bAcc,
       bank_ifsc: bIfsc,
       bank_upi_id: bUpi,
-      bank_details: tenantMap.bank_details ?? globalMap.bank_details ?? formattedBankDetails,
+      bank_details: isTenant ? (tenantMap.bank_details ?? formattedBankDetails) : (globalMap.bank_details ?? formattedBankDetails),
+      bank_branch: isTenant ? (tenantMap.bank_branch ?? "") : (globalMap.bank_branch ?? DEFAULTS.bank_branch),
+
+      // WhatsApp Gateway Settings & Credentials (Strictly isolated for business tenants)
       whatsapp_api_provider,
-      whatsapp_phone: tenantMap.whatsapp_phone ?? globalMap.whatsapp_phone ?? DEFAULTS.whatsapp_phone,
-      whatsapp_api_key: tenantMap.whatsapp_api_key ?? globalMap.whatsapp_api_key ?? DEFAULTS.whatsapp_api_key,
-      whatsapp_instance_id: tenantMap.whatsapp_instance_id ?? globalMap.whatsapp_instance_id ?? DEFAULTS.whatsapp_instance_id,
+      whatsapp_phone: isTenant ? (tenantMap.whatsapp_phone ?? "") : (globalMap.whatsapp_phone ?? DEFAULTS.whatsapp_phone),
+      whatsapp_api_key: isTenant ? (tenantMap.whatsapp_api_key ?? "") : (globalMap.whatsapp_api_key ?? DEFAULTS.whatsapp_api_key),
+      whatsapp_instance_id: isTenant ? (tenantMap.whatsapp_instance_id ?? "") : (globalMap.whatsapp_instance_id ?? DEFAULTS.whatsapp_instance_id),
+      whatsapp_gateways_config: isTenant ? (tenantMap.whatsapp_gateways_config ?? "{}") : (globalMap.whatsapp_gateways_config ?? DEFAULTS.whatsapp_gateways_config),
       whatsapp_reminder_template: tenantMap.whatsapp_reminder_template ?? globalMap.whatsapp_reminder_template ?? DEFAULTS.whatsapp_reminder_template,
-      yearly_plan_price: (tenantMap.yearly_plan_price && tenantMap.yearly_plan_price.trim()) || (globalMap.yearly_plan_price && globalMap.yearly_plan_price.trim()) || DEFAULTS.yearly_plan_price,
-      three_year_plan_price: (tenantMap.three_year_plan_price && tenantMap.three_year_plan_price.trim()) || (globalMap.three_year_plan_price && globalMap.three_year_plan_price.trim()) || DEFAULTS.three_year_plan_price,
-      lifetime_plan_price: (tenantMap.lifetime_plan_price && tenantMap.lifetime_plan_price.trim()) || (globalMap.lifetime_plan_price && globalMap.lifetime_plan_price.trim()) || DEFAULTS.lifetime_plan_price,
-      payment_qr_code: (tenantMap.payment_qr_code && tenantMap.payment_qr_code.trim()) || (globalMap.payment_qr_code && globalMap.payment_qr_code.trim()) || DEFAULTS.payment_qr_code,
-      trial_max_executives: tenantMap.trial_max_executives ?? globalMap.trial_max_executives ?? DEFAULTS.trial_max_executives,
-      trial_max_customers: tenantMap.trial_max_customers ?? globalMap.trial_max_customers ?? DEFAULTS.trial_max_customers,
-      yearly_max_executives: tenantMap.yearly_max_executives ?? globalMap.yearly_max_executives ?? DEFAULTS.yearly_max_executives,
-      yearly_max_customers: tenantMap.yearly_max_customers ?? globalMap.yearly_max_customers ?? DEFAULTS.yearly_max_customers,
-      three_year_max_executives: tenantMap.three_year_max_executives ?? globalMap.three_year_max_executives ?? DEFAULTS.three_year_max_executives,
-      three_year_max_customers: tenantMap.three_year_max_customers ?? globalMap.three_year_max_customers ?? DEFAULTS.three_year_max_customers,
-      lifetime_max_executives: tenantMap.lifetime_max_executives ?? globalMap.lifetime_max_executives ?? DEFAULTS.lifetime_max_executives,
-      lifetime_max_customers: tenantMap.lifetime_max_customers ?? globalMap.lifetime_max_customers ?? DEFAULTS.lifetime_max_customers,
-      broadcast_announcement_enabled: tenantMap.broadcast_announcement_enabled ?? globalMap.broadcast_announcement_enabled ?? DEFAULTS.broadcast_announcement_enabled,
-      broadcast_announcement_message: tenantMap.broadcast_announcement_message ?? globalMap.broadcast_announcement_message ?? DEFAULTS.broadcast_announcement_message,
-      broadcast_announcement_type: tenantMap.broadcast_announcement_type ?? globalMap.broadcast_announcement_type ?? DEFAULTS.broadcast_announcement_type,
-      broadcast_announcement_target_plan: tenantMap.broadcast_announcement_target_plan ?? globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
-      meta_title: tenantMap.meta_title ?? globalMap.meta_title ?? DEFAULTS.meta_title,
-      meta_description: tenantMap.meta_description ?? globalMap.meta_description ?? DEFAULTS.meta_description,
-      seo_keywords: tenantMap.seo_keywords ?? globalMap.seo_keywords ?? DEFAULTS.seo_keywords,
-      schema_json_ld: tenantMap.schema_json_ld ?? globalMap.schema_json_ld ?? DEFAULTS.schema_json_ld,
-      custom_head_code: tenantMap.custom_head_code ?? globalMap.custom_head_code ?? DEFAULTS.custom_head_code,
-      custom_body_code: tenantMap.custom_body_code ?? globalMap.custom_body_code ?? DEFAULTS.custom_body_code,
-      gstin: tenantMap.gstin ?? globalMap.gstin ?? DEFAULTS.gstin,
-      pan_no: tenantMap.pan_no ?? globalMap.pan_no ?? DEFAULTS.pan_no,
-      business_logo: tenantMap.business_logo ?? globalMap.business_logo ?? DEFAULTS.business_logo,
-      business_tagline: tenantMap.business_tagline ?? globalMap.business_tagline ?? DEFAULTS.business_tagline,
-      business_address: tenantMap.business_address ?? globalMap.business_address ?? DEFAULTS.business_address,
-      bank_branch: tenantMap.bank_branch ?? globalMap.bank_branch ?? DEFAULTS.bank_branch,
-      dispute_note: tenantMap.dispute_note ?? globalMap.dispute_note ?? DEFAULTS.dispute_note,
+
+      // Business Legal Identity & Branding (Strictly isolated for business tenants)
+      gstin: isTenant ? (tenantMap.gstin ?? "") : (globalMap.gstin ?? DEFAULTS.gstin),
+      pan_no: isTenant ? (tenantMap.pan_no ?? "") : (globalMap.pan_no ?? DEFAULTS.pan_no),
+      business_logo: isTenant ? (tenantMap.business_logo ?? "") : (globalMap.business_logo ?? DEFAULTS.business_logo),
+      business_tagline: isTenant ? (tenantMap.business_tagline ?? "") : (globalMap.business_tagline ?? DEFAULTS.business_tagline),
+      business_address: isTenant ? (tenantMap.business_address ?? "") : (globalMap.business_address ?? DEFAULTS.business_address),
+      dispute_note: isTenant ? (tenantMap.dispute_note ?? "") : (globalMap.dispute_note ?? DEFAULTS.dispute_note),
+
+      // SaaS Pricing & System Limits (Global / Super Admin controlled)
+      yearly_plan_price: (globalMap.yearly_plan_price && globalMap.yearly_plan_price.trim()) || DEFAULTS.yearly_plan_price,
+      three_year_plan_price: (globalMap.three_year_plan_price && globalMap.three_year_plan_price.trim()) || DEFAULTS.three_year_plan_price,
+      lifetime_plan_price: (globalMap.lifetime_plan_price && globalMap.lifetime_plan_price.trim()) || DEFAULTS.lifetime_plan_price,
+      payment_qr_code: (globalMap.payment_qr_code && globalMap.payment_qr_code.trim()) || DEFAULTS.payment_qr_code,
+      trial_max_executives: globalMap.trial_max_executives ?? DEFAULTS.trial_max_executives,
+      trial_max_customers: globalMap.trial_max_customers ?? DEFAULTS.trial_max_customers,
+      yearly_max_executives: globalMap.yearly_max_executives ?? DEFAULTS.yearly_max_executives,
+      yearly_max_customers: globalMap.yearly_max_customers ?? DEFAULTS.yearly_max_customers,
+      three_year_max_executives: globalMap.three_year_max_executives ?? DEFAULTS.three_year_max_executives,
+      three_year_max_customers: globalMap.three_year_max_customers ?? DEFAULTS.three_year_max_customers,
+      lifetime_max_executives: globalMap.lifetime_max_executives ?? DEFAULTS.lifetime_max_executives,
+      lifetime_max_customers: globalMap.lifetime_max_customers ?? DEFAULTS.lifetime_max_customers,
+
+      // Broadcast Announcements & SEO (Global / Super Admin controlled)
+      broadcast_announcement_enabled: globalMap.broadcast_announcement_enabled ?? DEFAULTS.broadcast_announcement_enabled,
+      broadcast_announcement_message: globalMap.broadcast_announcement_message ?? DEFAULTS.broadcast_announcement_message,
+      broadcast_announcement_type: globalMap.broadcast_announcement_type ?? DEFAULTS.broadcast_announcement_type,
+      broadcast_announcement_target_plan: globalMap.broadcast_announcement_target_plan ?? DEFAULTS.broadcast_announcement_target_plan,
+      meta_title: globalMap.meta_title ?? DEFAULTS.meta_title,
+      meta_description: globalMap.meta_description ?? DEFAULTS.meta_description,
+      seo_keywords: globalMap.seo_keywords ?? DEFAULTS.seo_keywords,
+      schema_json_ld: globalMap.schema_json_ld ?? DEFAULTS.schema_json_ld,
+      custom_head_code: globalMap.custom_head_code ?? DEFAULTS.custom_head_code,
+      custom_body_code: globalMap.custom_body_code ?? DEFAULTS.custom_body_code,
     };
   } catch {
     return DEFAULTS;

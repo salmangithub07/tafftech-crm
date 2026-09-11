@@ -105,6 +105,64 @@ export async function POST(req: NextRequest) {
         console.error("Green-API WhatsApp dispatch error:", e);
       }
     }
+  } else if (settings.whatsapp_api_provider === "wati" && settings.whatsapp_instance_id && settings.whatsapp_api_key) {
+    let endpoint = settings.whatsapp_instance_id.trim();
+    if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+      endpoint = `https://${endpoint}`;
+    }
+    endpoint = endpoint.replace(/\/$/, "");
+
+    for (const item of reminders) {
+      if (!item.customer_phone) continue;
+      try {
+        const cleanP = item.customer_phone.replace(/[^0-9]/g, "");
+        const toPhone = cleanP.startsWith("91") ? cleanP : `91${cleanP}`;
+
+        await fetch(`${endpoint}/api/v1/sendSessionMessage/${toPhone}?messageText=${encodeURIComponent(item.message)}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${settings.whatsapp_api_key.trim()}`,
+            Accept: "application/json",
+          },
+        });
+        apiSuccessCount++;
+      } catch (e) {
+        console.error("WATI WhatsApp dispatch error:", e);
+      }
+    }
+  } else if (settings.whatsapp_api_provider === "twilio" && settings.whatsapp_instance_id && settings.whatsapp_api_key && settings.whatsapp_phone) {
+    const accountSid = settings.whatsapp_instance_id.trim();
+    const authToken = settings.whatsapp_api_key.trim();
+    const fromWa = settings.whatsapp_phone.trim().startsWith("whatsapp:")
+      ? settings.whatsapp_phone.trim()
+      : `whatsapp:${settings.whatsapp_phone.trim()}`;
+
+    const authHeader = `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`;
+
+    for (const item of reminders) {
+      if (!item.customer_phone) continue;
+      try {
+        const cleanP = item.customer_phone.replace(/[^0-9]/g, "");
+        const toPhone = cleanP.startsWith("91") ? cleanP : `91${cleanP}`;
+        const toWa = `whatsapp:+${toPhone}`;
+
+        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+          method: "POST",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            From: fromWa,
+            To: toWa,
+            Body: item.message,
+          }),
+        });
+        apiSuccessCount++;
+      } catch (e) {
+        console.error("Twilio WhatsApp dispatch error:", e);
+      }
+    }
   }
 
   if (reminders.length > 0) {

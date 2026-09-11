@@ -30,6 +30,10 @@ import {
   Percent,
   Copy,
   ChevronRight,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -976,27 +980,210 @@ function InvoiceTab({ initialSettings }: { initialSettings: AppSettings }) {
 
 /* --------------------------- WhatsApp Gateway & Reminders Tab --------------------------- */
 
+type GatewayCreds = {
+  instanceId: string;
+  apiKey: string;
+};
+
+type GatewaysConfig = Record<string, GatewayCreds>;
+
+const PROVIDER_METADATA: Record<string, {
+  instanceLabel: string;
+  instancePlaceholder: string;
+  apiKeyLabel: string;
+  apiKeyPlaceholder: string;
+  description: string;
+}> = {
+  greenapi: {
+    instanceLabel: "ID Instance / Channel ID",
+    instancePlaceholder: "e.g. 1101823456 or account ID",
+    apiKeyLabel: "API Token Instance",
+    apiKeyPlaceholder: "e.g. 7a8b9c0d1e2f3a4b...",
+    description: "Enter your ID Instance and API Token from the Green-API console under Instance details.",
+  },
+  ultramsg: {
+    instanceLabel: "Instance ID",
+    instancePlaceholder: "e.g. instance12345",
+    apiKeyLabel: "API Token",
+    apiKeyPlaceholder: "••••••••••••••••",
+    description: "Enter your UltraMsg Instance ID and API Token from your UltraMsg dashboard.",
+  },
+  wati: {
+    instanceLabel: "API Endpoint / Tenant URL",
+    instancePlaceholder: "e.g. https://live-mt-server.wati.io/301234",
+    apiKeyLabel: "Bearer Access Token",
+    apiKeyPlaceholder: "••••••••••••••••",
+    description: "Enter your WATI API endpoint URL and Bearer Access Token.",
+  },
+  twilio: {
+    instanceLabel: "Account SID",
+    instancePlaceholder: "e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    apiKeyLabel: "Auth Token",
+    apiKeyPlaceholder: "••••••••••••••••",
+    description: "Enter your Twilio Account SID and Auth Token.",
+  },
+};
+
+type VerificationState = {
+  status: "idle" | "verifying" | "connected" | "qr_pending" | "invalid" | "error";
+  message?: string;
+};
+
 function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
   const router = useRouter();
   const [provider, setProvider] = React.useState<WhatsAppProviderType>(initialSettings.whatsapp_api_provider || "none");
   const [waPhone, setWaPhone] = React.useState(initialSettings.whatsapp_phone || "");
-  const [instanceId, setInstanceId] = React.useState(initialSettings.whatsapp_instance_id || "");
-  const [apiKey, setApiKey] = React.useState(initialSettings.whatsapp_api_key || "");
   const [template, setTemplate] = React.useState(initialSettings.whatsapp_reminder_template || "");
   const [saving, setSaving] = React.useState(false);
+  const [verificationMap, setVerificationMap] = React.useState<Record<string, VerificationState>>({});
+
+  // Per-provider isolated credentials state map
+  const [gatewaysConfig, setGatewaysConfig] = React.useState<GatewaysConfig>(() => {
+    let parsed: GatewaysConfig = {};
+    if (initialSettings.whatsapp_gateways_config) {
+      try {
+        parsed = JSON.parse(initialSettings.whatsapp_gateways_config);
+      } catch {}
+    }
+    // Seed active provider if legacy credentials exist and weren't in config
+    const currentProv = initialSettings.whatsapp_api_provider || "none";
+    if (currentProv !== "none" && !parsed[currentProv]) {
+      parsed[currentProv] = {
+        instanceId: initialSettings.whatsapp_instance_id || "",
+        apiKey: initialSettings.whatsapp_api_key || "",
+      };
+    }
+    // Ensure all standard providers exist in map
+    ["greenapi", "ultramsg", "wati", "twilio"].forEach((p) => {
+      if (!parsed[p]) {
+        parsed[p] = { instanceId: "", apiKey: "" };
+      }
+    });
+    return parsed;
+  });
+
+  const currentCreds = gatewaysConfig[provider] || { instanceId: "", apiKey: "" };
+  const currentVerification = verificationMap[provider] || { status: "idle" };
+
+  const meta = PROVIDER_METADATA[provider] || {
+    instanceLabel: "Instance ID / Channel ID",
+    instancePlaceholder: "instance12345",
+    apiKeyLabel: "API Secret Key / Token",
+    apiKeyPlaceholder: "••••••••••••••••",
+    description: "Enter your gateway API credentials.",
+  };
+
+  function handleInstanceIdChange(val: string) {
+    setGatewaysConfig((prev) => ({
+      ...prev,
+      [provider]: {
+        instanceId: val,
+        apiKey: prev[provider]?.apiKey || "",
+      },
+    }));
+    // Reset verification state when input changes
+    setVerificationMap((prev) => ({
+      ...prev,
+      [provider]: { status: "idle" },
+    }));
+  }
+
+  function handleApiKeyChange(val: string) {
+    setGatewaysConfig((prev) => ({
+      ...prev,
+      [provider]: {
+        instanceId: prev[provider]?.instanceId || "",
+        apiKey: val,
+      },
+    }));
+    // Reset verification state when input changes
+    setVerificationMap((prev) => ({
+      ...prev,
+      [provider]: { status: "idle" },
+    }));
+  }
+
+  async function handleVerifyConnection() {
+    if (provider === "none") return;
+    const instance = gatewaysConfig[provider]?.instanceId?.trim() || "";
+    const key = gatewaysConfig[provider]?.apiKey?.trim() || "";
+
+    if (!instance || !key) {
+      toast.error("Please enter both Instance ID and API Key to verify.");
+      return;
+    }
+
+    setVerificationMap((prev) => ({
+      ...prev,
+      [provider]: { status: "verifying" },
+    }));
+
+    try {
+      const res = await fetch("/api/settings/verify-whatsapp-gateway", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider,
+          instanceId: instance,
+          apiKey: key,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.status === "connected") {
+          setVerificationMap((prev) => ({
+            ...prev,
+            [provider]: { status: "connected", message: data.message },
+          }));
+          toast.success(data.message || "WhatsApp Gateway verified successfully!");
+        } else if (data.status === "qr_pending") {
+          setVerificationMap((prev) => ({
+            ...prev,
+            [provider]: { status: "qr_pending", message: data.message },
+          }));
+          toast.warning(data.message);
+        } else {
+          setVerificationMap((prev) => ({
+            ...prev,
+            [provider]: { status: "connected", message: data.message },
+          }));
+          toast.success(data.message);
+        }
+      } else {
+        const errMsg = data.error || "Verification failed. Invalid credentials.";
+        setVerificationMap((prev) => ({
+          ...prev,
+          [provider]: { status: "invalid", message: errMsg },
+        }));
+        toast.error(errMsg);
+      }
+    } catch (err: any) {
+      const errMsg = err?.message || "Could not reach gateway API server.";
+      setVerificationMap((prev) => ({
+        ...prev,
+        [provider]: { status: "error", message: errMsg },
+      }));
+      toast.error(errMsg);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
+      const activeInstanceId = provider !== "none" ? gatewaysConfig[provider]?.instanceId || "" : "";
+      const activeApiKey = provider !== "none" ? gatewaysConfig[provider]?.apiKey || "" : "";
+
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           whatsapp_api_provider: provider,
           whatsapp_phone: waPhone,
-          whatsapp_instance_id: instanceId,
-          whatsapp_api_key: apiKey,
+          whatsapp_instance_id: activeInstanceId,
+          whatsapp_api_key: activeApiKey,
+          whatsapp_gateways_config: JSON.stringify(gatewaysConfig),
           whatsapp_reminder_template: template,
         }),
       });
@@ -1009,6 +1196,9 @@ function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
       setSaving(false);
     }
   }
+
+  const isVerifying = currentVerification.status === "verifying";
+  const hasInputs = Boolean(currentCreds.instanceId?.trim() && currentCreds.apiKey?.trim());
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-6 max-w-3xl">
@@ -1051,29 +1241,112 @@ function WhatsAppTab({ initialSettings }: { initialSettings: AppSettings }) {
           </div>
 
           {provider !== "none" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
-              <div className="space-y-1.5">
-                <Label htmlFor="instanceId">Instance ID / Channel ID</Label>
-                <Input
-                  id="instanceId"
-                  value={instanceId}
-                  onChange={(e) => setInstanceId(e.target.value)}
-                  placeholder="instance12345"
-                  className="font-mono text-xs"
-                />
+            <div className="flex flex-col gap-3 pt-3 border-t">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-foreground">
+                    Credentials for {provider === "greenapi" ? "Green-API" : provider === "ultramsg" ? "UltraMsg Gateway" : provider.toUpperCase()}
+                  </span>
+                  {currentVerification.status === "connected" ? (
+                    <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-300 border-emerald-500/40 bg-emerald-500/10 gap-1 font-semibold">
+                      <CheckCircle2 className="size-3 text-emerald-500" />
+                      Verified &amp; Connected
+                    </Badge>
+                  ) : currentVerification.status === "qr_pending" ? (
+                    <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-500/40 bg-amber-500/10 gap-1 font-semibold">
+                      <AlertTriangle className="size-3 text-amber-500" />
+                      QR Scan Pending
+                    </Badge>
+                  ) : currentVerification.status === "invalid" ? (
+                    <Badge variant="destructive" className="text-[10px] gap-1 font-semibold">
+                      <AlertCircle className="size-3" />
+                      Invalid Credentials
+                    </Badge>
+                  ) : hasInputs ? (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border bg-muted/40 font-medium">
+                      Unverified
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] text-muted-foreground">
+                      Fresh / Not Configured
+                    </Badge>
+                  )}
+                </div>
+
+                {hasInputs && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isVerifying}
+                    onClick={handleVerifyConnection}
+                    className="h-7 text-xs px-2.5 gap-1.5 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <Loader2 className="size-3 animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="size-3" />
+                        <span>Test Connection</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="apiKey">API Secret Key / Token</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="••••••••••••••••"
-                  className="font-mono text-xs"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="instanceId">{meta.instanceLabel}</Label>
+                  <Input
+                    id="instanceId"
+                    value={currentCreds.instanceId}
+                    onChange={(e) => handleInstanceIdChange(e.target.value)}
+                    placeholder={meta.instancePlaceholder}
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="apiKey">{meta.apiKeyLabel}</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={currentCreds.apiKey}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                    placeholder={meta.apiKeyPlaceholder}
+                    className="font-mono text-xs"
+                  />
+                </div>
               </div>
+
+              {/* Real-time Verification Feedback Banners */}
+              {currentVerification.status === "connected" && (
+                <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>{currentVerification.message || "Connection active! Ready to send automated WhatsApp messages."}</span>
+                </div>
+              )}
+
+              {currentVerification.status === "qr_pending" && (
+                <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>{currentVerification.message || "Credentials are valid, but WhatsApp QR code is pending scan in your Green-API console."}</span>
+                </div>
+              )}
+
+              {currentVerification.status === "invalid" && (
+                <div className="p-2.5 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs flex items-center gap-2">
+                  <AlertCircle className="size-4 shrink-0 text-destructive" />
+                  <span>{currentVerification.message || "Invalid credentials. Please verify your ID Instance and API Token."}</span>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
+                {meta.description}
+              </p>
             </div>
           )}
         </CardContent>
