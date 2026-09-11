@@ -411,9 +411,7 @@ export function LandingPageClient() {
                     </span>
                     <span className="text-xs font-semibold text-muted-foreground">/ year</span>
                   </div>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                    Save over 40% vs monthly billing
-                  </p>
+                  
                 </div>
 
                 <ul className="space-y-2.5 text-xs text-muted-foreground pt-4 border-t border-primary/20">
@@ -571,10 +569,10 @@ export function LandingPageClient() {
                   <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
                     <Receipt className="size-5" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">GST Billing &amp; Printable Invoices</h3>
+                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">GST Billing &amp; Quotations</h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-2.5">
-                  Create official GST invoices, manage Paid/Unpaid/Partial payment statuses, and print clean thermal or full-page tax receipts with your branding.
+                  Generate official GST tax invoices &amp; proforma quotations. Manage payment statuses (Paid/Unpaid/Partial), share via WhatsApp, and print crisp zero-radius tax documents.
                 </p>
               </Card>
 
@@ -597,10 +595,10 @@ export function LandingPageClient() {
                   <div className="size-10 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20 shrink-0 group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all duration-300">
                     <BarChart3 className="size-5" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors duration-200">SM Analytics &amp; Lead Tracking</h3>
+                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors duration-200">SM Analytics &amp; Goal Tracking</h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-2.5">
-                  Log executive social media performance, track enquiries, post activity, and generate real-time visual revenue analytics dashboards.
+                  Track multi-platform posts, enquiries &amp; views. Set monthly SM targets with live progress bars, assign social tasks, and monitor executive performance leaderboards.
                 </p>
               </Card>
 
@@ -610,10 +608,10 @@ export function LandingPageClient() {
                   <div className="size-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20 shrink-0 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
                     <Wallet className="size-5" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">Balance Sheet &amp; Customer Ledgers</h3>
+                  <h3 className="text-base sm:text-lg font-bold leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">Tally Account Ledgers &amp; Balance Sheet</h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-2.5">
-                  Maintain real-time double-entry ledgers, track customer debit &amp; credit balances, record payments, and sync accounts automatically.
+                  Double-entry accounting with 7-column Tally statements, voucher types (Receipt, Payment, Contra, Journal), live Dr/Cr balances, mobile card views, and PDF exports.
                 </p>
               </Card>
             </div>
@@ -681,7 +679,7 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Thermal Receipts</span>
+                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Quotations</span>
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
@@ -689,7 +687,11 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">Balance Sheet &amp; Ledgers</span>
+                      <span className="text-muted-foreground font-medium">SM Analytics &amp; Goal Tracking</span>
+                      <CheckCircle2 className="size-4 text-emerald-500" />
+                    </li>
+                    <li className="flex items-center justify-between py-1 border-b border-border/30">
+                      <span className="text-muted-foreground font-medium">Tally Ledgers &amp; Balance Sheet</span>
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1">
@@ -730,7 +732,7 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-primary" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Thermal Receipts</span>
+                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Quotations</span>
                       <CheckCircle2 className="size-4 text-primary" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
@@ -738,7 +740,11 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-primary" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">Balance Sheet &amp; Ledgers</span>
+                      <span className="text-muted-foreground font-medium">SM Analytics &amp; Goal Tracking</span>
+                      <CheckCircle2 className="size-4 text-primary" />
+                    </li>
+                    <li className="flex items-center justify-between py-1 border-b border-border/30">
+                      <span className="text-muted-foreground font-medium">Tally Ledgers &amp; Balance Sheet</span>
                       <CheckCircle2 className="size-4 text-primary" />
                     </li>
                     <li className="flex items-center justify-between py-1">
@@ -779,7 +785,7 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Thermal Receipts</span>
+                      <span className="text-muted-foreground font-medium">GST Invoicing &amp; Quotations</span>
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
@@ -787,7 +793,11 @@ export function LandingPageClient() {
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1 border-b border-border/30">
-                      <span className="text-muted-foreground font-medium">Balance Sheet &amp; Ledgers</span>
+                      <span className="text-muted-foreground font-medium">SM Analytics &amp; Goal Tracking</span>
+                      <CheckCircle2 className="size-4 text-emerald-500" />
+                    </li>
+                    <li className="flex items-center justify-between py-1 border-b border-border/30">
+                      <span className="text-muted-foreground font-medium">Tally Ledgers &amp; Balance Sheet</span>
                       <CheckCircle2 className="size-4 text-emerald-500" />
                     </li>
                     <li className="flex items-center justify-between py-1">
@@ -837,7 +847,7 @@ export function LandingPageClient() {
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4">GST Invoicing &amp; Thermal Printable Receipts</td>
+                  <td className="p-4">GST Invoicing &amp; Quotations</td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-primary inline" /></td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
@@ -849,7 +859,13 @@ export function LandingPageClient() {
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4">Balance Sheet &amp; Ledgers</td>
+                  <td className="p-4">SM Analytics &amp; Goal Tracking</td>
+                  <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
+                  <td className="p-4 text-center"><CheckCircle2 className="size-4 text-primary inline" /></td>
+                  <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4">Tally Ledgers &amp; Balance Sheet</td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-primary inline" /></td>
                   <td className="p-4 text-center"><CheckCircle2 className="size-4 text-emerald-500 inline" /></td>
@@ -904,7 +920,7 @@ export function LandingPageClient() {
                 },
                 {
                   q: "Is my customer data secure and private?",
-                  a: `Yes! ${settings.site_name || "Taff Desk CRM"} employs strict multi-tenant data isolation. Each tenant's data is strictly scoped and encrypted so no other business can view your records.`,
+                  a: `Yes! ${settings.site_name || "Taff Desk CRM"} employs strict multi-business data isolation. Each business's data is strictly scoped and encrypted so no other business can view your records.`,
                 },
               ].map((faq, i) => {
                 const isOpen = openFaq === i;
@@ -985,27 +1001,132 @@ export function LandingPageClient() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/60 py-8 bg-background">
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
-              <LayoutDashboard className="size-4.5" />
-            </div>
-            <span className="font-bold tracking-tight text-foreground text-sm">
-              {settings.site_name || "Taff Desk CRM"}
-            </span>
-            <span className="text-muted-foreground text-xs font-normal ml-1">
-              &copy; {new Date().getFullYear()} All rights reserved.
-            </span>
-          </Link>
+      {/* Improvised Modern SaaS Footer */}
+      <footer className="border-t border-border/70 bg-gradient-to-b from-background via-muted/20 to-muted/40 relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/5 blur-3xl pointer-events-none rounded-full" />
 
-          <div className="flex items-center gap-6 text-xs font-medium">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#comparison" className="hover:text-foreground transition-colors">Comparison</a>
-            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-            <Link href="/login" className="hover:text-foreground transition-colors">Sign In</Link>
+        {/* Main Footer Content */}
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-16 pb-10 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 sm:gap-10 pb-12 border-b border-border/60">
+            {/* Brand column (5 cols) */}
+            <div className="md:col-span-5 space-y-4">
+              <Link href="/" className="inline-flex items-center gap-2.5 group">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md shadow-primary/20 transition-transform duration-300 group-hover:scale-105">
+                  <LayoutDashboard className="size-5" />
+                </div>
+                <span className="font-extrabold tracking-tight text-foreground text-lg">
+                  {settings.site_name || "Taff Desk CRM"}
+                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                  v2.0
+                </span>
+              </Link>
+              
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+                All-in-one business growth platform built for modern teams. Streamline customer inquiries, appointments, 1-click WhatsApp messaging, inventory, and GST billing in one unified dashboard.
+              </p>
+
+              {/* Trust Badges */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted-foreground font-medium">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background border border-border/80 shadow-2xs">
+                  <ShieldCheck className="size-3.5 text-emerald-500" />
+                  Bank-Grade Encryption
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background border border-border/80 shadow-2xs">
+                  <Zap className="size-3.5 text-amber-500" />
+                  99.9% Uptime Guarantee
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation Column 1: Product (2 cols) */}
+            <div className="md:col-span-2 sm:col-span-1 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-foreground">Product</p>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li>
+                  <a href="#features" className="hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+                    Features Overview
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+                    Pricing Plans
+                  </a>
+                </li>
+                <li>
+                  <a href="#comparison" className="hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+                    Plan Comparison
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+                    Frequently Asked Questions
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Navigation Column 2: Key Modules (3 cols) */}
+            <div className="md:col-span-3 sm:col-span-1 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-foreground">Core Modules</p>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-primary/70" />
+                  <span>Lead Pipeline &amp; Follow-ups</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-primary/70" />
+                  <span>Appointments &amp; Reminders</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  <span>1-Click WhatsApp Automations</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-primary/70" />
+                  <span>GST Billing &amp; Quotations</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-primary/70" />
+                  <span>Tally Ledger Statements</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Navigation Column 3: Get Started / Quick Access (2 cols) */}
+            <div className="md:col-span-2 sm:col-span-1 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-foreground">Quick Access</p>
+              <div className="space-y-2.5">
+                <Button size="sm" variant="default" asChild className="w-full text-xs font-semibold gap-1.5 shadow-xs">
+                  <Link href="/register">
+                    Free Trial <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" asChild className="w-full text-xs font-medium border-border/80 hover:bg-background">
+                  <Link href="/login">Dashboard Login</Link>
+                </Button>
+                <div className="pt-2 text-[11px] text-muted-foreground">
+                  <p className="font-medium text-foreground">Need Assistance?</p>
+                  <p className="mt-0.5 leading-relaxed">24/7 dedicated support for all registered organizations.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sub-footer / Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-center sm:text-left">
+              <span>&copy; {new Date().getFullYear()} {settings.site_name || "Taff Desk CRM"}. All rights reserved.</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium">
+              <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+              <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+              <Link href="/login" className="hover:text-foreground transition-colors">Login</Link>
+              <Link href="/register" className="text-primary hover:underline font-semibold">Start Free</Link>
+            </div>
           </div>
         </div>
       </footer>

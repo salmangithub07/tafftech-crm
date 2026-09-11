@@ -23,6 +23,7 @@ const settingsSchema = z.object({
   whatsapp_phone: z.string().optional(),
   whatsapp_api_key: z.string().optional(),
   whatsapp_instance_id: z.string().optional(),
+  whatsapp_gateways_config: z.string().optional(),
   whatsapp_reminder_template: z.string().optional(),
   yearly_plan_price: z.string().optional(),
   three_year_plan_price: z.string().optional(),
