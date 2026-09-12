@@ -63,6 +63,10 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     await execute(`
+      ALTER TABLE quotations ADD COLUMN IF NOT EXISTS document_title VARCHAR(50) DEFAULT 'PROFORMA INVOICE';
+    `).catch(() => {});
+
+    await execute(`
       ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INTEGER;
     `).catch(() => {});
 

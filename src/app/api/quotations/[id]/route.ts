@@ -84,7 +84,7 @@ export async function PUT(
   const res = await execute(
     `UPDATE quotations SET
       customer_id = ?, customer_name = ?, customer_phone = ?, customer_address = ?, customer_gst_number = ?, tax_type = ?,
-      quotation_date = ?, book_to = ?, transport = ?, gr_no = ?, vehicle_no = ?, dispute_note = ?,
+      quotation_date = ?, book_to = ?, transport = ?, gr_no = ?, vehicle_no = ?, dispute_note = ?, document_title = ?,
       subtotal = ?, tax_percent = ?, tax_amount = ?, discount_amount = ?, quotation_amount = ?, total_amount = ?,
       notes = ?
      WHERE id = ? AND tenant_id = ?`,
@@ -101,6 +101,7 @@ export async function PUT(
       body.gr_no || "",
       body.vehicle_no || "",
       body.dispute_note || "",
+      body.document_title || "PROFORMA INVOICE",
       subtotal,
       body.tax_percent || 0,
       taxAmount,

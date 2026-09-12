@@ -316,8 +316,11 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
               <span className="sm:hidden">Back</span>
             </Link>
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg sm:text-xl font-bold tracking-tight">{docNumber}</h1>
+            <Badge variant="outline" className="text-xs font-mono font-medium">
+              {quotation.document_title || "PROFORMA INVOICE"}
+            </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -431,7 +434,7 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
               bill={quotation}
               siteName={settings?.site_name}
               settings={settings}
-              documentType="PROFORMA INVOICE"
+              documentType={(quotation.document_title as any) || "PROFORMA INVOICE"}
             />
           </Card>
         </PinchZoomContainer>

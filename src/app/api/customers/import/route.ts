@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne, execute } from "@/lib/db";
+import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { getPlanLimits } from "@/lib/subscription";
+import { normalizePhone10 } from "@/lib/phone";
 import { z } from "zod";
 
 const rowSchema = z.object({
@@ -53,8 +54,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Pre-load existing active customer phone numbers for this tenant
+  const existingRows = await query<{ phone: string }>(
+    "SELECT phone FROM customers WHERE tenant_id = ? AND COALESCE(is_trashed, 0) = 0 AND phone IS NOT NULL AND phone != ''",
+    [tenantId]
+  );
+  const existingPhones = new Set<string>();
+  for (const r of existingRows) {
+    const n = normalizePhone10(r.phone);
+    if (n && n.length >= 10) existingPhones.add(n.slice(-10));
+  }
+
   let inserted = 0;
   let skipped = 0;
+  let duplicatesSkipped = 0;
 
   for (const row of rows) {
     const parsed = rowSchema.safeParse(row);
@@ -63,6 +76,18 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const d = parsed.data;
+
+    // Check duplicate mobile number
+    const norm = normalizePhone10(d.phone);
+    if (norm && norm.length >= 10) {
+      const last10 = norm.slice(-10);
+      if (existingPhones.has(last10)) {
+        duplicatesSkipped++;
+        continue;
+      }
+      existingPhones.add(last10);
+    }
+
     const rawStatus = String(d.status || "").toLowerCase().trim();
     let normStatus = rawStatus;
     if (rawStatus === "inactive" || rawStatus === "complete") normStatus = "completed";
@@ -84,7 +109,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     inserted,
     skipped,
+    duplicatesSkipped,
     importedCount: inserted,
-    skippedCount: skipped,
+    skippedCount: skipped + duplicatesSkipped,
   });
 }
+

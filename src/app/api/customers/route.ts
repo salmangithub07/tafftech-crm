@@ -5,6 +5,7 @@ import { buildDateFilter, paginationParams } from "@/lib/query-helpers";
 import { logActivity } from "@/lib/activity";
 import { getSettings } from "@/lib/settings";
 import { getPlanLimits } from "@/lib/subscription";
+import { normalizePhone10 } from "@/lib/phone";
 import { z } from "zod";
 
 const customerSchema = z.object({
@@ -113,6 +114,30 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
   const createdBy = d.created_by || session.id;
+
+  // Duplicate mobile number prevention for this tenant
+  const normPhone = normalizePhone10(d.phone);
+  if (normPhone && normPhone.length >= 10) {
+    const existingCust = await queryOne<{ id: number; name: string; phone: string; status: string }>(
+      `SELECT id, name, phone, status 
+       FROM customers 
+       WHERE tenant_id = ? 
+         AND COALESCE(is_trashed, 0) = 0 
+         AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 10) = ?
+       LIMIT 1`,
+      [tenantId, normPhone.slice(-10)]
+    );
+
+    if (existingCust) {
+      return NextResponse.json(
+        {
+          error: `Duplicate Entry: Customer already exists with mobile number "${d.phone}" — ${existingCust.name} (${existingCust.status.toUpperCase()})`,
+          existingCustomer: existingCust,
+        },
+        { status: 409 }
+      );
+    }
+  }
 
   // Check customer/lead limits for this tenant
   const superAdminSettings = await getSettings(0);

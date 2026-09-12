@@ -350,10 +350,16 @@ export function CustomersClient({
           if (!res.ok) throw new Error(data.error || "Import failed");
 
           const importedCount = data.importedCount ?? data.inserted ?? 0;
-          const skippedCount = data.skippedCount ?? data.skipped ?? 0;
-          toast.success(
-            `Imported ${importedCount} customer(s).${skippedCount ? ` Skipped ${skippedCount}.` : ""}`
-          );
+          const duplicatesSkipped = data.duplicatesSkipped ?? 0;
+          const invalidSkipped = data.skipped ?? 0;
+
+          let msg = `Imported ${importedCount} customer(s).`;
+          if (duplicatesSkipped > 0) {
+            msg += ` (${duplicatesSkipped} duplicate mobile${duplicatesSkipped > 1 ? "s" : ""} skipped)`;
+          } else if (invalidSkipped > 0) {
+            msg += ` (${invalidSkipped} invalid row${invalidSkipped > 1 ? "s" : ""} skipped)`;
+          }
+          toast.success(msg);
           refresh();
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Import failed");

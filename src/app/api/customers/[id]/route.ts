@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute } from "@/lib/db";
 import { getSession, tenantOf, canAccess } from "@/lib/auth";
 import { ensureActivityTables } from "@/lib/activity";
+import { normalizePhone10 } from "@/lib/phone";
 import { z } from "zod";
 import type { CustomerStatus } from "@/lib/types";
 
@@ -10,8 +11,8 @@ const customerSchema = z.object({
   product: z.string().optional().or(z.literal("")).default(""),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")).default(""),
   phone: z.string().optional().or(z.literal("")).default(""),
-  address: z.string().optional().or(z.literal("")).default(""),
-  notes: z.string().optional().or(z.literal("")).default(""),
+  address: z.string().optional().or(z.literal("")),
+  notes: z.string().optional().or(z.literal("")),
   status: z.enum(["lead", "progress", "active", "completed", "order_soon"]).default("lead"),
   visited: z.boolean().default(false),
   created_by: z.coerce.number().int().positive().optional().nullable(),
@@ -46,6 +47,32 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!existing.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const d = parsed.data;
+
+    // Check duplicate phone with any OTHER customer in the same tenant
+    const normPhone = normalizePhone10(d.phone);
+    if (normPhone && normPhone.length >= 10) {
+      const duplicateCust = await queryOne<{ id: number; name: string; phone: string; status: string }>(
+        `SELECT id, name, phone, status 
+         FROM customers 
+         WHERE tenant_id = ? 
+           AND id != ? 
+           AND COALESCE(is_trashed, 0) = 0 
+           AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 10) = ?
+         LIMIT 1`,
+        [tenantId, custId, normPhone.slice(-10)]
+      );
+
+      if (duplicateCust) {
+        return NextResponse.json(
+          {
+            error: `Duplicate Entry: Mobile number "${d.phone}" is already used by another customer: ${duplicateCust.name} (${duplicateCust.status.toUpperCase()})`,
+            existingCustomer: duplicateCust,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const createdBy = d.created_by || existing[0].created_by || session.id;
 
     await execute(

@@ -226,7 +226,7 @@ export function PublicQuotationView({ id }: { id: string }) {
               template={settings?.invoice_template || "modern"}
               customTerms={settings?.invoice_terms}
               bankDetails={settings?.bank_details}
-              documentType="PROFORMA INVOICE"
+              documentType={(quotation.document_title as any) || "PROFORMA INVOICE"}
             />
           </div>
         </PinchZoomContainer>
