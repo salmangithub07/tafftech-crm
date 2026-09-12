@@ -212,7 +212,7 @@ export function QuotationDetailsDialog({
               bill={quotation}
               siteName={siteName}
               settings={settingsData}
-              documentType="PROFORMA INVOICE"
+              documentType={(quotation.document_title as any) || "PROFORMA INVOICE"}
             />
           </div>
         </div>

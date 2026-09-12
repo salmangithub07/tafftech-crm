@@ -470,12 +470,19 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                         />
                       </TableCell>
                       <TableCell className="font-mono font-medium">
-                        <button
-                          onClick={() => viewQuotationDetails(q)}
-                          className="font-mono font-semibold text-primary hover:underline cursor-pointer"
-                        >
-                          {docNo}
-                        </button>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            onClick={() => viewQuotationDetails(q)}
+                            className="font-mono font-semibold text-primary hover:underline cursor-pointer"
+                          >
+                            {docNo}
+                          </button>
+                          {q.document_title === "TAX INVOICE" && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-normal">
+                              Tax Inv
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium">
                         <button

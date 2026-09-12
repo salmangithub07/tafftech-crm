@@ -59,8 +59,9 @@ export function PrintableInvoice({
   customTerms?: string;
   bankDetails?: string;
   settings?: AppSettings;
-  documentType?: "TAX INVOICE" | "PROFORMA INVOICE";
+  documentType?: "TAX INVOICE" | "PROFORMA INVOICE" | string;
 }) {
+  const docHeading = (bill as any)?.document_title || documentType || "TAX INVOICE";
   const rawCompanyName = siteName || settings?.site_name || "Taff Tech";
   const companyName = rawCompanyName.replace(/\bCRM\b/gi, "").replace(/\s+/g, " ").trim() || "Taff Tech";
   const docDate = (bill as any).bill_date || (bill as any).quotation_date || (bill as any).created_at || new Date().toISOString();
@@ -147,7 +148,7 @@ export function PrintableInvoice({
         {/* Order / Customer & Transport Details Box — 2 Horizontal Columns */}
         <div className="border-2 border-black grid grid-cols-2 my-2 text-xs">
           <div className="p-2 border-r-2 border-black space-y-1">
-            <p className="font-sans font-semibold text-[13px] uppercase">{documentType} : {bill.gr_no || docNumber}</p>
+            <p className="font-sans font-semibold text-[13px] uppercase">{docHeading} : {bill.gr_no || docNumber}</p>
             <p className="font-sans font-semibold text-[13px] uppercase">NAME : <span className="uppercase">{bill.customer_name}</span></p>
             <p className="font-sans font-semibold">ADDRESS : {bill.customer_address || "—"}</p>
             <p className="font-sans font-semibold">MOB NO : {bill.customer_phone || "N/A"}</p>
@@ -293,7 +294,7 @@ export function PrintableInvoice({
         {/* Top Header Banner */}
         <div className="bg-slate-900 text-white p-4 flex items-center justify-between mb-6 rounded-none">
           <div>
-            <h1 className="text-xl font-bold tracking-wider uppercase">TAX INVOICE</h1>
+            <h1 className="text-xl font-bold tracking-wider uppercase">{docHeading}</h1>
             <p className="text-xs text-slate-300 mt-0.5">Invoice #: {b.bill_number || b.quotation_number || docNumber}</p>
           </div>
           <div className="text-right">
@@ -596,7 +597,7 @@ export function PrintableInvoice({
       {/* Header */}
       <div className="flex items-start justify-between border-b border-border pb-5 mb-6">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-primary">{documentType}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-primary">{docHeading}</h2>
           <p className="text-sm font-semibold text-muted-foreground mt-0.5">
             Invoice #: {b.bill_number || b.quotation_number || docNumber}
           </p>

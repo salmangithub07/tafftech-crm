@@ -27,6 +27,7 @@ const createQuotationSchema = z.object({
   gr_no: z.string().optional().or(z.literal("")).default(""),
   vehicle_no: z.string().optional().or(z.literal("")).default(""),
   dispute_note: z.string().optional().or(z.literal("")).default(""),
+  document_title: z.string().optional().or(z.literal("")).default("PROFORMA INVOICE"),
   items: z.array(quotationItemSchema).min(1, "At least one product item is required"),
   discount_amount: z.coerce.number().min(0).default(0),
   tax_percent: z.coerce.number().min(0).default(0),
@@ -152,10 +153,10 @@ export async function POST(req: NextRequest) {
     const result = await execute(
       `INSERT INTO quotations (
         tenant_id, quotation_number, appointment_id, customer_id, customer_name, customer_phone, customer_address, customer_gst_number, tax_type,
-        quotation_date, book_to, transport, gr_no, vehicle_no, dispute_note,
+        quotation_date, book_to, transport, gr_no, vehicle_no, dispute_note, document_title,
         subtotal, tax_percent, tax_amount, discount_amount, quotation_amount, total_amount,
         quotation_status, notes, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tenantId,
         quotationNumber,
@@ -172,6 +173,7 @@ export async function POST(req: NextRequest) {
         d.gr_no,
         d.vehicle_no,
         d.dispute_note,
+        d.document_title || "PROFORMA INVOICE",
         subtotal,
         d.tax_percent,
         d.tax_amount,

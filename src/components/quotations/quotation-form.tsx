@@ -63,6 +63,7 @@ const formSchema = z.object({
   gr_no: z.string().optional(),
   vehicle_no: z.string().optional(),
   dispute_note: z.string().optional(),
+  document_title: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -115,6 +116,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
       gr_no: "",
       vehicle_no: "",
       dispute_note: "",
+      document_title: "PROFORMA INVOICE",
     },
   });
 
@@ -242,6 +244,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
             gr_no: qData.gr_no ?? "",
             vehicle_no: qData.vehicle_no ?? "",
             dispute_note: qData.dispute_note ?? "",
+            document_title: qData.document_title ?? "PROFORMA INVOICE",
           });
           setTaxPresetKey(deriveTaxPresetKey(qData.tax_type, qData.tax_percent));
         } else if (prefillCustomerId) {
@@ -458,9 +461,28 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Truck className="size-4 text-primary" /> Quotation & Transport
             </CardTitle>
-            <CardDescription className="text-xs">Date, destination and logistics details</CardDescription>
+            <CardDescription className="text-xs">Document title, date, destination and logistics details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <Label className="text-xs font-semibold">Document Title / Heading (Print/PDF)</Label>
+              <Select
+                value={watch("document_title") || "PROFORMA INVOICE"}
+                onValueChange={(val) => setValue("document_title", val)}
+              >
+                <SelectTrigger className="mt-1 h-9 text-xs">
+                  <SelectValue placeholder="Select Document Title" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PROFORMA INVOICE">PROFORMA INVOICE (Default)</SelectItem>
+                  <SelectItem value="TAX INVOICE">TAX INVOICE</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Display as &quot;PROFORMA INVOICE&quot; or &quot;TAX INVOICE&quot; on the quotation print/PDF. (Note: This remains a quotation draft until converted to bill).
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Quotation Date *</Label>
