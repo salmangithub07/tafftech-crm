@@ -400,26 +400,26 @@ export function BillForm() {
           <Button type="button" variant="outline" size="sm" asChild className="h-9">
             <Link href="/bills">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={isSubmitting} size="sm" className="gap-1.5 h-9 shadow-sm">
+          <Button type="submit" disabled={isSubmitting} size="sm" className="gap-1.5 h-9 shadow-sm font-medium">
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            <span>Save & Generate Invoice</span>
+            <span>Save &amp; Generate Invoice</span>
           </Button>
         </div>
       </div>
 
-      {/* Grid: Customer & Logistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Grid: Customer & Logistics (Symmetric 2-Card Row) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
         {/* Customer Information Card */}
-        <Card className="shadow-xs">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className="shadow-xs flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b bg-muted/20">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <User className="size-4 text-primary" /> Customer Details
             </CardTitle>
             <CardDescription className="text-xs">Select existing customer or enter details manually</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3.5 pt-4 flex-1">
             <div>
-              <Label className="text-xs">Existing Customer (Optional)</Label>
+              <Label className="text-xs font-medium">Existing Customer (Search &amp; Autofill)</Label>
               <SearchableSelect
                 options={customers.map((c) => ({
                   value: String(c.id),
@@ -430,12 +430,13 @@ export function BillForm() {
                 placeholder="Search and select customer..."
                 searchPlaceholder="Search customer by name or phone..."
                 className="mt-1"
+                triggerClassName="h-9 text-xs"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Customer Name *</Label>
+                <Label className="text-xs font-medium">Customer Name *</Label>
                 <Input
                   {...register("customer_name")}
                   placeholder="e.g. Rahul Sharma"
@@ -446,7 +447,7 @@ export function BillForm() {
                 )}
               </div>
               <div>
-                <Label className="text-xs">Phone Number</Label>
+                <Label className="text-xs font-medium">Phone Number</Label>
                 <Input
                   {...register("customer_phone")}
                   placeholder="e.g. 9876543210"
@@ -457,7 +458,7 @@ export function BillForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">GSTIN / Tax ID</Label>
+                <Label className="text-xs font-medium">GSTIN / Tax ID</Label>
                 <Input
                   {...register("customer_gst_number")}
                   placeholder="e.g. 27AAAAA0000A1Z5"
@@ -465,7 +466,7 @@ export function BillForm() {
                 />
               </div>
               <div>
-                <Label className="text-xs">Billing Address</Label>
+                <Label className="text-xs font-medium">Billing Address</Label>
                 <Input
                   {...register("customer_address")}
                   placeholder="City, State, Pincode"
@@ -477,17 +478,17 @@ export function BillForm() {
         </Card>
 
         {/* Invoice & Dispatch Metadata Card */}
-        <Card className="shadow-xs">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Truck className="size-4 text-primary" /> Invoice & Logistics
+        <Card className="shadow-xs flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b bg-muted/20">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Truck className="size-4 text-primary" /> Invoice &amp; Logistics
             </CardTitle>
-            <CardDescription className="text-xs">Billing date, transport and vehicle details</CardDescription>
+            <CardDescription className="text-xs">Billing date, destination, transport and dispatch details</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3.5 pt-4 flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Invoice Date *</Label>
+                <Label className="text-xs font-medium">Invoice Date *</Label>
                 <div className="mt-1">
                   <DatePicker
                     value={watch("bill_date")}
@@ -496,7 +497,7 @@ export function BillForm() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Book To / Destination</Label>
+                <Label className="text-xs font-medium">Book To / Destination</Label>
                 <Input
                   {...register("book_to")}
                   placeholder="e.g. Delhi, India"
@@ -505,9 +506,9 @@ export function BillForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Transport / Courier</Label>
+                <Label className="text-xs font-medium">Transport / Courier</Label>
                 <Input
                   {...register("transport")}
                   placeholder="e.g. Safe Express"
@@ -515,18 +516,29 @@ export function BillForm() {
                 />
               </div>
               <div>
-                <Label className="text-xs">Vehicle No.</Label>
+                <Label className="text-xs font-medium">Vehicle No.</Label>
                 <Input
                   {...register("vehicle_no")}
                   placeholder="e.g. DL 01 AB 1234"
                   className="mt-1 h-9 text-xs uppercase"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">GR / LR No.</Label>
+                <Label className="text-xs font-medium">GR / LR No.</Label>
                 <Input
                   {...register("gr_no")}
                   placeholder="e.g. GR-5542"
+                  className="mt-1 h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Dispute Note / Jurisdiction</Label>
+                <Input
+                  {...register("dispute_note")}
+                  placeholder="e.g. Subject to local jurisdiction"
                   className="mt-1 h-9 text-xs"
                 />
               </div>
@@ -536,13 +548,13 @@ export function BillForm() {
       </div>
 
       {/* Bill Items Table Card */}
-      <Card className="shadow-xs">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+      <Card className="shadow-xs overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-muted/20 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <FileCheck className="size-4 text-primary" /> Billed Items
             </CardTitle>
-            <CardDescription className="text-xs">Add products, quantities and rates</CardDescription>
+            <CardDescription className="text-xs">Add products from inventory catalog or type custom items</CardDescription>
           </div>
           <Button
             type="button"
@@ -557,7 +569,7 @@ export function BillForm() {
                 unit_price: 0,
               })
             }
-            className="gap-1 text-xs h-8"
+            className="gap-1 text-xs h-8 shadow-2xs font-medium"
           >
             <Plus className="size-3.5" /> Add Item
           </Button>
@@ -565,30 +577,30 @@ export function BillForm() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-muted/50 text-muted-foreground border-y font-semibold">
+              <thead className="bg-muted/40 text-muted-foreground border-b font-medium text-[11px] uppercase tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-4 w-12 text-center">#</th>
-                  <th className="py-2.5 px-4 min-w-[220px]">Product / Service</th>
-                  <th className="py-2.5 px-3 w-32">HSN / SKU</th>
-                  <th className="py-2.5 px-3 w-24 text-right">Qty</th>
-                  <th className="py-2.5 px-3 w-32 text-right">Rate (₹)</th>
+                  <th className="py-2.5 px-3 w-10 text-center">#</th>
+                  <th className="py-2.5 px-3 min-w-[240px]">Product / Description</th>
+                  <th className="py-2.5 px-3 w-28">HSN / SKU</th>
+                  <th className="py-2.5 px-3 w-20 text-right">Qty</th>
+                  <th className="py-2.5 px-3 w-28 text-right">Rate (₹)</th>
                   <th className="py-2.5 px-4 w-32 text-right">Amount (₹)</th>
-                  <th className="py-2.5 px-3 w-12 text-center"></th>
+                  <th className="py-2.5 px-2 w-10 text-center"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-border">
                 {fields.map((field, index) => {
                   const qty = Number(watchedItems[index]?.quantity) || 0;
                   const price = Number(watchedItems[index]?.unit_price) || 0;
                   const lineTotal = qty * price;
 
                   return (
-                    <tr key={field.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="py-2.5 px-4 text-center font-mono text-muted-foreground">
+                    <tr key={field.id} className="hover:bg-muted/15 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-muted-foreground text-xs">
                         {index + 1}
                       </td>
-                      <td className="py-2.5 px-4 min-w-[260px]">
-                        <div className="space-y-1.5">
+                      <td className="py-2 px-3 min-w-[240px]">
+                        <div className="space-y-1">
                           {products.length > 0 && (
                             <SearchableSelect
                               options={products.map((p) => ({
@@ -598,26 +610,26 @@ export function BillForm() {
                               }))}
                               value={watchedItems[index]?.product_id ? String(watchedItems[index]?.product_id) : ""}
                               onValueChange={(val) => handleSelectProduct(index, val)}
-                              placeholder="Pick from catalog..."
-                              searchPlaceholder="Search catalog products..."
+                              placeholder="Search catalog product..."
+                              searchPlaceholder="Search catalog by name or SKU..."
                               triggerClassName="h-8 text-xs bg-background"
                             />
                           )}
                           <Input
                             {...register(`items.${index}.product_name`)}
-                            placeholder="Or enter custom item name / description"
+                            placeholder="Product name or custom description..."
                             className="h-8 text-xs bg-background"
                           />
                         </div>
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           {...register(`items.${index}.hsn_code`)}
-                          placeholder="HSN / SAC"
-                          className="h-8 text-xs"
+                          placeholder="HSN / SKU"
+                          className="h-8 text-xs font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           type="number"
                           min={1}
@@ -625,7 +637,7 @@ export function BillForm() {
                           className="h-8 text-xs text-right font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           type="number"
                           step="0.01"
@@ -634,17 +646,17 @@ export function BillForm() {
                           className="h-8 text-xs text-right font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono font-semibold text-foreground">
+                      <td className="py-2 px-4 text-right font-mono font-semibold text-foreground text-sm">
                         ₹{lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2 px-2 text-center">
                         {fields.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             onClick={() => remove(index)}
-                            className="size-7 text-muted-foreground hover:text-destructive"
+                            className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           >
                             <Trash2 className="size-3.5" />
                           </Button>
@@ -657,7 +669,7 @@ export function BillForm() {
             </table>
           </div>
 
-          <div className="p-3 border-t bg-muted/10 flex justify-between items-center">
+          <div className="p-3 border-t bg-muted/15 flex justify-between items-center">
             <Button
               type="button"
               variant="outline"
@@ -671,32 +683,38 @@ export function BillForm() {
                   unit_price: 0,
                 })
               }
-              className="gap-1 text-xs h-8"
+              className="gap-1.5 text-xs h-8 shadow-2xs font-medium"
             >
               <Plus className="size-3.5" /> Add Another Row
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Total Items: <span className="font-semibold text-foreground">{fields.length}</span>
-            </p>
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-muted-foreground">
+                Total Items: <span className="font-semibold text-foreground">{fields.length}</span>
+              </span>
+              <span className="text-muted-foreground border-l pl-4 font-medium">
+                Items Subtotal: <span className="font-mono font-bold text-foreground">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Bottom Grid: Payment, Taxes & Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Left 2 Cols: Taxes, Payment & Notes */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-5">
           {/* Payment & Settlement Card */}
           <Card className="shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CreditCard className="size-4 text-primary" /> Payment & Settlement
+            <CardHeader className="pb-3 border-b bg-muted/20">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <CreditCard className="size-4 text-primary" /> Payment &amp; Settlement
               </CardTitle>
+              <CardDescription className="text-xs">Record payment status, method and ledger account</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Payment Status</Label>
+                  <Label className="text-xs font-medium">Payment Status</Label>
                   <Select
                     value={watchedPaymentStatus}
                     onValueChange={(val: any) => setValue("payment_status", val)}
@@ -713,7 +731,7 @@ export function BillForm() {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Payment Method</Label>
+                  <Label className="text-xs font-medium">Payment Method</Label>
                   <Select
                     value={watch("payment_method")}
                     onValueChange={(val: any) => setValue("payment_method", val)}
@@ -731,7 +749,7 @@ export function BillForm() {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Amount Paid (₹)</Label>
+                  <Label className="text-xs font-medium">Amount Paid (₹)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -744,7 +762,7 @@ export function BillForm() {
 
               {ledgerAccounts.length > 0 && (
                 <div>
-                  <Label className="text-xs">Deposit into Ledger Account</Label>
+                  <Label className="text-xs font-medium">Deposit into Ledger Account</Label>
                   <Select
                     value={watch("account_id") ? String(watch("account_id")) : "none"}
                     onValueChange={(val) => setValue("account_id", val === "none" ? null : Number(val))}
@@ -770,7 +788,7 @@ export function BillForm() {
                   checked={watch("record_stock_out")}
                   onCheckedChange={(c) => setValue("record_stock_out", !!c)}
                 />
-                <Label htmlFor="record_stock_out" className="text-xs font-normal cursor-pointer">
+                <Label htmlFor="record_stock_out" className="text-xs font-normal cursor-pointer text-muted-foreground">
                   Automatically deduct billed quantities from Product Inventory Stock
                 </Label>
               </div>
@@ -779,15 +797,16 @@ export function BillForm() {
 
           {/* Tax & Discount Card */}
           <Card className="shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Calculator className="size-4 text-primary" /> Tax & Discounts
+            <CardHeader className="pb-3 border-b bg-muted/20">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Calculator className="size-4 text-primary" /> Tax &amp; Discounts
               </CardTitle>
+              <CardDescription className="text-xs">Configure GST rates, auto-calculated tax, and discounts</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="space-y-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">GST / Tax Preset</Label>
+                  <Label className="text-xs font-medium">GST / Tax Preset</Label>
                   <Select value={taxPresetKey} onValueChange={handleSelectTaxPreset}>
                     <SelectTrigger className="mt-1 h-9 text-xs">
                       <SelectValue placeholder="Select Tax Rate" />
@@ -806,7 +825,7 @@ export function BillForm() {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Tax Amount (₹)</Label>
+                  <Label className="text-xs font-medium">Tax Amount (₹)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -818,55 +837,59 @@ export function BillForm() {
                 </div>
               </div>
 
-              <div>
-                <Label className="text-xs">Special Discount (₹)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  {...register("discount_amount", { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 h-9 text-xs font-mono max-w-xs"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-medium">Special Discount (₹)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    {...register("discount_amount", { valueAsNumber: true })}
+                    placeholder="0.00"
+                    className="mt-1 h-9 text-xs font-mono"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Notes & Remarks Card */}
           <Card className="shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FileText className="size-4 text-primary" /> Terms & Invoice Remarks
+            <CardHeader className="pb-3 border-b bg-muted/20">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="size-4 text-primary" /> Terms &amp; Invoice Remarks
               </CardTitle>
+              <CardDescription className="text-xs">Custom remarks, payment terms or warranty notes</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <Textarea
                 {...register("notes")}
                 placeholder="Enter custom remarks, warranty notes or payment terms..."
                 rows={3}
-                className="text-xs"
+                className="text-xs resize-none"
               />
             </CardContent>
           </Card>
         </div>
 
         {/* Right Col: Grand Total Summary Card */}
-        <div>
-          <Card className="shadow-md border-primary/20 bg-card sticky top-20">
-            <CardHeader className="pb-3 border-b bg-muted/30">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+        <div className="lg:col-span-1">
+          <Card className="shadow-md border-primary/25 bg-card sticky top-20 overflow-hidden">
+            <CardHeader className="pb-3 border-b bg-primary/5">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
                 <Receipt className="size-4 text-primary" /> Invoice Summary
               </CardTitle>
+              <CardDescription className="text-xs">Final payable breakdown</CardDescription>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex justify-between text-xs text-muted-foreground">
+            <CardContent className="p-4 space-y-3.5">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
                 <span>Subtotal ({watchedItems.length} items)</span>
                 <span className="font-mono font-medium text-foreground">
                   ₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="flex justify-between text-xs text-muted-foreground">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
                 <span>Tax Amount</span>
                 <span className="font-mono font-medium text-foreground">
                   ₹{Number(watchedTaxAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -874,41 +897,45 @@ export function BillForm() {
               </div>
 
               {Number(watchedDiscount) > 0 && (
-                <div className="flex justify-between text-xs text-emerald-600 dark:text-emerald-400">
-                  <span>Discount</span>
-                  <span className="font-mono font-medium">
+                <div className="flex justify-between items-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span>Special Discount</span>
+                  <span className="font-mono font-semibold">
                     - ₹{Number(watchedDiscount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
 
-              <div className="border-t pt-3 flex justify-between items-baseline">
-                <span className="font-bold text-sm">Grand Total</span>
-                <span className="font-heading text-xl sm:text-2xl font-extrabold text-primary font-mono">
+              <div className="border-t pt-3.5 flex justify-between items-baseline">
+                <span className="text-sm font-bold text-foreground">Grand Total</span>
+                <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-primary">
                   ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="flex justify-between text-xs pt-1 border-t">
-                <span className="text-muted-foreground">Amount Paid:</span>
+              <div className="flex justify-between items-center text-xs pt-2 border-t text-muted-foreground">
+                <span>Amount Paid:</span>
                 <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
                   ₹{Number(watchedPaidAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
               {remainingDue > 0 && (
-                <div className="flex justify-between text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                <div className="flex justify-between items-center text-xs text-rose-600 dark:text-rose-400 font-semibold">
                   <span>Balance Due:</span>
-                  <span className="font-mono">
+                  <span className="font-mono font-bold">
                     ₹{remainingDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
 
-              <div className="pt-4">
-                <Button type="submit" disabled={isSubmitting} className="w-full gap-2 shadow-sm font-semibold">
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-10 gap-2 font-semibold shadow-sm"
+                >
                   {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                  <span>Save & Generate Invoice</span>
+                  <span>Save &amp; Generate Invoice</span>
                 </Button>
               </div>
             </CardContent>

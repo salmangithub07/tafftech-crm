@@ -386,19 +386,19 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
         </div>
       </div>
 
-      {/* Grid: Customer & Logistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Grid: Customer & Logistics (Symmetric 2-Card Row) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
         {/* Customer Information Card */}
-        <Card className="shadow-xs">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className="shadow-xs flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b bg-muted/20">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <User className="size-4 text-primary" /> Customer Details
             </CardTitle>
             <CardDescription className="text-xs">Select an existing customer or enter details manually</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3.5 pt-4 flex-1">
             <div>
-              <Label className="text-xs">Existing Customer (Optional)</Label>
+              <Label className="text-xs font-medium">Existing Customer (Search & Autofill)</Label>
               <SearchableSelect
                 options={customers.map((c) => ({
                   value: String(c.id),
@@ -409,12 +409,13 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 placeholder="Search and select customer..."
                 searchPlaceholder="Search customer by name or phone..."
                 className="mt-1"
+                triggerClassName="h-9 text-xs"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Customer Name *</Label>
+                <Label className="text-xs font-medium">Customer Name *</Label>
                 <Input
                   {...register("customer_name")}
                   placeholder="e.g. Acme Corp"
@@ -425,7 +426,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 )}
               </div>
               <div>
-                <Label className="text-xs">Phone Number</Label>
+                <Label className="text-xs font-medium">Phone Number</Label>
                 <Input
                   {...register("customer_phone")}
                   placeholder="e.g. 9876543210"
@@ -436,7 +437,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">GSTIN / Tax ID</Label>
+                <Label className="text-xs font-medium">GSTIN / Tax ID</Label>
                 <Input
                   {...register("customer_gst_number")}
                   placeholder="e.g. 27AAAAA0000A1Z5"
@@ -444,7 +445,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 />
               </div>
               <div>
-                <Label className="text-xs">Billing Address</Label>
+                <Label className="text-xs font-medium">Billing Address</Label>
                 <Input
                   {...register("customer_address")}
                   placeholder="City, State, Pincode"
@@ -456,36 +457,32 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
         </Card>
 
         {/* Quotation & Dispatch Metadata Card */}
-        <Card className="shadow-xs">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Truck className="size-4 text-primary" /> Quotation & Transport
+        <Card className="shadow-xs flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b bg-muted/20">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Truck className="size-4 text-primary" /> Quotation &amp; Transport
             </CardTitle>
             <CardDescription className="text-xs">Document title, date, destination and logistics details</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-xs font-semibold">Document Title / Heading (Print/PDF)</Label>
-              <Select
-                value={watch("document_title") || "PROFORMA INVOICE"}
-                onValueChange={(val) => setValue("document_title", val)}
-              >
-                <SelectTrigger className="mt-1 h-9 text-xs">
-                  <SelectValue placeholder="Select Document Title" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PROFORMA INVOICE">PROFORMA INVOICE (Default)</SelectItem>
-                  <SelectItem value="TAX INVOICE">TAX INVOICE</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Display as &quot;PROFORMA INVOICE&quot; or &quot;TAX INVOICE&quot; on the quotation print/PDF. (Note: This remains a quotation draft until converted to bill).
-              </p>
-            </div>
-
+          <CardContent className="space-y-3.5 pt-4 flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Quotation Date *</Label>
+                <Label className="text-xs font-medium">Document Title (PDF/Print)</Label>
+                <Select
+                  value={watch("document_title") || "PROFORMA INVOICE"}
+                  onValueChange={(val) => setValue("document_title", val)}
+                >
+                  <SelectTrigger className="mt-1 h-9 text-xs font-medium">
+                    <SelectValue placeholder="Select Title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PROFORMA INVOICE">PROFORMA INVOICE (Default)</SelectItem>
+                    <SelectItem value="TAX INVOICE">TAX INVOICE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Quotation Date *</Label>
                 <div className="mt-1">
                   <DatePicker
                     value={watch("quotation_date")}
@@ -493,27 +490,30 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Book To / Destination</Label>
+                <Label className="text-xs font-medium">Book To / Destination</Label>
                 <Input
                   {...register("book_to")}
                   placeholder="e.g. Mumbai, Maharashtra"
                   className="mt-1 h-9 text-xs"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs">Transport / Courier</Label>
+                <Label className="text-xs font-medium">Transport / Courier</Label>
                 <Input
                   {...register("transport")}
                   placeholder="e.g. VRL Logistics"
                   className="mt-1 h-9 text-xs"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Vehicle No.</Label>
+                <Label className="text-xs font-medium">Vehicle No.</Label>
                 <Input
                   {...register("vehicle_no")}
                   placeholder="e.g. MH 12 AB 1234"
@@ -521,7 +521,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 />
               </div>
               <div>
-                <Label className="text-xs">GR / LR No.</Label>
+                <Label className="text-xs font-medium">GR / LR No.</Label>
                 <Input
                   {...register("gr_no")}
                   placeholder="e.g. GR-9081"
@@ -534,13 +534,13 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
       </div>
 
       {/* Quotation Items Table Card */}
-      <Card className="shadow-xs">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+      <Card className="shadow-xs overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-muted/20 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <FileCheck className="size-4 text-primary" /> Quotation Items
             </CardTitle>
-            <CardDescription className="text-xs">Add products, quantities and rates</CardDescription>
+            <CardDescription className="text-xs">Add products from inventory catalog or type custom items</CardDescription>
           </div>
           <Button
             type="button"
@@ -555,7 +555,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 unit_price: 0,
               })
             }
-            className="gap-1 text-xs h-8"
+            className="gap-1 text-xs h-8 shadow-2xs font-medium"
           >
             <Plus className="size-3.5" /> Add Item
           </Button>
@@ -563,30 +563,30 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-muted/50 text-muted-foreground border-y font-semibold">
+              <thead className="bg-muted/40 text-muted-foreground border-b font-medium text-[11px] uppercase tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-4 w-12 text-center">#</th>
-                  <th className="py-2.5 px-4 min-w-[220px]">Product / Service</th>
-                  <th className="py-2.5 px-3 w-32">HSN / SKU</th>
-                  <th className="py-2.5 px-3 w-24 text-right">Qty</th>
-                  <th className="py-2.5 px-3 w-32 text-right">Rate (₹)</th>
+                  <th className="py-2.5 px-3 w-10 text-center">#</th>
+                  <th className="py-2.5 px-3 min-w-[240px]">Product / Description</th>
+                  <th className="py-2.5 px-3 w-28">HSN / SKU</th>
+                  <th className="py-2.5 px-3 w-20 text-right">Qty</th>
+                  <th className="py-2.5 px-3 w-28 text-right">Rate (₹)</th>
                   <th className="py-2.5 px-4 w-32 text-right">Amount (₹)</th>
-                  <th className="py-2.5 px-3 w-12 text-center"></th>
+                  <th className="py-2.5 px-2 w-10 text-center"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-border">
                 {fields.map((field, index) => {
                   const qty = Number(watchedItems[index]?.quantity) || 0;
                   const price = Number(watchedItems[index]?.unit_price) || 0;
                   const lineTotal = qty * price;
 
                   return (
-                    <tr key={field.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="py-2.5 px-4 text-center font-mono text-muted-foreground">
+                    <tr key={field.id} className="hover:bg-muted/15 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-muted-foreground text-xs">
                         {index + 1}
                       </td>
-                      <td className="py-2.5 px-4 min-w-[260px]">
-                        <div className="space-y-1.5">
+                      <td className="py-2 px-3 min-w-[240px]">
+                        <div className="space-y-1">
                           {products.length > 0 && (
                             <SearchableSelect
                               options={products.map((p) => ({
@@ -596,26 +596,26 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                               }))}
                               value={watchedItems[index]?.product_id ? String(watchedItems[index]?.product_id) : ""}
                               onValueChange={(val) => handleSelectProduct(index, val)}
-                              placeholder="Pick from catalog..."
-                              searchPlaceholder="Search catalog products..."
+                              placeholder="Search catalog product..."
+                              searchPlaceholder="Search catalog by name or SKU..."
                               triggerClassName="h-8 text-xs bg-background"
                             />
                           )}
                           <Input
                             {...register(`items.${index}.product_name`)}
-                            placeholder="Or enter custom item name / description"
+                            placeholder="Product name or custom description..."
                             className="h-8 text-xs bg-background"
                           />
                         </div>
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           {...register(`items.${index}.hsn_code`)}
-                          placeholder="HSN / SAC"
-                          className="h-8 text-xs"
+                          placeholder="HSN / SKU"
+                          className="h-8 text-xs font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           type="number"
                           min={1}
@@ -623,7 +623,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                           className="h-8 text-xs text-right font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-3">
                         <Input
                           type="number"
                           step="0.01"
@@ -632,17 +632,17 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                           className="h-8 text-xs text-right font-mono"
                         />
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono font-semibold text-foreground">
+                      <td className="py-2 px-4 text-right font-mono font-semibold text-foreground text-sm">
                         ₹{lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2 px-2 text-center">
                         {fields.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             onClick={() => remove(index)}
-                            className="size-7 text-muted-foreground hover:text-destructive"
+                            className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           >
                             <Trash2 className="size-3.5" />
                           </Button>
@@ -655,7 +655,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
             </table>
           </div>
 
-          <div className="p-3 border-t bg-muted/10 flex justify-between items-center">
+          <div className="p-3 border-t bg-muted/15 flex justify-between items-center">
             <Button
               type="button"
               variant="outline"
@@ -669,32 +669,38 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                   unit_price: 0,
                 })
               }
-              className="gap-1 text-xs h-8"
+              className="gap-1.5 text-xs h-8 shadow-2xs font-medium"
             >
               <Plus className="size-3.5" /> Add Another Row
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Total Items: <span className="font-semibold text-foreground">{fields.length}</span>
-            </p>
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-muted-foreground">
+                Total Items: <span className="font-semibold text-foreground">{fields.length}</span>
+              </span>
+              <span className="text-muted-foreground border-l pl-4 font-medium">
+                Items Subtotal: <span className="font-mono font-bold text-foreground">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Bottom Grid: Taxes, Discounts & Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Left 2 Cols: Taxes & Notes */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-5">
           {/* Tax & Discount Card */}
           <Card className="shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Calculator className="size-4 text-primary" /> Tax & Discounts
+            <CardHeader className="pb-3 border-b bg-muted/20">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Calculator className="size-4 text-primary" /> Tax &amp; Discounts
               </CardTitle>
+              <CardDescription className="text-xs">Configure GST rates, auto-calculated tax, and discounts</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="space-y-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">GST / Tax Preset</Label>
+                  <Label className="text-xs font-medium">GST / Tax Preset</Label>
                   <Select value={taxPresetKey} onValueChange={handleSelectTaxPreset}>
                     <SelectTrigger className="mt-1 h-9 text-xs">
                       <SelectValue placeholder="Select Tax Rate" />
@@ -713,7 +719,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 </div>
 
                 <div>
-                  <Label className="text-xs">Tax Amount (₹)</Label>
+                  <Label className="text-xs font-medium">Tax Amount (₹)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -725,55 +731,59 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                 </div>
               </div>
 
-              <div>
-                <Label className="text-xs">Special Discount (₹)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  {...register("discount_amount", { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 h-9 text-xs font-mono max-w-xs"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-medium">Special Discount (₹)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    {...register("discount_amount", { valueAsNumber: true })}
+                    placeholder="0.00"
+                    className="mt-1 h-9 text-xs font-mono"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Notes & Remarks Card */}
           <Card className="shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FileText className="size-4 text-primary" /> Notes & Special Terms
+            <CardHeader className="pb-3 border-b bg-muted/20">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="size-4 text-primary" /> Notes &amp; Special Terms
               </CardTitle>
+              <CardDescription className="text-xs">Terms &amp; conditions printed at the bottom of quotation</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <Textarea
                 {...register("notes")}
                 placeholder="Enter quotation terms, delivery timeframe, payment schedule or warranty notes..."
                 rows={3}
-                className="text-xs"
+                className="text-xs resize-none"
               />
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Col: Grand Total Summary Card */}
-        <div>
-          <Card className="shadow-md border-primary/20 bg-card sticky top-20">
-            <CardHeader className="pb-3 border-b bg-muted/30">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+        {/* Right Col: Sticky Amount Summary Card */}
+        <div className="lg:col-span-1">
+          <Card className="shadow-md border-primary/25 bg-card sticky top-20 overflow-hidden">
+            <CardHeader className="pb-3 border-b bg-primary/5">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
                 <Receipt className="size-4 text-primary" /> Amount Summary
               </CardTitle>
+              <CardDescription className="text-xs">Final payable breakdown</CardDescription>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex justify-between text-xs text-muted-foreground">
+            <CardContent className="p-4 space-y-3.5">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
                 <span>Subtotal ({watchedItems.length} items)</span>
                 <span className="font-mono font-medium text-foreground">
                   ₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="flex justify-between text-xs text-muted-foreground">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
                 <span>Tax Amount</span>
                 <span className="font-mono font-medium text-foreground">
                   ₹{Number(watchedTaxAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -781,23 +791,27 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
               </div>
 
               {Number(watchedDiscountAmount) > 0 && (
-                <div className="flex justify-between text-xs text-emerald-600 dark:text-emerald-400">
-                  <span>Discount</span>
-                  <span className="font-mono font-medium">
+                <div className="flex justify-between items-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span>Special Discount</span>
+                  <span className="font-mono font-semibold">
                     - ₹{Number(watchedDiscountAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
 
-              <div className="border-t pt-3 flex justify-between items-baseline">
-                <span className="font-bold text-sm">Grand Total</span>
-                <span className="font-heading text-xl sm:text-2xl font-extrabold text-primary font-mono">
+              <div className="border-t pt-3.5 flex justify-between items-baseline">
+                <span className="text-sm font-bold text-foreground">Grand Total</span>
+                <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-primary">
                   ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="pt-4">
-                <Button type="submit" disabled={isSubmitting} className="w-full gap-2 shadow-sm font-semibold">
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-10 gap-2 font-semibold shadow-sm"
+                >
                   {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
                   <span>{isEditing ? "Update Quotation" : "Save & Generate Quotation"}</span>
                 </Button>
