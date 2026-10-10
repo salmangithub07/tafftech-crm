@@ -74,6 +74,7 @@ export type Quotation = {
   total_amount?: number;
   quotation_status: QuotationStatus;
   notes?: string | null;
+  dispatched_from?: string | null;
   book_to?: string | null;
   transport?: string | null;
   gr_no?: string | null;
@@ -249,6 +250,7 @@ export type Bill = {
   payment_status: BillPaymentStatus;
   payment_method: BillPaymentMethod;
   notes?: string | null;
+  dispatched_from?: string | null;
   book_to?: string | null;
   transport?: string | null;
   gr_no?: string | null;

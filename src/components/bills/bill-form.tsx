@@ -65,6 +65,7 @@ const formSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]),
   payment_method: z.enum(["cash", "bank", "credit", "other"]),
   notes: z.string().optional(),
+  dispatched_from: z.string().optional(),
   book_to: z.string().optional(),
   transport: z.string().optional(),
   gr_no: z.string().optional(),
@@ -76,7 +77,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function BillForm() {
+export function BillForm({ billId }: { billId?: string | number } = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefillQuotationId = searchParams?.get("quotation_id");
@@ -124,6 +125,7 @@ export function BillForm() {
       payment_status: "paid",
       payment_method: "cash",
       notes: "",
+      dispatched_from: "",
       book_to: "",
       transport: "",
       gr_no: "",
@@ -214,12 +216,14 @@ export function BillForm() {
       fetch("/api/settings").then((r) => (r.ok ? r.json() : null)),
     ];
 
-    if (prefillQuotationId) {
+    if (billId) {
+      promises.push(fetch(`/api/bills/${billId}`).then((r) => (r.ok ? r.json() : null)));
+    } else if (prefillQuotationId) {
       promises.push(fetch(`/api/quotations/${prefillQuotationId}`).then((r) => (r.ok ? r.json() : null)));
     }
 
     Promise.all(promises)
-      .then(([cRes, pRes, bsRes, sRes, qData]) => {
+      .then(([cRes, pRes, bsRes, sRes, extraData]) => {
         const custData: Customer[] = cRes.data || [];
         const prodData: Product[] = pRes.data || [];
         setCustomers(custData);
@@ -230,7 +234,55 @@ export function BillForm() {
           setLedgerAccounts(accounts);
         }
 
-        if (qData) {
+        if (billId && extraData) {
+          const bItems =
+            extraData.items && extraData.items.length > 0
+              ? extraData.items.map((i: any) => ({
+                  product_id: i.product_id ?? null,
+                  product_name: i.product_name ?? "",
+                  hsn_code: i.hsn_code ?? "",
+                  quantity: Number(i.quantity) || 1,
+                  unit_price: Number(i.unit_price) || 0,
+                }))
+              : [
+                  {
+                    product_id: null,
+                    product_name: "Item",
+                    hsn_code: "",
+                    quantity: 1,
+                    unit_price: Number(extraData.total_amount || 0),
+                  },
+                ];
+
+          reset({
+            customer_id: extraData.customer_id ?? null,
+            customer_name: extraData.customer_name ?? "",
+            customer_phone: extraData.customer_phone ?? "",
+            customer_email: extraData.customer_email ?? "",
+            customer_address: extraData.customer_address ?? "",
+            customer_gst_number: extraData.customer_gst_number ?? "",
+            tax_type: extraData.tax_type ?? "igst",
+            tax_percent: Number(extraData.tax_percent) || 18,
+            bill_date: extraData.bill_date ? String(extraData.bill_date).slice(0, 10) : new Date().toISOString().slice(0, 10),
+            items: bItems,
+            tax_amount: Number(extraData.tax_amount) || 0,
+            discount_amount: Number(extraData.discount_amount) || 0,
+            paid_amount: Number(extraData.paid_amount) || 0,
+            payment_status: extraData.payment_status || "paid",
+            payment_method: extraData.payment_method || "cash",
+            notes: extraData.notes || "",
+            dispatched_from: extraData.dispatched_from || "",
+            book_to: extraData.book_to || "",
+            transport: extraData.transport || "",
+            gr_no: extraData.gr_no || "",
+            vehicle_no: extraData.vehicle_no || "",
+            dispute_note: extraData.dispute_note || sRes?.dispute_note || "",
+            account_id: null,
+            record_stock_out: false,
+          });
+          setTaxPresetKey(deriveTaxPresetKey(extraData.tax_type, extraData.tax_percent));
+        } else if (extraData) {
+          const qData = extraData;
           const qItems =
             qData.items && qData.items.length > 0
               ? qData.items.map((i: any) => ({
@@ -272,6 +324,7 @@ export function BillForm() {
             payment_status: "paid",
             payment_method: "cash",
             notes: qData.notes || (qData.quotation_number ? `Generated from Quotation ${qData.quotation_number}` : ""),
+            dispatched_from: qData.dispatched_from || "",
             book_to: qData.book_to || "",
             transport: qData.transport || "",
             gr_no: qData.gr_no || "",
@@ -304,7 +357,7 @@ export function BillForm() {
         console.error("Failed to load bill options:", err);
       })
       .finally(() => setLoadingOptions(false));
-  }, [prefillQuotationId, prefillCustomerId, prefillProductId, prefillQuantity, reset, setValue]);
+  }, [billId, prefillQuotationId, prefillCustomerId, prefillProductId, prefillQuantity, reset, setValue]);
 
   function handleSelectCustomer(val: string | null) {
     if (!val) {
@@ -341,8 +394,11 @@ export function BillForm() {
 
   async function onSubmit(values: FormValues) {
     try {
-      const res = await fetch("/api/bills", {
-        method: "POST",
+      const endpoint = billId ? `/api/bills/${billId}` : "/api/bills";
+      const method = billId ? "PUT" : "POST";
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
@@ -352,13 +408,13 @@ export function BillForm() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to create bill");
+        throw new Error(err.error || (billId ? "Failed to update bill" : "Failed to create bill"));
       }
 
       const savedData = await res.json();
-      toast.success("Bill generated successfully!");
+      toast.success(billId ? "Bill updated successfully!" : "Bill generated successfully!");
 
-      const targetId = savedData.id || savedData.bill?.id;
+      const targetId = billId || savedData.id || savedData.bill?.id;
       if (targetId) {
         router.push(`/bills/${targetId}`);
       } else {
@@ -391,18 +447,22 @@ export function BillForm() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Create Tax Invoice / Bill</h1>
-            <p className="text-xs text-muted-foreground">Generate an official GST invoice and record sales</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+              {billId ? "Edit Tax Invoice / Bill" : "Create Tax Invoice / Bill"}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {billId ? "Update bill details, dispatch logistics, and items" : "Generate an official GST invoice and record sales"}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" size="sm" asChild className="h-9">
-            <Link href="/bills">Cancel</Link>
+            <Link href={billId ? `/bills/${billId}` : "/bills"}>Cancel</Link>
           </Button>
           <Button type="submit" disabled={isSubmitting} size="sm" className="gap-1.5 h-9 shadow-sm font-medium">
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            <span>Save &amp; Generate Invoice</span>
+            <span>{billId ? "Save Changes" : "Save & Generate Invoice"}</span>
           </Button>
         </div>
       </div>
@@ -497,6 +557,17 @@ export function BillForm() {
                 </div>
               </div>
               <div>
+                <Label className="text-xs font-medium">Dispatched From: </Label>
+                <Input
+                  {...register("dispatched_from")}
+                  placeholder="e.g. Nagpur Warehouse"
+                  className="mt-1 h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
                 <Label className="text-xs font-medium">Book To / Destination</Label>
                 <Input
                   {...register("book_to")}
@@ -504,9 +575,6 @@ export function BillForm() {
                   className="mt-1 h-9 text-xs"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">Transport / Courier</Label>
                 <Input
@@ -515,6 +583,9 @@ export function BillForm() {
                   className="mt-1 h-9 text-xs"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">Vehicle No.</Label>
                 <Input
@@ -523,9 +594,6 @@ export function BillForm() {
                   className="mt-1 h-9 text-xs uppercase"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">GR / LR No.</Label>
                 <Input
@@ -534,14 +602,15 @@ export function BillForm() {
                   className="mt-1 h-9 text-xs"
                 />
               </div>
-              <div>
-                <Label className="text-xs font-medium">Dispute Note / Jurisdiction</Label>
-                <Input
-                  {...register("dispute_note")}
-                  placeholder="e.g. Subject to local jurisdiction"
-                  className="mt-1 h-9 text-xs"
-                />
-              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-medium">Dispute Note / Jurisdiction</Label>
+              <Input
+                {...register("dispute_note")}
+                placeholder="e.g. Subject to local jurisdiction"
+                className="mt-1 h-9 text-xs"
+              />
             </div>
           </CardContent>
         </Card>

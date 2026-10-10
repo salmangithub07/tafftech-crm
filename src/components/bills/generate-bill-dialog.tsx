@@ -54,6 +54,7 @@ const formSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]),
   payment_method: z.enum(["cash", "bank", "credit", "other"]),
   notes: z.string().optional(),
+  dispatched_from: z.string().optional(),
   book_to: z.string().optional(),
   transport: z.string().optional(),
   gr_no: z.string().optional(),
@@ -124,6 +125,12 @@ export function GenerateBillDialog({
       payment_status: "paid",
       payment_method: "cash",
       notes: "",
+      dispatched_from: "",
+      book_to: "",
+      transport: "",
+      gr_no: "",
+      vehicle_no: "",
+      dispute_note: "",
       account_id: null,
       record_stock_out: !skipStockDeduction,
     },
@@ -250,6 +257,7 @@ export function GenerateBillDialog({
               payment_status: "paid",
               payment_method: "cash",
               notes: qData.notes || (qData.quotation_number ? `Generated from Quotation ${qData.quotation_number}` : ""),
+              dispatched_from: qData.dispatched_from || "",
               book_to: qData.book_to || "",
               transport: qData.transport || "",
               gr_no: qData.gr_no || "",
@@ -285,6 +293,7 @@ export function GenerateBillDialog({
               payment_status: "paid",
               payment_method: "cash",
               notes: initialProduct ? `Generated on stock removal for ${initialProduct.name}` : "",
+              dispatched_from: "",
               book_to: "",
               transport: "",
               gr_no: "",
@@ -459,14 +468,18 @@ export function GenerateBillDialog({
             </div>
 
             {/* Transport & Shipping Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/40">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-border/40">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="dispatched_from" className="text-xs font-medium">Dispatched From: </Label>
+                <Input id="dispatched_from" {...register("dispatched_from")} placeholder="e.g. Warehouse" className="h-8 text-xs" />
+              </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="book_to" className="text-xs font-medium">Book To</Label>
-                <Input id="book_to" {...register("book_to")} placeholder="e.g. GUWAHATI CITY (GWTCTY-6818)" className="h-8 text-xs" />
+                <Input id="book_to" {...register("book_to")} placeholder="e.g. GUWAHATI CITY" className="h-8 text-xs" />
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="transport" className="text-xs font-medium">Transport</Label>
-                <Input id="transport" {...register("transport")} placeholder="e.g. VRL GUWAHATI CITY" className="h-8 text-xs" />
+                <Input id="transport" {...register("transport")} placeholder="e.g. VRL GUWAHATI" className="h-8 text-xs" />
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="gr_no" className="text-xs font-medium">GR. No.</Label>

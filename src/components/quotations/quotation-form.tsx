@@ -58,6 +58,7 @@ const formSchema = z.object({
   tax_amount: z.number().min(0),
   discount_amount: z.number().min(0),
   notes: z.string().optional(),
+  dispatched_from: z.string().optional(),
   book_to: z.string().optional(),
   transport: z.string().optional(),
   gr_no: z.string().optional(),
@@ -111,6 +112,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
       tax_amount: 0,
       discount_amount: 0,
       notes: "",
+      dispatched_from: "",
       book_to: "",
       transport: "",
       gr_no: "",
@@ -239,6 +241,7 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
             tax_amount: Number(qData.tax_amount) || 0,
             discount_amount: Number(qData.discount_amount) || 0,
             notes: qData.notes ?? "",
+            dispatched_from: qData.dispatched_from ?? "",
             book_to: qData.book_to ?? "",
             transport: qData.transport ?? "",
             gr_no: qData.gr_no ?? "",
@@ -494,6 +497,14 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
+                <Label className="text-xs font-medium">Dispatched From: </Label>
+                <Input
+                  {...register("dispatched_from")}
+                  placeholder="e.g. Warehouse / City"
+                  className="mt-1 h-9 text-xs"
+                />
+              </div>
+              <div>
                 <Label className="text-xs font-medium">Book To / Destination</Label>
                 <Input
                   {...register("book_to")}
@@ -501,6 +512,9 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                   className="mt-1 h-9 text-xs"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">Transport / Courier</Label>
                 <Input
@@ -509,9 +523,6 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                   className="mt-1 h-9 text-xs"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">Vehicle No.</Label>
                 <Input
@@ -520,14 +531,15 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
                   className="mt-1 h-9 text-xs uppercase"
                 />
               </div>
-              <div>
-                <Label className="text-xs font-medium">GR / LR No.</Label>
-                <Input
-                  {...register("gr_no")}
-                  placeholder="e.g. GR-9081"
-                  className="mt-1 h-9 text-xs"
-                />
-              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-medium">GR / LR No.</Label>
+              <Input
+                {...register("gr_no")}
+                placeholder="e.g. GR-9081"
+                className="mt-1 h-9 text-xs"
+              />
             </div>
           </CardContent>
         </Card>

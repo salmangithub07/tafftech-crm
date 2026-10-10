@@ -157,6 +157,7 @@ export function PrintableInvoice({
           </div>
           <div className="p-2 space-y-1">
             <p className="font-sans font-semibold text-[13px] uppercase">GR.NO . {bill.gr_no || docNumber}</p>
+            <p className="font-sans font-semibold text-black">DISPATCHED FROM: {bill.dispatched_from || "------------------------------------------"}</p>
             <p className="font-sans font-semibold text-black">VEHICLE NO. {bill.vehicle_no || "------------------------------------------"}</p>
             <p className="font-sans font-semibold text-black">TRANSPORT. ----{bill.transport || "------------------------------------------"}----</p>
           </div>

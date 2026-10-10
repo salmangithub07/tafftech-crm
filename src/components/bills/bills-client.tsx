@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   DollarSign,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -303,6 +304,9 @@ export function BillsClient() {
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/edit`)}>
+                            <Pencil className="size-4" /> Edit Bill
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               shareDocumentOnWhatsApp({
@@ -381,6 +385,9 @@ export function BillsClient() {
                           )}
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/edit`)}>
+                            <Pencil className="size-4" /> Edit Bill
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
