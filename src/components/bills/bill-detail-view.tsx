@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -350,6 +351,16 @@ export function BillDetailView({ billId }: { billId: number | string }) {
           >
             <MessageSquare className="size-3.5" />
             <span>WhatsApp</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/bills/${bill.id}/edit`)}
+            className="gap-1.5 text-xs h-9 text-primary border-primary/30 hover:bg-primary/10"
+          >
+            <Pencil className="size-3.5" />
+            <span>Edit</span>
           </Button>
 
           {!isPaid && (

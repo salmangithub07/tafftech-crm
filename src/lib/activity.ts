@@ -105,7 +105,8 @@ export async function ensureActivityTables() {
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
     `).catch(() => {});
 
-    // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE, GSTIN, TAX TYPE)
+    // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE, GSTIN, TAX TYPE, DISPATCHED FROM)
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS dispatched_from VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS gr_no VARCHAR(100);`).catch(() => {});
@@ -136,6 +137,7 @@ export async function ensureActivityTables() {
         total_amount DECIMAL(12,2) DEFAULT 0,
         quotation_status VARCHAR(50) DEFAULT 'pending',
         notes TEXT,
+        dispatched_from VARCHAR(255),
         book_to VARCHAR(255),
         transport VARCHAR(255),
         gr_no VARCHAR(100),
@@ -152,6 +154,7 @@ export async function ensureActivityTables() {
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50);`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_address TEXT;`).catch(() => {});
+    await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS dispatched_from VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS gr_no VARCHAR(100);`).catch(() => {});

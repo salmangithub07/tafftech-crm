@@ -54,6 +54,7 @@ const formSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]),
   payment_method: z.enum(["cash", "bank", "credit", "other"]),
   notes: z.string().optional(),
+  dispatched_from: z.string().optional(),
   book_to: z.string().optional(),
   transport: z.string().optional(),
   gr_no: z.string().optional(),
@@ -124,6 +125,12 @@ export function GenerateBillDialog({
       payment_status: "paid",
       payment_method: "cash",
       notes: "",
+      dispatched_from: "",
+      book_to: "",
+      transport: "",
+      gr_no: "",
+      vehicle_no: "",
+      dispute_note: "",
       account_id: null,
       record_stock_out: !skipStockDeduction,
     },
@@ -250,6 +257,7 @@ export function GenerateBillDialog({
               payment_status: "paid",
               payment_method: "cash",
               notes: qData.notes || (qData.quotation_number ? `Generated from Quotation ${qData.quotation_number}` : ""),
+              dispatched_from: qData.dispatched_from || "",
               book_to: qData.book_to || "",
               transport: qData.transport || "",
               gr_no: qData.gr_no || "",
@@ -285,6 +293,7 @@ export function GenerateBillDialog({
               payment_status: "paid",
               payment_method: "cash",
               notes: initialProduct ? `Generated on stock removal for ${initialProduct.name}` : "",
+              dispatched_from: "",
               book_to: "",
               transport: "",
               gr_no: "",
@@ -459,14 +468,18 @@ export function GenerateBillDialog({
             </div>
 
             {/* Transport & Shipping Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/40">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-border/40">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="dispatched_from" className="text-xs font-medium">Dispatched From: </Label>
+                <Input id="dispatched_from" {...register("dispatched_from")} placeholder="e.g. Warehouse" className="h-8 text-xs" />
+              </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="book_to" className="text-xs font-medium">Book To</Label>
-                <Input id="book_to" {...register("book_to")} placeholder="e.g. GUWAHATI CITY (GWTCTY-6818)" className="h-8 text-xs" />
+                <Input id="book_to" {...register("book_to")} placeholder="e.g. GUWAHATI CITY" className="h-8 text-xs" />
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="transport" className="text-xs font-medium">Transport</Label>
-                <Input id="transport" {...register("transport")} placeholder="e.g. VRL GUWAHATI CITY" className="h-8 text-xs" />
+                <Input id="transport" {...register("transport")} placeholder="e.g. VRL GUWAHATI" className="h-8 text-xs" />
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="gr_no" className="text-xs font-medium">GR. No.</Label>
@@ -501,10 +514,25 @@ export function GenerateBillDialog({
                 const currentProductId = watch(`items.${index}.product_id`);
 
                 return (
-                  <div key={field.id} className="grid grid-cols-12 gap-2 items-end rounded-md border p-3 bg-card">
-                    <div className="col-span-12 sm:col-span-4 flex flex-col gap-1">
-                      <Label className="text-[11px]">Product Item *</Label>
-                      <div className="flex gap-2">
+                  <div key={field.id} className="relative rounded-lg border border-border/80 bg-background/60 p-3 shadow-xs hover:border-primary/40 transition-colors">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/40">
+                      <span className="text-[11px] font-semibold text-muted-foreground">Item #{index + 1}</span>
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="size-3 mr-1" /> Remove
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                      <div className="sm:col-span-4 flex flex-col gap-1.5">
+                        <Label className="text-xs font-medium">Select Product</Label>
                         <SearchableSelect
                           options={productOptions}
                           value={currentProductId ? String(currentProductId) : null}
@@ -516,55 +544,44 @@ export function GenerateBillDialog({
                           triggerClassName="h-9 text-xs"
                         />
                       </div>
-                      <Input className="h-9 text-xs mt-1" {...register(`items.${index}.product_name`)} placeholder="Item name" />
-                    </div>
 
-                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
-                      <Label className="text-[11px]">HSN Code</Label>
-                      <Input
-                        className="h-9 text-xs font-mono uppercase"
-                        {...register(`items.${index}.hsn_code`)}
-                        placeholder="87341000"
-                      />
-                    </div>
-
-                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
-                      <Label className="text-[11px]">Qty</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-9 text-xs"
-                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                      />
-                    </div>
-
-                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1">
-                      <Label className="text-[11px]">Unit Price (₹)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        className="h-9 text-xs"
-                        {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
-                      />
-                    </div>
-
-                    <div className="col-span-6 sm:col-span-2 flex items-center justify-between gap-1 pb-1">
-                      <div className="text-right">
-                        <p className="text-[10px] text-muted-foreground">Total</p>
-                        <p className="font-mono text-xs font-semibold">₹{rowTotal.toLocaleString("en-IN")}</p>
+                      <div className="sm:col-span-3 flex flex-col gap-1.5">
+                        <Label className="text-xs font-medium">Item Name / Desc *</Label>
+                        <Input className="h-9 text-xs" {...register(`items.${index}.product_name`)} placeholder="Custom item name" />
                       </div>
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      )}
+
+                      <div className="sm:col-span-2 flex flex-col gap-1.5">
+                        <Label className="text-xs font-medium">HSN Code</Label>
+                        <Input
+                          className="h-9 text-xs font-mono uppercase"
+                          {...register(`items.${index}.hsn_code`)}
+                          placeholder="HSN / SKU"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1 flex flex-col gap-1.5">
+                        <Label className="text-xs font-medium">Qty</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          className="h-9 text-xs text-center"
+                          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2 flex flex-col gap-1.5">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-xs font-medium">Unit Price (₹)</Label>
+                          <span className="text-[10px] text-muted-foreground font-mono">₹{rowTotal.toLocaleString("en-IN")}</span>
+                        </div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          className="h-9 text-xs text-right font-mono"
+                          {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
@@ -575,10 +592,10 @@ export function GenerateBillDialog({
               type="button"
               variant="outline"
               size="sm"
-              className="w-fit gap-1 text-xs"
+              className="w-fit gap-1.5 text-xs self-start"
               onClick={() => append({ product_id: null, product_name: "", hsn_code: "", quantity: 1, unit_price: 0 })}
             >
-              <Plus className="size-3.5" /> Add Product Line
+              <Plus className="size-3.5" /> Add Product Item
             </Button>
           </div>
 

@@ -51,6 +51,7 @@ const formSchema = z.object({
   tax_amount: z.number().min(0),
   discount_amount: z.number().min(0),
   notes: z.string().optional(),
+  dispatched_from: z.string().optional(),
   book_to: z.string().optional(),
   transport: z.string().optional(),
   gr_no: z.string().optional(),
@@ -111,6 +112,7 @@ export function QuotationDialog({
       tax_amount: 0,
       discount_amount: 0,
       notes: "",
+      dispatched_from: "",
       book_to: "",
       transport: "",
       gr_no: "",
@@ -223,6 +225,7 @@ export function QuotationDialog({
               tax_amount: Number(quotationToEdit.tax_amount) || 0,
               discount_amount: Number(quotationToEdit.discount_amount) || 0,
               notes: quotationToEdit.notes ?? "",
+              dispatched_from: quotationToEdit.dispatched_from ?? "",
               book_to: quotationToEdit.book_to ?? "",
               transport: quotationToEdit.transport ?? "",
               gr_no: quotationToEdit.gr_no ?? "",
@@ -257,6 +260,7 @@ export function QuotationDialog({
               tax_amount: 0,
               discount_amount: 0,
               notes: appointment?.remarks ?? "",
+              dispatched_from: "",
               book_to: "",
               transport: "",
               gr_no: "",
@@ -411,7 +415,11 @@ export function QuotationDialog({
             </div>
 
             {/* Transport & Shipping Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/40">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-border/40">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="dispatched_from" className="text-xs">Dispatched From: </Label>
+                <Input id="dispatched_from" {...register("dispatched_from")} placeholder="e.g. Warehouse" className="h-8 text-xs" />
+              </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="book_to" className="text-xs">Book To</Label>
                 <Input id="book_to" {...register("book_to")} placeholder="e.g. CITY NAME" className="h-8 text-xs" />

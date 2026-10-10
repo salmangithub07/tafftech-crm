@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, CalendarClock, UserCheck, ArrowRight, FileText } from "lucide-react";
+import { Users, CalendarClock, Flame, ArrowRight, FileText } from "lucide-react";
 import { query, queryOne } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,10 @@ const statusVariant: Record<string, "default" | "secondary" | "success" | "warni
   active: "success",
   lead: "warning",
   progress: "info",
+  order_soon: "warning",
+  completed: "secondary",
   inactive: "secondary",
   pending: "default",
-  completed: "success",
   cancelled: "secondary",
 };
 
@@ -35,15 +36,15 @@ export default async function DashboardPage() {
       [tenantId]
     )
   )?.c ?? 0;
-  const activeCustomers = (
+  const orderSoonCustomers = (
     await queryOne<{ c: number }>(
-      "SELECT COUNT(*) as c FROM customers WHERE tenant_id = ? AND status = 'active' AND COALESCE(is_trashed, 0) = 0",
+      "SELECT COUNT(*) as c FROM customers WHERE tenant_id = ? AND status = 'order_soon' AND COALESCE(is_trashed, 0) = 0",
       [tenantId]
     )
   )?.c ?? 0;
-  const pendingAppointments = (
+  const todayAppointments = (
     await queryOne<{ c: number }>(
-      "SELECT COUNT(*) as c FROM appointments WHERE tenant_id = ? AND status = 'pending' AND COALESCE(is_trashed, 0) = 0",
+      "SELECT COUNT(*) as c FROM appointments WHERE tenant_id = ? AND status = 'pending' AND appointment_date = CURRENT_DATE AND COALESCE(is_trashed, 0) = 0",
       [tenantId]
     )
   )?.c ?? 0;
@@ -68,10 +69,34 @@ export default async function DashboardPage() {
   );
 
   const stats = [
-    { title: "Total Customers", value: totalCustomers, icon: Users, hint: `${activeCustomers} active` },
-    { title: "Active Customers", value: activeCustomers, icon: UserCheck, hint: "Currently engaged" },
-    { title: "Pending Appointments", value: pendingAppointments, icon: CalendarClock, hint: "Follow-ups due" },
-    { title: "Pending Quotations", value: pendingQuotations, icon: FileText, hint: "Awaiting response" },
+    {
+      title: "Total Customers",
+      value: totalCustomers,
+      icon: Users,
+      hint: `${orderSoonCustomers} order soon`,
+      href: "/customers",
+    },
+    {
+      title: "Order Soon Customers",
+      value: orderSoonCustomers,
+      icon: Flame,
+      hint: "Ready to convert",
+      href: "/customers",
+    },
+    {
+      title: "Today's Appointments",
+      value: todayAppointments,
+      icon: CalendarClock,
+      hint: "Scheduled today",
+      href: "/appointments",
+    },
+    {
+      title: "Pending Quotations",
+      value: pendingQuotations,
+      icon: FileText,
+      hint: "Awaiting response",
+      href: "/quotations",
+    },
   ];
 
   return (
@@ -87,27 +112,28 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((s) => (
-          <Card
-            key={s.title}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-2xs hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="space-y-1 min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
-                  {s.title}
-                </p>
-                <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
-                  {s.value}
-                </p>
-                <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
-                  {s.hint}
-                </p>
+          <Link key={s.title} href={s.href} className="block group">
+            <Card
+              className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-2xs hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+                    {s.title}
+                  </p>
+                  <p className="font-mono text-2xl font-extrabold tracking-tight text-foreground">
+                    {s.value}
+                  </p>
+                  <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
+                    {s.hint}
+                  </p>
+                </div>
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
+                  <s.icon className="size-5" />
+                </div>
               </div>
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-xs">
-                <s.icon className="size-5" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -144,7 +170,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 <Badge variant={statusVariant[c.status] ?? "outline"} className="capitalize text-xs font-semibold">
-                  {c.status}
+                  {c.status === "order_soon" ? "Order Soon" : c.status}
                 </Badge>
               </div>
             ))}

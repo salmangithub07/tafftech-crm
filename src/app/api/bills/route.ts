@@ -29,6 +29,7 @@ const createBillSchema = z.object({
   payment_status: z.enum(["paid", "unpaid", "partial"]).default("paid"),
   payment_method: z.enum(["cash", "bank", "credit", "other"]).default("cash"),
   notes: z.string().optional().or(z.literal("")).default(""),
+  dispatched_from: z.string().optional().or(z.literal("")).default(""),
   book_to: z.string().optional().or(z.literal("")).default(""),
   transport: z.string().optional().or(z.literal("")).default(""),
   gr_no: z.string().optional().or(z.literal("")).default(""),
@@ -232,8 +233,8 @@ export async function POST(req: NextRequest) {
     `INSERT INTO bills (
       tenant_id, bill_number, customer_id, customer_name, customer_phone, customer_email, customer_address, customer_gst_number, tax_type,
       bill_date, subtotal, tax_amount, discount_amount, total_amount, paid_amount, payment_status, payment_method,
-      notes, book_to, transport, gr_no, vehicle_no, dispute_note, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      notes, dispatched_from, book_to, transport, gr_no, vehicle_no, dispute_note, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       tenantId,
       billNumber,
@@ -253,6 +254,7 @@ export async function POST(req: NextRequest) {
       computedStatus,
       d.payment_method,
       d.notes,
+      d.dispatched_from,
       d.book_to,
       d.transport,
       d.gr_no,
