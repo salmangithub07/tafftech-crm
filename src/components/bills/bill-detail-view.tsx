@@ -15,7 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Pencil,
+  Pencil, Truck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -351,6 +351,18 @@ export function BillDetailView({ billId }: { billId: number | string }) {
           >
             <MessageSquare className="size-3.5" />
             <span>WhatsApp</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-1.5 text-xs h-9 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+          >
+            <Link href={`/bills/${bill.id}/dispatch`}>
+              <Truck className="size-3.5" />
+              <span>Dispatch Slip</span>
+            </Link>
           </Button>
 
           <Button
