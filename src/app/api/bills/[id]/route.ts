@@ -71,7 +71,7 @@ export async function PUT(
     `UPDATE bills SET
       customer_id = ?, customer_name = ?, customer_phone = ?, customer_email = ?, customer_address = ?, customer_gst_number = ?, tax_type = ?,
       bill_date = ?, subtotal = ?, tax_amount = ?, discount_amount = ?, total_amount = ?, paid_amount = ?, payment_status = ?, payment_method = ?,
-      notes = ?, dispatched_from = ?, book_to = ?, transport = ?, gr_no = ?, vehicle_no = ?, dispute_note = ?
+      notes = ?, document_title = ?, dispatched_from = ?, book_to = ?, transport = ?, gr_no = ?, vehicle_no = ?, dispute_note = ?
      WHERE id = ? AND tenant_id = ?`,
     [
       body.customer_id || null,
@@ -90,6 +90,7 @@ export async function PUT(
       computedStatus,
       body.payment_method || "cash",
       body.notes || "",
+      body.document_title || "TAX INVOICE",
       body.dispatched_from || "",
       body.book_to || "",
       body.transport || "",
@@ -124,6 +125,57 @@ export async function PUT(
         qty * price,
       ]
     );
+  }
+
+  return NextResponse.json({ ok: true, id });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canAccess(session, "bills")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const tenantId = tenantOf(session)!;
+  const resolvedParams = await params;
+  const id = parseInt(resolvedParams.id, 10);
+
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "Invalid data." }, { status: 400 });
+
+  const fields: string[] = [];
+  const values: any[] = [];
+
+  const allowedFields = [
+    "document_title",
+    "dispatched_from",
+    "book_to",
+    "transport",
+    "gr_no",
+    "vehicle_no",
+    "dispute_note",
+  ];
+
+  for (const f of allowedFields) {
+    if (f in body) {
+      fields.push(`${f} = ?`);
+      values.push(body[f] || "");
+    }
+  }
+
+  if (fields.length === 0) {
+    return NextResponse.json({ ok: true, message: "No fields to update." });
+  }
+
+  values.push(id, tenantId);
+  const res = await execute(
+    `UPDATE bills SET ${fields.join(", ")} WHERE id = ? AND tenant_id = ?`,
+    values
+  );
+
+  if (res.affectedRows === 0) {
+    return NextResponse.json({ error: "Bill not found or permission denied." }, { status: 404 });
   }
 
   return NextResponse.json({ ok: true, id });

@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   DollarSign,
   MessageSquare,
-  Pencil,
+  Pencil, Truck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -304,6 +304,9 @@ export function BillsClient() {
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/dispatch`)}>
+                            <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/edit`)}>
                             <Pencil className="size-4" /> Edit Bill
                           </DropdownMenuItem>
@@ -385,6 +388,9 @@ export function BillsClient() {
                           )}
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}`)}>
                             <Eye className="size-4" /> View / Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/dispatch`)}>
+                            <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/bills/${b.id}/edit`)}>
                             <Pencil className="size-4" /> Edit Bill

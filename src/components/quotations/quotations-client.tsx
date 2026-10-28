@@ -15,7 +15,7 @@ import {
   RotateCcw,
   Pencil,
   MessageSquare,
-  Eye,
+  Eye, Truck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -515,6 +515,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/quotations/${q.id}/dispatch`)}>
+                                  <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
+                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {
                                     shareDocumentOnWhatsApp({
@@ -626,6 +629,9 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                               <>
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/quotations/${q.id}/dispatch`)}>
+                                  <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {

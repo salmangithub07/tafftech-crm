@@ -106,6 +106,7 @@ export async function ensureActivityTables() {
     `).catch(() => {});
 
     // Additional Bill fields (BOOK TO, TRANSPORT, GR.NO, VEHICLE NO, DISPUTE NOTE, GSTIN, TAX TYPE, DISPATCHED FROM)
+    await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS document_title VARCHAR(50) DEFAULT 'TAX INVOICE';`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS dispatched_from VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS book_to VARCHAR(255);`).catch(() => {});
     await execute(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS transport VARCHAR(255);`).catch(() => {});

@@ -42,20 +42,53 @@ export async function PATCH(
 
   const body = await req.json().catch(() => null);
   const status = body?.quotation_status;
-  if (!status || !["pending", "accepted", "rejected"].includes(status)) {
-    return NextResponse.json({ error: "Invalid quotation status." }, { status: 400 });
+  if (status && ["pending", "accepted", "rejected"].includes(status)) {
+    const statusRes = await execute("UPDATE quotations SET quotation_status = ? WHERE id = ? AND tenant_id = ?", [
+      status,
+      id,
+      tenantId,
+    ]);
+    if (statusRes.affectedRows === 0) {
+      return NextResponse.json({ error: "Quotation not found or permission denied." }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true, quotation_status: status });
   }
 
-  const res = await execute("UPDATE quotations SET quotation_status = ? WHERE id = ? AND tenant_id = ?", [
-    status,
-    id,
-    tenantId,
-  ]);
+  const fields: string[] = [];
+  const values: any[] = [];
+  const allowedFields = [
+    "document_title",
+    "dispatched_from",
+    "book_to",
+    "transport",
+    "gr_no",
+    "vehicle_no",
+    "dispute_note",
+  ];
+
+  for (const f of allowedFields) {
+    if (body && f in body) {
+      fields.push(`${f} = ?`);
+      values.push(body[f] || "");
+    }
+  }
+
+  if (fields.length === 0) {
+    return NextResponse.json({ ok: true, message: "No fields to update." });
+  }
+
+  values.push(id, tenantId);
+  const res = await execute(
+    `UPDATE quotations SET ${fields.join(", ")} WHERE id = ? AND tenant_id = ?`,
+    values
+  );
+
   if (res.affectedRows === 0) {
     return NextResponse.json({ error: "Quotation not found or permission denied." }, { status: 404 });
   }
 
-  return NextResponse.json({ ok: true, quotation_status: status });
+  return NextResponse.json({ ok: true, id });
+
 }
 
 export async function PUT(

@@ -256,6 +256,7 @@ export type Bill = {
   gr_no?: string | null;
   vehicle_no?: string | null;
   dispute_note?: string | null;
+  document_title?: string | null;
   created_by?: number | null;
   created_by_name?: string | null;
   created_at: string;
