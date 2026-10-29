@@ -278,17 +278,21 @@ h1, h2, h3, .font-heading {
   }
 
   /* When main contains an invoice (#bill-print-root), hide non-invoice siblings inside main */
-  main:has(#bill-print-root) > *:not(:has(#bill-print-root)):not(#bill-print-root) {
+  main:has(#bill-print-root) > *:not(:has(#bill-print-root)):not(#bill-print-root),
+  main:has(#dispatch-print-root) > *:not(:has(#dispatch-print-root)):not(#dispatch-print-root) {
     display: none !important;
   }
 
   /* Invoice styling */
   #bill-print-root,
-  #bill-print-root * {
+  #bill-print-root *,
+  #dispatch-print-root,
+  #dispatch-print-root * {
     visibility: visible !important;
   }
 
-  #bill-print-root {
+  #bill-print-root,
+  #dispatch-print-root {
     display: block !important;
     position: relative !important;
     width: 100% !important;
@@ -305,7 +309,8 @@ h1, h2, h3, .font-heading {
     print-color-adjust: exact !important;
   }
 
-  #bill-print-root .bg-yellow-banner {
+  #bill-print-root .bg-yellow-banner,
+  #dispatch-print-root .bg-yellow-banner {
     background-color: #facc15 !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
