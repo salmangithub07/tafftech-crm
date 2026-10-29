@@ -12,7 +12,6 @@ import {
   Truck,
   FileText,
   Loader2,
-  CheckCircle2,
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -159,6 +158,11 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
       return;
     }
 
+    // Collect all stylesheets and style tags from current document
+    const headStyles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
+      .map((el) => el.outerHTML)
+      .join("\n");
+
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
     iframe.style.right = "0";
@@ -182,36 +186,69 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
         <head>
           <base href="${typeof window !== "undefined" ? window.location.origin : ""}/" />
           <title>${pdfFileName}</title>
+          ${headStyles}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet" />
           <style>
-            * { box-sizing: border-box; }
-            body { margin: 0; padding: 12px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-            @page { size: A4 portrait; margin: 8mm; }
-            @media print {
-              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page {
+              size: A4 portrait;
+              margin: 5mm;
+            }
+            * {
+              box-sizing: border-box !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background-color: #ffffff !important;
+              color: #000000 !important;
+              font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+            }
+            #dispatch-print-root {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 auto !important;
+              box-sizing: border-box !important;
+              border: 2px solid #000000 !important;
+              background-color: #ffffff !important;
+              color: #000000 !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              page-break-after: avoid !important;
+              page-break-before: avoid !important;
+            }
+            .bg-yellow-banner {
+              background-color: #facc15 !important;
+              color: #000000 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
           </style>
-          <link rel="stylesheet" href="/_next/static/css/app/layout.css" />
+          <script src="https://cdn.tailwindcss.com"></script>
         </head>
         <body>
-          ${printElement.outerHTML}
+          <div style="padding: 0; margin: 0;">
+            ${printElement.outerHTML}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.focus();
+                window.print();
+                setTimeout(function() {
+                  if (window.frameElement) window.frameElement.remove();
+                }, 1000);
+              }, 350);
+            };
+          </script>
         </body>
       </html>
     `);
     iDoc.close();
-
-    setTimeout(() => {
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } catch (e) {
-        console.error("Print error:", e);
-      } finally {
-        setTimeout(() => {
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-          resetTitle();
-        }, 1500);
-      }
-    }, 400);
+    resetTitle();
   }
 
   async function handleDownloadPDF() {
@@ -339,9 +376,9 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
   const docNumber = (doc as any).bill_number || (doc as any).quotation_number || `DOC-${docId}`;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 print:p-0 print:m-0 print:max-w-none print:pb-0">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 print:hidden">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" asChild>
             <Link href={backUrl} className="gap-1.5 text-xs">
@@ -400,9 +437,9 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
       </div>
 
       {/* Grid: Logistics Edit Panel (Left/Top) & Live Preview (Right/Bottom) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start print:block print:p-0 print:m-0">
         {/* Logistics Edit Panel */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-4 print:hidden">
           <Card className="shadow-sm border">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -554,9 +591,9 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
         </div>
 
         {/* Live Preview Container (Right/Bottom) */}
-        <div className="lg:col-span-8 flex flex-col items-center">
+        <div className="lg:col-span-8 flex flex-col items-center print:w-full print:block print:p-0 print:m-0">
           <PinchZoomContainer>
-            <div className="w-[750px] bg-white text-black shadow-md border rounded-none overflow-hidden p-0">
+            <div className="w-[750px] print:w-full bg-white text-black shadow-md border print:border-none print:shadow-none rounded-none overflow-hidden p-0">
               <PrintableDispatchSlip
                 doc={{
                   ...doc,
