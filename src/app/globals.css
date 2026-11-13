@@ -291,14 +291,30 @@ h1, h2, h3, .font-heading {
     visibility: visible !important;
   }
 
-  #bill-print-root,
-  #dispatch-print-root {
+  #bill-print-root {
     display: block !important;
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
     padding: 8px !important;
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #dispatch-print-root {
+    display: block !important;
+    position: relative !important;
+    width: 480px !important;
+    max-width: 480px !important;
+    margin: 0 auto !important;
+    padding: 16px !important;
     box-shadow: none !important;
     border: 2px solid #000000 !important;
     background-color: #ffffff !important;

@@ -407,18 +407,6 @@ export function QuotationDetailView({ quotationId }: { quotationId: number | str
           <Button
             variant="outline"
             size="sm"
-            asChild
-            className="gap-1.5 text-xs h-9 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-          >
-            <Link href={`/quotations/${quotation.id}/dispatch`}>
-              <Truck className="size-3.5" />
-              <span>Dispatch Slip</span>
-            </Link>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => router.push(`/quotations/${quotation.id}/edit`)}
             className="gap-1.5 text-xs h-9 text-primary border-primary/30 hover:bg-primary/10"
           >

@@ -573,7 +573,8 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-muted/40 text-muted-foreground border-b font-medium text-[11px] uppercase tracking-wider">
                 <tr>
@@ -667,7 +668,99 @@ export function QuotationForm({ quotationId }: { quotationId?: string | number }
             </table>
           </div>
 
-          <div className="p-3 border-t bg-muted/15 flex justify-between items-center">
+          {/* Mobile Item Card List (Responsive UI) */}
+          <div className="md:hidden divide-y divide-border/60">
+            {fields.map((field, index) => {
+              const qty = Number(watchedItems[index]?.quantity) || 0;
+              const price = Number(watchedItems[index]?.unit_price) || 0;
+              const lineTotal = qty * price;
+
+              return (
+                <div key={field.id} className="p-3.5 space-y-3 bg-card hover:bg-muted/10 transition-colors">
+                  {/* Top Row: Item Number & Line Total & Delete button */}
+                  <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
+                    <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                      Item #{index + 1}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground">Amount:</span>
+                      <span className="font-mono font-bold text-sm text-foreground">
+                        ₹{lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </span>
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ml-1"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Search & Custom Description */}
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] font-semibold text-muted-foreground">Product Description *</Label>
+                    {products.length > 0 && (
+                      <SearchableSelect
+                        options={products.map((p) => ({
+                          value: String(p.id),
+                          label: p.name,
+                          sublabel: `₹${Number(p.price || 0).toLocaleString("en-IN")}${p.sku ? ` • SKU: ${p.sku}` : ""}`,
+                        }))}
+                        value={watchedItems[index]?.product_id ? String(watchedItems[index]?.product_id) : ""}
+                        onValueChange={(val) => handleSelectProduct(index, val)}
+                        placeholder="Select from product catalog..."
+                        searchPlaceholder="Search catalog by name or SKU..."
+                        triggerClassName="h-8 text-xs bg-background"
+                      />
+                    )}
+                    <Input
+                      {...register(`items.${index}.product_name`)}
+                      placeholder="Product name or custom description..."
+                      className="h-8 text-xs bg-background"
+                    />
+                  </div>
+
+                  {/* HSN, Quantity & Rate Grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-[10px] font-medium text-muted-foreground">HSN/SKU</Label>
+                      <Input
+                        {...register(`items.${index}.hsn_code`)}
+                        placeholder="HSN"
+                        className="h-8 text-xs font-mono mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] font-medium text-muted-foreground">Qty *</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                        className="h-8 text-xs text-right font-mono mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] font-medium text-muted-foreground">Rate (₹) *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                        className="h-8 text-xs text-right font-mono mt-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="p-3 border-t bg-muted/15 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
             <Button
               type="button"
               variant="outline"

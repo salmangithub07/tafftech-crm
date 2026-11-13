@@ -47,14 +47,20 @@ export async function GET(req: NextRequest) {
 
     await ensureActivityTables();
 
+    const search = req.nextUrl.searchParams.get("search") || "";
     const status = req.nextUrl.searchParams.get("status");
     const period = req.nextUrl.searchParams.get("period");
     const date = req.nextUrl.searchParams.get("date");
     const { page, limit, offset } = paginationParams(req, 10);
 
     const dateFilter = buildDateFilter("q.quotation_date", period, date);
-    const baseWhere = " WHERE q.tenant_id = ?" + dateFilter.clause;
-    const baseParams = [tenantId, ...dateFilter.params];
+    let baseWhere = " WHERE q.tenant_id = ?" + dateFilter.clause;
+    const baseParams: any[] = [tenantId, ...dateFilter.params];
+
+    if (search) {
+      baseWhere += " AND (q.quotation_number ILIKE ? OR q.customer_name ILIKE ? OR q.customer_phone ILIKE ?)";
+      baseParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
 
     let where = baseWhere;
     const params = [...baseParams];

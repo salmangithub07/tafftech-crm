@@ -15,10 +15,11 @@ import {
   RotateCcw,
   Pencil,
   MessageSquare,
-  Eye, Truck,
+  Eye, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,6 +73,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
     acceptedValue: 0,
     pendingValue: 0,
   });
+  const [search, setSearch] = React.useState("");
   const [tab, setTab] = React.useState<FilterTab>("all");
   const [dateFilter, setDateFilter] = React.useState<DateFilterValue>({ period: "all", value: "" });
   const [page, setPage] = React.useState(1);
@@ -95,6 +97,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
       page: String(page),
       limit: String(pageSize),
       ...(tab !== "all" ? { status: tab } : {}),
+      ...(search.trim() ? { search: search.trim() } : {}),
       ...dateFilterParams(dateFilter),
     });
     const res = await fetch(`/api/quotations?${params}`);
@@ -105,7 +108,7 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
       setCounts(json.counts);
       if (json.stats) setStats(json.stats);
     }
-  }, [tab, page, pageSize, dateFilter]);
+  }, [tab, page, pageSize, dateFilter, search]);
 
   React.useEffect(() => {
     fetchQuotations();
@@ -352,17 +355,40 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
         </Card>
       </div>
 
-      <Tabs value={tab} onValueChange={changeTab}>
-        <ScrollableTabsWrapper filter={<DateFilter value={dateFilter} onChange={changeDateFilter} />}>
-          <TabsList className="w-max sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1">
-            <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
-            <TabsTrigger value="accepted">Accepted ({counts.accepted})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
-            <TabsTrigger value="trash">Trash ({counts.trash})</TabsTrigger>
-          </TabsList>
-        </ScrollableTabsWrapper>
-      </Tabs>
+      {/* Filters Toolbar with Search between Tabs and DateFilter */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+          {/* 1. Status Tabs */}
+          <Tabs value={tab} onValueChange={changeTab} className="shrink-0 w-full sm:w-auto">
+            <TabsList className="w-full sm:w-fit justify-start h-9 sm:h-10 p-1 gap-1 overflow-x-auto scrollbar-none">
+              <TabsTrigger value="all" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">All ({counts.all})</TabsTrigger>
+              <TabsTrigger value="pending" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Pending ({counts.pending})</TabsTrigger>
+              <TabsTrigger value="accepted" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Accepted ({counts.accepted})</TabsTrigger>
+              <TabsTrigger value="rejected" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Rejected ({counts.rejected})</TabsTrigger>
+              <TabsTrigger value="trash" className="px-2.5 sm:px-3 text-xs whitespace-nowrap">Trash ({counts.trash})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* 2. Searchbar in Center */}
+          <div className="relative flex-1 max-w-xs lg:max-w-md min-w-[200px]">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search Quotation #, Customer, Phone..."
+              className="pl-9 h-9 text-xs"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 3. Date Filter */}
+        <div className="shrink-0">
+          <DateFilter value={dateFilter} onChange={changeDateFilter} />
+        </div>
+      </div>
 
       {/* Bulk action toolbar */}
       {(selectedIds.length > 0 || (isTrashTab && counts.trash > 0)) && (
@@ -515,9 +541,6 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => router.push(`/quotations/${q.id}/dispatch`)}>
-                                  <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
-                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {
                                     shareDocumentOnWhatsApp({
@@ -629,9 +652,6 @@ export function QuotationsClient({ initialQuotations }: { initialQuotations: Quo
                               <>
                                 <DropdownMenuItem onClick={() => viewQuotationDetails(q)}>
                                   <Printer className="size-4" /> View / Print
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => router.push(`/quotations/${q.id}/dispatch`)}>
-                                  <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Dispatch Slip
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {

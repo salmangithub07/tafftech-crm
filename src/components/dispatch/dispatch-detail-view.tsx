@@ -208,9 +208,9 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
               font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
             }
             #dispatch-print-root {
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 auto !important;
+              width: 480px !important;
+              max-width: 480px !important;
+              margin: 8mm auto !important;
               box-sizing: border-box !important;
               border: 2px solid #000000 !important;
               background-color: #ffffff !important;
@@ -284,9 +284,12 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new JSPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfW = 210, pageH = 297;
-      const imgH = (canvas.height * pdfW) / canvas.width;
-      let left = imgH, pos = 0;
-      pdf.addImage(imgData, "JPEG", 0, pos, pdfW, imgH, undefined, "FAST");
+      // Keep natural vertical slip width (approx 130mm centered on A4)
+      const slipW = 135;
+      const slipX = (pdfW - slipW) / 2;
+      const imgH = (canvas.height * slipW) / canvas.width;
+      let left = imgH, pos = 12;
+      pdf.addImage(imgData, "JPEG", slipX, pos, slipW, imgH, undefined, "FAST");
       left -= pageH;
       while (left > 0) {
         pos = left - imgH;
@@ -593,7 +596,7 @@ export function DispatchDetailView({ type, docId }: DispatchDetailViewProps) {
         {/* Live Preview Container (Right/Bottom) */}
         <div className="lg:col-span-8 flex flex-col items-center print:w-full print:block print:p-0 print:m-0">
           <PinchZoomContainer>
-            <div className="w-[750px] print:w-full bg-white text-black shadow-md border print:border-none print:shadow-none rounded-none overflow-hidden p-0">
+            <div className="w-[520px] max-w-full print:w-full bg-white text-black shadow-md border print:border-none print:shadow-none rounded-none overflow-hidden p-2">
               <PrintableDispatchSlip
                 doc={{
                   ...doc,
